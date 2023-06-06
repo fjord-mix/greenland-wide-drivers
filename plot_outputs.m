@@ -20,7 +20,7 @@ ylabel('Thickness (m)'); legend('1','2','3','4','Location','east');
 subplot(m,n,2); plot(taxis1,fjord_model1.s.T,'linewidth',1.5); hold on;
 ylabel('Temperature (^oC)'); 
 subplot(m,n,3); plot(taxis1,fjord_model1.s.S,'linewidth',1.5); hold on;
-ylabel('Salinity'); xlabel('Model time (days)')
+ylabel('Salinity'); xlabel('Time')
 
 if nargin > 2
     model_runtime2 = fjord_model2.s.t(1:size(fjord_model1.s.H,2));
