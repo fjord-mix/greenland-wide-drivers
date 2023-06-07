@@ -26,7 +26,7 @@ for i_tau=1:length(tau_space)
     save([outs_path,name_exp,'.mat'],'fjord_run','-v7.3') % v7.3 allows files > 2GB
     % plot_outputs(fjord_run)
 end
-name_set = sprintf('%s_C%1.e_P%d_dt%0.2f_tau*_havg',fjord_keys{id},C0_space(3),P0_space(2),dt_run);    % varying dt with default params
+name_set = sprintf('%s_C%1.e_P%d_dt%0.2f_tau*_havg',fjord_keys{id},C0_space(3),P0_space(2),dt_run);
 plot_subset_runs([outs_path,name_set,'.mat'],'Effect of relaxation')
 
 
