@@ -18,7 +18,7 @@ plt_obs_handles = plot_obs(datasets);% ,datasets.obs.ctd_data.omg); % add this s
 %plt_obs_handles.cb1.Visible = 'off'; plt_obs_handles.cb2.Visible = 'off'; plt_obs_handles.cb3.Visible = 'off'; 
 
 %% Choosing model runtime
-datasets.opts.time_start = datetime(2010,01,15);
+datasets.opts.time_start = datetime(2000,01,15);
 datasets.opts.time_end   = datetime(2020,01,15);
 datasets.opts.time_interval = [datasets.opts.time_start,datasets.opts.time_end]; 
 
