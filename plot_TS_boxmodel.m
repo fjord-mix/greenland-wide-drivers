@@ -2,9 +2,27 @@ function fig_layer_handles = plot_TS_boxmodel(datasets,fjords_map,fjord_title,fj
 letters = 'abcdefgh';
 
 % bin shelf forcings according to the fjord boxes
-[Ts,Ss] = bin_ocean_profiles(fjord.f.Ts,fjord.f.Ss,-fjord.f.zs,fjord.s.H);
-Ts = Ts';
-Ss = Ss';
+n_layers=size(fjord.s.H,1);
+n_timesteps=length(fjord.s.t);
+Ts = zeros([n_layers,n_timesteps]);
+Ss = zeros([n_layers,n_timesteps]);
+
+% increasing resolution to avoid trapz integral issues
+zs = fjord.f.zs;
+nz_orig=1:length(zs);
+nz_hr=linspace(1,length(zs),100*length(zs));
+zs_hr=interp1(nz_orig,zs,nz_hr);
+Ts_hr=interp1(zs,fjord.f.Ts,zs_hr);
+Ss_hr=interp1(zs,fjord.f.Ss,zs_hr);
+for k=1:n_timesteps    
+    [Ts(:,k),Ss(:,k)] = bin_ocean_profiles(Ts_hr(:,k),Ss_hr(:,k),-zs_hr,fjord.s.H(:,k)',fjord.p);
+end
+% smooth out the profile for plotting purposes. The differences in salinity are O(10^-2)
+Ts=smoothdata(Ts,2);
+Ss=smoothdata(Ss,2);
+
+% Ts = Ts';
+% Ss = Ss';
 
 % get fjord limits to select obs data accordingly
 [Xf,Yf]    = meshgrid(fjords_map.x,fjords_map.y);
@@ -66,14 +84,9 @@ n_layers = size(fjord.s.H,1);
 tlims = NaN([n_layers,2]);
 slims = NaN([n_layers,2]);
 for i=1:n_layers
-    min_t = min(min(fjord.s.T(i,:)),min(Ts(i,:)));
-    if min_t > 0
-        min_t = 0.85*min_t;
-    else
-        min_t = 1.15*min_t;
-    end
-    tlims(i,:) = [-2 3]; %[min_t 1.15*max(max(fjord.s.T(i,:)),max(Ts(i,:)))];
-    slims(i,:) = [31 37]; %[0.85*min(min(fjord.s.S(i,:)),min(Ss(i,:))) 1.15*max(max(fjord.s.S(i,:)),max(Ss(i,:)))];
+    min_t = min(min(fjord.s.T(i,:)),min(Ts(i,:)));    
+    tlims(i,:) = [min_t-0.5 max(max(fjord.s.T(i,:)),max(Ts(i,:)))+0.5];
+    slims(i,:) = [min(min(fjord.s.S(i,:)),min(Ss(i,:)))-0.2 max(max(fjord.s.S(i,:)),max(Ss(i,:)))+0.2];
 end
 
 runtime_axis = fjord.m.time_axis;
@@ -93,13 +106,11 @@ end
 t_obs = zeros([n_layers,length(casts_time_series)]);
 s_obs = zeros([n_layers,length(casts_time_series)]);
 if length(casts_time_series)>1
-    for k=1:length(casts_time_series)
-        [t_obs(:,k),s_obs(:,k)] = bin_ocean_profiles(casts_time_series(k).temp,casts_time_series(k).sal,casts_time_series(k).depth,H_obs_axis(:,k));    
+    for k=1:length(casts_time_series)        
+        [t_obs(:,k),s_obs(:,k)] = bin_ocean_profiles(casts_time_series(k).temp',casts_time_series(k).sal',casts_time_series(k).depth',H_obs_axis(:,k)',fjord.p);    
     end
 else
-    [t_obs,s_obs] = bin_ocean_profiles(casts_time_series.temp,casts_time_series.sal,casts_time_series.depth,H_obs_axis);
-    t_obs=t_obs';
-    s_obs=s_obs';
+    [t_obs,s_obs] = bin_ocean_profiles(casts_time_series.temp',casts_time_series.sal',casts_time_series.depth',H_obs_axis,fjord.p);    
 end
 % filter out weird extrapolation
 t_obs(abs(t_obs) > 1e2) = NaN;
@@ -116,7 +127,7 @@ i_plt=1;
 for i_layer=1:n_layers
     subplot(4,2,i_plt); hold on; box on;
     fig_layer_handles.hfj = plot(taxis,fjord.s.T(i_layer,:),'linewidth',1.5,'color',[0.5 0.5 0.5]);
-    fig_layer_handles.hsh = plot(taxis,Ts(i_layer,:),'LineStyle','--','linewidth',1.5,'color',[0.5 0.5 0.5]);
+    fig_layer_handles.hsh = plot(taxis,Ts(i_layer,:),'LineStyle','--','linewidth',1.,'color',[0.5 0.5 0.5]);
     if ~isempty(t_obs)
     if size(t_obs,2) > 1
         scatter([casts_time_series.time],t_obs(i_layer,:),30,'black','filled','MarkerFaceAlpha',0.75);
@@ -136,7 +147,7 @@ for i_layer=1:n_layers
 
     subplot(4,2,i_plt+1); hold on; box on;
     plot(taxis,fjord.s.S(i_layer,:),'linewidth',1.5,'color',[0.5 0.5 0.5])
-    plot(taxis,Ss(i_layer,:),'LineStyle','--','linewidth',1.5,'color',[0.5 0.5 0.5])
+    plot(taxis,Ss(i_layer,:),'LineStyle','--','linewidth',1.,'color',[0.5 0.5 0.5])
     if ~isempty(s_obs)
     if size(s_obs,2) > 1
         scatter([casts_time_series.time],s_obs(i_layer,:),30,'black','filled','MarkerFaceAlpha',0.75);
