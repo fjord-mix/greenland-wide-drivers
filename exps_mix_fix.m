@@ -73,7 +73,6 @@ name_ctrl = sprintf('%s_K%1.e_dt%0.2f',fjord_keys{id},K0_space(1),dt_space(4));
 datasets.opts.dt = dt_space(4);
 fjord_run = prepare_boxmodel_input(datasets,fjords_processed(fjord_ids(id)),fjord_ids(id)); % arranges into the boxmodel input structure
 fjord_run.p.trelax = 365*86400;
-fjord_run.p.K0=K0_space(2);
 fjord_run.s = boxmodel_v4(fjord_run.p,fjord_run.f,fjord_run.a,fjord_run.t); % runs and gets the results    
 fjord_run.m.name = name_ctrl;
 % save([outs_path,name_ctrl,'','.mat'],'fjord_run','-v7.3') % v7.3 allows files > 2GB
