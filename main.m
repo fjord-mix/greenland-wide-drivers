@@ -18,9 +18,10 @@ plt_obs_handles = plot_obs(datasets);% ,datasets.obs.ctd_data.omg); % add this s
 %plt_obs_handles.cb1.Visible = 'off'; plt_obs_handles.cb2.Visible = 'off'; plt_obs_handles.cb3.Visible = 'off'; 
 
 %% Choosing model runtime
-datasets.opts.time_start = datetime(2000,01,15);
-datasets.opts.time_end   = datetime(2020,01,15);
+datasets.opts.time_start = datetime(2010,01,15);
+datasets.opts.time_end   = datetime(2018,01,15);
 datasets.opts.time_interval = [datasets.opts.time_start,datasets.opts.time_end]; 
+datasets.opts.dt            = 1.0; % time step in days
 
 %% Setting up specific "flagship fjords" which might be of interest
 % Their IDs were obtained visually using plot_fjords_summary(). uncomment
@@ -33,6 +34,17 @@ datasets.opts.time_interval = [datasets.opts.time_start,datasets.opts.time_end];
 fjord_ids=[35,39,45,34];
 fjord_names={'Kangerlussuaq','Sermilik','Kangersuneq','Ilulissat'};
 fjord_keys={'KF','SF','KS','IS'};
+
+%% Control experiment, to see how it works
+id=1;
+name_ctrl = sprintf('%s_ORAS5_ctrl',fjord_keys{id});
+fjord_run = prepare_boxmodel_input(datasets,fjords_processed(fjord_ids(id)),fjord_ids(id)); % arranges into the boxmodel input structure
+% fjord_run.p.trelax = 365*86400;
+fjord_run.s = boxmodel_v4(fjord_run.p,fjord_run.f,fjord_run.a,fjord_run.t); % runs and gets the results    
+fjord_run.o = postprocess_boxmodel(fjord_run);
+fjord_run.m.name = name_ctrl;
+% plot_outputs([],fjord_run);
+hf=plot_ts_at_depth(fjord_run,[5,200,500],'nearest');
 
 %% Exploring parametre space
 
