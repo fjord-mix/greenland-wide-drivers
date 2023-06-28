@@ -39,7 +39,7 @@ fjord_keys={'KF','SF','KS','IS'};
 id=1;
 name_ctrl = sprintf('%s_ORAS5_ctrl',fjord_keys{id});
 fjord_run = prepare_boxmodel_input(datasets,fjords_processed(fjord_ids(id)),fjord_ids(id)); % arranges into the boxmodel input structure
-% fjord_run.p.trelax = 365*86400;
+fjord_run.p.trelax = 10*86400;
 fjord_run.s = boxmodel_v4(fjord_run.p,fjord_run.f,fjord_run.a,fjord_run.t); % runs and gets the results    
 fjord_run.o = postprocess_boxmodel(fjord_run);
 fjord_run.m.name = name_ctrl;
@@ -49,6 +49,8 @@ hf=plot_ts_at_depth(fjord_run,[5,200,500],'nearest');
 %% Exploring parametre space
 
 run exps_parametre_space.m
+
+run exps_icebergs.m
 
 %% Running for all fjords of interest
 
