@@ -4,9 +4,9 @@ function outputs = postprocess_boxmodel(fjord)
     z_profiles=fjord.f.zs;
     temp_profiles=NaN(size(fjord.f.Ts));
     salt_profiles=NaN(size(fjord.f.Ss));
-    t_export=NaN(size(fjord.t));
-    s_export=NaN(size(fjord.t));
-    v_export=NaN(size(fjord.t));
+    t_export=zeros(size(fjord.t));
+    s_export=zeros(size(fjord.t));
+    v_export=zeros(size(fjord.t));
     z_bnds_export=NaN([2,length(fjord.t)]);
 
     % iterates over all time steps
@@ -26,9 +26,9 @@ function outputs = postprocess_boxmodel(fjord)
         % if something is being exported
         if ~isempty(i_export) 
             z_bnds_export(:,i)=box_depths(i_export:i_export+1); % gets the depth interval
-            t_export(i)=fjord.s.T(i_export,i);                  % copies over the associated heat,
-            s_export(i)=fjord.s.S(i_export,i);                  % salt,
-            v_export(i)=fjord.s.V(i_export,i);                  % and volume fluxes
+            t_export(i)=fjord.s.Te(i_export,i);                 % copies over the total heat,
+            s_export(i)=fjord.s.Se(i_export,i);                 % and salt exported
+            v_export(i)=fjord.s.QVs(i_export,i);                % and volume fluxes
         end
 
     end
