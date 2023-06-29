@@ -34,7 +34,7 @@ else
     fig_handles.hfs = plot(taxis,s_series,'linewidth',1.5);
     ylabel('Salinity (-)')
     xlabel('Time')
-    hl=legend(depth_lbls);
+    fig_handles.hl=legend(depth_lbls);
 
 end
 
