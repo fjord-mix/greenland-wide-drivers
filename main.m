@@ -4,10 +4,17 @@ addpath(genpath(import_path))
 addpath(genpath(model_path))
 addpath(genpath(collation_path))
 
-[datasets,fjords_processed,fjords_map,msk_fjord_ids] = compile_datasets(data_path);
-
 outs_path = [data_path,'/greenland/FjordMIX/boxmodel/']; % where the model output files will be saved
 figs_path = [project_path,'/figs/'];                     % where the figures and animations will be saved
+
+[datasets,fjords_processed,fjords_map,msk_fjord_ids] = compile_datasets(data_path);
+
+%% Choosing model runtime
+datasets.opts.time_start = datetime(2010,01,15);
+datasets.opts.time_end   = datetime(2018,01,15);
+datasets.opts.time_interval = [datasets.opts.time_start,datasets.opts.time_end]; 
+datasets.opts.dt            = 1.0; % time step in days
+
 %% Summary of data compilation 
 % useful to check the link of glaciers and shelf profiles with their respective fjord and if all data was properly loaded
 plt_handles     = plot_fjords_summary(datasets,fjords_map,fjords_processed);
@@ -16,12 +23,6 @@ plt_obs_handles = plot_obs(datasets);% ,datasets.obs.ctd_data.omg); % add this s
 % just to facilitade figure browsing
 %plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off'; 
 %plt_obs_handles.cb1.Visible = 'off'; plt_obs_handles.cb2.Visible = 'off'; plt_obs_handles.cb3.Visible = 'off'; 
-
-%% Choosing model runtime
-datasets.opts.time_start = datetime(2010,01,15);
-datasets.opts.time_end   = datetime(2018,01,15);
-datasets.opts.time_interval = [datasets.opts.time_start,datasets.opts.time_end]; 
-datasets.opts.dt            = 1.0; % time step in days
 
 %% Setting up specific "flagship fjords" which might be of interest
 % Their IDs were obtained visually using plot_fjords_summary(). uncomment
@@ -37,15 +38,14 @@ fjord_keys={'KF','SF','KS','IS'};
 
 %% Control experiment, to see how it works
 id=1;
-name_ctrl = sprintf('%s_ORAS5_ctrl',fjord_keys{id});
+name_ctrl = sprintf('%s_ctrl',fjord_keys{id});
 fjord_run = prepare_boxmodel_input(datasets,fjords_processed(fjord_ids(id)),fjord_ids(id)); % arranges into the boxmodel input structure
-fjord_run.p.trelax = 10*86400;
 fjord_run.s = boxmodel_v4(fjord_run.p,fjord_run.f,fjord_run.a,fjord_run.t); % runs and gets the results    
 fjord_run.o = postprocess_boxmodel(fjord_run);
 fjord_run.m.name = name_ctrl;
 % plot_outputs([],fjord_run);
 hf=plot_ts_at_depth(fjord_run,[5,200,500],'nearest');
-
+hf=plot_fw_out(fjord_run);
 %% Exploring parametre space
 
 run exps_parametre_space.m
