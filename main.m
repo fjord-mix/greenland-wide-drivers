@@ -42,6 +42,7 @@ fjord_ctrl = prepare_boxmodel_input(datasets,fjords_processed(fjord_ids(id)),fjo
 fjord_ctrl.s = boxmodel(fjord_ctrl.p,fjord_ctrl.f,fjord_ctrl.a,fjord_ctrl.t); % runs and gets the results    
 fjord_ctrl.o = postprocess_boxmodel(fjord_ctrl);
 fjord_ctrl.m.name = name_ctrl;
+% save([outs_path,'/',fjord_ctrl.m.name],'fjord_ctrl','-v7.3') % v7.3 allows files > 2GB
 
 % Examples of different ways to plot the outputs
 plot_outputs([],fjord_ctrl);
