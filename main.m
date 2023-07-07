@@ -17,16 +17,15 @@ datasets.opts.dt            = 1.0; % time step in days
 
 %% Summary of data compilation 
 % useful to check the link of glaciers and shelf profiles with their respective fjord and if all data was properly loaded
-plt_handles     = plot_fjords_summary(datasets,fjords_map,fjords_processed);
-plt_obs_handles = plot_obs(datasets);% ,datasets.obs.ctd_data.omg); % add this second argument to plot only a specific obs dataset
 
-% just to facilitade figure browsing
-%plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off'; 
+plt_handles     = plot_fjords_summary(datasets,fjords_map,fjords_processed); %plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off'; 
+plt_obs_handles = plot_obs(datasets);
+% plt_obs_handles = plot_obs(datasets,datasets.obs.ctd_data.omg); % plots only a specific obs dataset
 %plt_obs_handles.cb1.Visible = 'off'; plt_obs_handles.cb2.Visible = 'off'; plt_obs_handles.cb3.Visible = 'off'; 
 
 %% Setting up specific "flagship fjords" which might be of interest
-% Their IDs were obtained visually using plot_fjords_summary(). uncomment
-% the "text()" function line where IDs are plotted to see them
+% Their IDs were obtained visually using plot_fjords_summary()
+% Uncomment the "text()" function line where IDs are plotted to see them
 % 22 + 23 + 24 + 25: Uummannaq system; Kangerlussuup Sermia drains into 25
 % 34: Ilulissat (Jakobshavn)
 % 35: Kangerlussuaq
@@ -39,13 +38,16 @@ fjord_keys={'KF','SF','KS','IS'};
 %% Control experiment, to see how it works
 id=1;
 name_ctrl = sprintf('%s_ctrl',fjord_keys{id});
-fjord_run = prepare_boxmodel_input(datasets,fjords_processed(fjord_ids(id)),fjord_ids(id)); % arranges into the boxmodel input structure
-fjord_run.s = boxmodel_v4(fjord_run.p,fjord_run.f,fjord_run.a,fjord_run.t); % runs and gets the results    
-fjord_run.o = postprocess_boxmodel(fjord_run);
-fjord_run.m.name = name_ctrl;
-% plot_outputs([],fjord_run);
-hf=plot_ts_at_depth(fjord_run,[5,200,500],'nearest');
-hf=plot_fw_out(fjord_run);
+fjord_ctrl = prepare_boxmodel_input(datasets,fjords_processed(fjord_ids(id)),fjord_ids(id)); % arranges into the boxmodel input structure
+fjord_ctrl.s = boxmodel(fjord_ctrl.p,fjord_ctrl.f,fjord_ctrl.a,fjord_ctrl.t); % runs and gets the results    
+fjord_ctrl.o = postprocess_boxmodel(fjord_ctrl);
+fjord_ctrl.m.name = name_ctrl;
+
+% Examples of different ways to plot the outputs
+plot_outputs([],fjord_ctrl);
+plot_ts_at_depth(fjord_ctrl,[5,200,500],'nearest');
+plot_fluxes(fjord_ctrl);
+plot_fw_out(fjord_ctrl); % still WiP
 %% Exploring parametre space
 
 run exps_parametre_space.m

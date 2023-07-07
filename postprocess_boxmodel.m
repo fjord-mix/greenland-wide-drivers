@@ -12,7 +12,7 @@ function outputs = postprocess_boxmodel(fjord)
     % iterates over all time steps
     for i=1:length(fjord.s.t) 
 
-        % copies profile values for all depths related to that box
+        % copies profile values for all depths corresponding to that box
         box_depths=-[0, cumsum(fjord.s.H(:,i)')];
         for k=1:length(box_depths)-1
             inds_box=z_profiles < box_depths(k) & z_profiles > box_depths(k+1);
@@ -20,15 +20,15 @@ function outputs = postprocess_boxmodel(fjord)
             salt_profiles(inds_box,i)=fjord.s.S(k,i);
         end
         
-        i_outflow = find(fjord.s.QVs(:,i) > 0); % finds where flow is going towards the shelf
+        i_outflow = find(fjord.s.QVs(:,i) > 0);       % finds where flow is going towards the shelf
         [~,i_export] = max(fjord.s.QVs(i_outflow,i)); % finds the strongest flow
 
         % if something is being exported
         if ~isempty(i_export) 
             z_bnds_export(:,i)=box_depths(i_export:i_export+1); % gets the depth interval
-            t_export(i)=fjord.s.Te(i_export,i);                 % copies over the total heat,
-            s_export(i)=fjord.s.Se(i_export,i);                 % and salt exported
-            v_export(i)=fjord.s.QVs(i_export,i);                % and volume fluxes
+            t_export(i)=fjord.s.Te(i_export,i);                 % copies over the total heat
+            s_export(i)=fjord.s.Se(i_export,i);                 % and salt exported,
+            v_export(i)=fjord.s.QVs(i_export,i);                % as well as volume fluxes
         end
 
     end
