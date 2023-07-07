@@ -26,6 +26,7 @@ for i_layer=1:n_layers
     line(taxis1,0*model_runtime1,'linestyle',':');
     % icebergs dont have a volume flux
     text(0.02,0.9,sprintf('Layer %d',i_layer),'Units','normalized')    
+    ylim([-6 6])
 end
 
 
