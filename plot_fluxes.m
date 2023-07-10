@@ -18,7 +18,7 @@ m=n_layers; n=3;
 figure('Position',[20 20 900 900],'Name',fjord_model1.m.name); 
 for i_layer=1:n_layers
     subplot(m,n,1+(i_layer-1)*3); hold on; box on
-    if i_layer==1, title(sprintf('Volume flux (%0.1e*m$^3$s$^{-1}$)',unit_factor)); end
+    if i_layer==1, title(sprintf('Volume flux (%0.1e*m$^3$s$^{-1}$)',unit_factor),'interpreter','latex'); end
     plot(taxis1,real(fjord_model1.s.QVg(i_layer,1:n_steps)).*unit_factor,'linewidth',1.5); 
     plot(taxis1,real(fjord_model1.s.QVs(i_layer,1:n_steps)).*unit_factor,'linewidth',1.5); 
     plot(taxis1,real(fjord_model1.s.QVk(i_layer,1:n_steps)).*unit_factor,'linewidth',1.5); 
@@ -32,7 +32,7 @@ end
 
 for i_layer=1:n_layers
     subplot(m,n,2+(i_layer-1)*3); hold on; box on
-    if i_layer==1, title(sprintf('Temperature flux (%0.1e*???)',unit_factor)); end
+    if i_layer==1, title(sprintf('Temperature flux (%0.1e*???)',unit_factor),'interpreter','latex'); end
     plot(taxis1,real(fjord_model1.s.QTg(i_layer,1:n_steps)).*unit_factor,'linewidth',1.5); 
     plot(taxis1,real(fjord_model1.s.QTs(i_layer,1:n_steps)).*unit_factor,'linewidth',1.5); 
     plot(taxis1,real(fjord_model1.s.QTk(i_layer,1:n_steps)).*unit_factor,'linewidth',1.5); 
@@ -45,7 +45,7 @@ end
 
 for i_layer=1:n_layers
     subplot(m,n,3+(i_layer-1)*3); hold on; box on
-    if i_layer==1, title(sprintf('Salinity flux (%0.1e*???)',unit_factor)); end
+    if i_layer==1, title(sprintf('Salinity flux (%0.1e*???)',unit_factor),'interpreter','latex'); end
     plot(taxis1,real(fjord_model1.s.QSg(i_layer,1:n_steps)).*unit_factor,'linewidth',1.5); 
     plot(taxis1,real(fjord_model1.s.QSs(i_layer,1:n_steps)).*unit_factor,'linewidth',1.5); 
     plot(taxis1,real(fjord_model1.s.QSk(i_layer,1:n_steps)).*unit_factor,'linewidth',1.5); 

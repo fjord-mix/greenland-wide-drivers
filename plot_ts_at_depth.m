@@ -28,7 +28,7 @@ else
     fig_handles.hf = figure;
     subplot(2,1,1)    
     fig_handles.hft = plot(taxis,t_series,'linewidth',1.5);
-    ylabel('Temperature ($^o$C)')
+    ylabel('Temperature ($^o$C)','interpreter','latex')
     title(fjord.m.name,'interpreter','none')
     fig_handles.hl=legend(depth_lbls,'Location','southeast');
     subplot(2,1,2)
