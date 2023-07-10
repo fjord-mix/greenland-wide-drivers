@@ -1,4 +1,4 @@
-function plot_fluxes(fjord_model1,fjord_model2)
+function plot_fluxes(fjord_model1)
 
 
 
@@ -18,7 +18,7 @@ m=n_layers; n=3;
 figure('Position',[20 20 900 900],'Name',fjord_model1.m.name); 
 for i_layer=1:n_layers
     subplot(m,n,1+(i_layer-1)*3); hold on; box on
-    if i_layer==1, title(sprintf('Volume flux (%0.1e*m^3/s)',unit_factor)); end
+    if i_layer==1, title(sprintf('Volume flux (%0.1e*m$^3$s$^{-1}$)',unit_factor)); end
     plot(taxis1,real(fjord_model1.s.QVg(i_layer,1:n_steps)).*unit_factor,'linewidth',1.5); 
     plot(taxis1,real(fjord_model1.s.QVs(i_layer,1:n_steps)).*unit_factor,'linewidth',1.5); 
     plot(taxis1,real(fjord_model1.s.QVk(i_layer,1:n_steps)).*unit_factor,'linewidth',1.5); 
@@ -56,13 +56,5 @@ for i_layer=1:n_layers
 end
 
 legend('plume','shelf','mixing','artificial','icebergs','Location','east');
-
-
-
-% subplot(m,n,2); plot(taxis1,fjord_model1.s.QTb,'linewidth',1.5); hold on;
-% ylabel('Temperature flux (??)'); 
-% subplot(m,n,3); plot(taxis1,fjord_model1.s.QSb,'linewidth',1.5); hold on;
-% ylabel('Salinity flux (??)'); xlabel('Model time (days)')
-
 
 end

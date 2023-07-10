@@ -25,16 +25,17 @@ else
     t_series=t_series(:,1:length(model_runtime));
     s_series=s_series(:,1:length(model_runtime));
 
-    hf = figure;
+    fig_handles.hf = figure;
     subplot(2,1,1)    
     fig_handles.hft = plot(taxis,t_series,'linewidth',1.5);
-    ylabel('Temperature (^oC)')
+    ylabel('Temperature ($^o$C)')
     title(fjord.m.name,'interpreter','none')
+    fig_handles.hl=legend(depth_lbls,'Location','southeast');
     subplot(2,1,2)
     fig_handles.hfs = plot(taxis,s_series,'linewidth',1.5);
     ylabel('Salinity (-)')
     xlabel('Time')
-    fig_handles.hl=legend(depth_lbls);
+    
 
 end
 
