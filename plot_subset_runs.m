@@ -45,7 +45,7 @@ for i_file=1:n_files
     %% Temperature
     for i_layer=1:n_layers
         subplot(m,n,2+(i_layer-1)*3); hold on; box on
-        if i_layer==1, title(sprintf('Temperature (^oC)')); end
+        if i_layer==1, title(sprintf('Temperature ($^o$C)','interpreter','latex')); end
         plot(taxis,real(fjord_run.s.T(i_layer,1:n_steps)),'linewidth',1.5,'color',line_colors(i_file,:)); 
         % text(0.02,0.9,sprintf('Layer %d',i_layer),'Units','normalized')
     end
