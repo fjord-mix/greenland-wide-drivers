@@ -51,8 +51,8 @@ plot_fluxes(fjord_ctrl);
 plot_fw_out(fjord_ctrl); % still WiP
 
 %% Sample runs for some fjords of interest
-output_fname='/test_flagship_fjords';
-run exps_flagship_fjords.m
+output_fname='/test_benchmark_fjords';
+run exps_benchmark_fjords.m
 % save([outs_path,output_fname],'fjord_model','-v7.3') % v7.3 allows files > 2GB
 
 %% Exploring parametre space
