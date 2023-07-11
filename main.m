@@ -36,8 +36,9 @@ fjord_names={'Kangerlussuaq','Sermilik','Kangersuneq','Ilulissat'};
 fjord_keys={'KF','SF','KS','IS'};
 
 %% Control experiment, to see how it works
+id=1;
 name_ctrl = sprintf('%s_ctrl',fjord_keys{id});
-fjord_ctrl = prepare_boxmodel_input(datasets,fjords_processed(fjord_ids(id)),fjord_ids(id),p); % arranges into the boxmodel input structure
+fjord_ctrl = prepare_boxmodel_input(datasets,fjords_processed(fjord_ids(id)),fjord_ids(id)); % arranges into the boxmodel input structure
 [fjord_ctrl.s,fjord_ctrl.f] = boxmodel(fjord_ctrl.p,fjord_ctrl.f,fjord_ctrl.a,fjord_ctrl.t); % runs and gets the results    
 fjord_ctrl.o = postprocess_boxmodel(fjord_ctrl);
 fjord_ctrl.m.name = name_ctrl;
