@@ -51,14 +51,22 @@ plot_fluxes(fjord_ctrl);
 plot_fw_out(fjord_ctrl); % still WiP
 
 %% Sample runs for some fjords of interest
-output_fname='/test_benchmark_fjords';
+exp_out_path='/test_benchmark_fjords/';
+mkdir(exp_out_path)
 run exps_benchmark_fjords.m
-% save([outs_path,output_fname],'fjord_model','-v7.3') % v7.3 allows files > 2GB
+% save([exp_out_path,'example_benchmark_fjords_',num2str(p.N),'layers'],'fjord_model','-v7.3') % v7.3 allows files > 2GB
+
+% Showing what can go wrong
+run exps_bad_examples.m
 
 %% Exploring parametre space
 
+exp_out_path=[outs_path,'/sens_rlx_time/'];
+mkdir(exp_out_path)
 run exps_parametre_space.m
 
+exp_out_path='/sens_icebergs/';
+mkdir(exp_out_path)
 run exps_icebergs.m
 
 

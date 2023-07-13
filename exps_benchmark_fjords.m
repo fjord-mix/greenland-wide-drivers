@@ -18,11 +18,9 @@ for id=1:length(fjord_ids)
     fjord_run.m.name = fjord_name;
     fjord_model(id) = fjord_run;
 end
-% save([outs_path,'example_benchmark_fjords_',num2str(p.N),'layers'],'fjord_model','-v7.3') % v7.3 allows files > 2GB
-% for id=1:2, plot_outputs(fjord_model(id)); end %plot_fluxes(fjord_model(id)); end
 
 %% Loop to plot model outputs for desired fjords
-% fjord_model = load([outs_path,output_fname]).fjord_model;
+% fjord_model = load([exp_out_path,'example_benchmark_fjords_',num2str(p.N),'layers']).fjord_model;
 for id=1:length(fjord_model)
     fprintf('Plotting model outputs for %s... \n',fjord_model(id).m.name)   
     % plot_outputs(fjord_model(id))

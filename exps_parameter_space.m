@@ -9,9 +9,6 @@ P0_space  = [25, 10 50, 75];           % plume-entrainment coefficient (default:
 K0_space  = [5e-2, 5e-10, 5e-5, 5e-3]; % mixing coefficient (default 0.05)
 tau_space = [5, 10, 30, 90, 365];      % relaxation time
 
-exp_out_path=[outs_path,'/sens_rlx_time/'];
-mkdir(exp_out_path)
-
 %% Single-parametre run - relaxation time
 for i_tau=1:length(tau_space)
     name_exp = sprintf('%s_tau%dd',fjord_keys{id},tau_space(i_tau));    

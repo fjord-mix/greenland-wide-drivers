@@ -7,9 +7,6 @@ end
 
 M0_space = [2e-8,2e-10,2e-9,2e-7,2e-6]; % Defining the parametre space (default M0: 2e-8)
 
-exp_out_path=[outs_path,'/sens_icebergs/'];
-mkdir(exp_out_path)
-
 % Iterating over a loop performing one run for each combination
 for i_param=1:length(M0_space)
     name_exp = sprintf('%s_M0%0.1e',fjord_keys{id},M0_space(i_param));    
