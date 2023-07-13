@@ -30,6 +30,7 @@ end
 % Plotting outputs
 name_set = sprintf('%s_tau*',fjord_keys{id});
 plot_subset_runs([exp_out_path,name_set,'.mat'],'Effect of relaxation time','Paired')
+% exportgraphics(gcf,[figs_path,'/test_rlx/fluxes_trelax.png'],'ContentType','vector','BackgroundColor','none'); close gcf
 
 for i_tau=1:length(tau_space)
     name_exp = sprintf('%s_tau%dd',fjord_keys{id},tau_space(i_tau));    

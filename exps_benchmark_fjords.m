@@ -25,5 +25,6 @@ end
 % fjord_model = load([outs_path,output_fname]).fjord_model;
 for id=1:length(fjord_model)
     fprintf('Plotting model outputs for %s... \n',fjord_model(id).m.name)   
-    plot_outputs(fjord_model(id))
+    % plot_outputs(fjord_model(id))
+    animate(fjord_model(id),[figs_path,'/animations/'],fjord_model(id).m.name,200)
 end

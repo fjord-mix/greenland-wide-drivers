@@ -30,6 +30,7 @@ end
 % This is a useful way to evaluate the differences between a set of runs
 name_set = sprintf('%s_M0*',fjord_keys{id});
 plot_subset_runs([exp_out_path,name_set,'.mat'],'Effect of icebergs','Set2')
+exportgraphics(gcf,[figs_path,'/test_iceberg/sens_icebergs.png'],'ContentType','vector','BackgroundColor','none'); close gcf
 
 % Individual plots for all simulations performed
 chosen_depths=[5, 200, 500];
