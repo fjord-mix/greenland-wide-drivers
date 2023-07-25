@@ -19,7 +19,8 @@ function outputs = postprocess_boxmodel(fjord)
             temp_profiles(inds_box,i)=fjord.s.T(k,i);
             salt_profiles(inds_box,i)=fjord.s.S(k,i);
         end
-        
+
+        % computes outflow of freshwater
         i_outflow = find(fjord.s.QVs(:,i) > 0);       % finds where flow is going towards the shelf
         [~,i_export] = max(fjord.s.QVs(i_outflow,i)); % finds the strongest flow
 
@@ -32,6 +33,10 @@ function outputs = postprocess_boxmodel(fjord)
         end
 
     end
+
+    % computes total fjord salt (kg) and heat content (J)
+    outputs.hc = (fjord.s.T .* p.cw .* (p.betaS*s.S - p.betaT*T)) .* fjord.p.L.*fjord.p.W.*fjord.p.H;
+    outputs.sc = fjord.s.S .* fjord.p.L.*fjord.p.W.*fjord.p.H;
 
     % copies all into output structure
     outputs.Tf = temp_profiles;
