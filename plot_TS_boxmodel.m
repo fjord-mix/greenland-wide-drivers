@@ -1,6 +1,6 @@
 function fig_layer_handles = plot_TS_boxmodel(fjord,fjords_map,all_ctd_data)
 %% Plotting model outputs per layer, comparing with the shelf forcing
-letters = 'abcdefgh';
+letters = 'abcdefghijklmnopqrstuvwxyz';
 
 % bin shelf forcings according to the fjord boxes
 n_layers=size(fjord.s.H,1);
@@ -8,13 +8,18 @@ n_timesteps=length(fjord.s.t);
 Ts = zeros([n_layers,n_timesteps]);
 Ss = zeros([n_layers,n_timesteps]);
 
-% increasing resolution to avoid trapz integral issues
+% increasing resolution to avoid trapz integral issues if needed
 zs = fjord.f.zs;
 nz_orig=1:length(zs);
-nz_hr=linspace(1,length(zs),100*length(zs));
+if length(zs) < 100
+    nz_hr=linspace(1,length(zs),100*length(zs));
+else
+    nz_hr=linspace(1,length(zs),1*length(zs));
+end
 zs_hr=interp1(nz_orig,zs,nz_hr);
 Ts_hr=interp1(zs,fjord.f.Ts,zs_hr);
 Ss_hr=interp1(zs,fjord.f.Ss,zs_hr);
+
 for k=1:n_timesteps    
     [Ts(:,k),Ss(:,k)] = bin_ocean_profiles(Ts_hr(:,k),Ss_hr(:,k),zs_hr,fjord.s.H(:,k)',fjord.p);
 end
@@ -45,7 +50,7 @@ if isfield(fjord.m,'time_axis')
         taxis(i_time) = datetime(t0+model_runtime(i_time),'ConvertFrom','datenum');
     end
 else
-    taxis=fjord_model1.s.t;
+    taxis=fjord.s.t;
     isdays = ' (days)';
 end
 
@@ -138,7 +143,7 @@ time_lims = [min(taxis) max(taxis)];
 fig_layer_handles.hf = figure('Position',[20 20 800 600],'Name',fjord.m.name);
 i_plt=1;
 for i_layer=1:n_layers
-    subplot(4,2,i_plt); hold on; box on;
+    subplot(n_layers,2,i_plt); hold on; box on;
     fig_layer_handles.hfj = plot(taxis,fjord.s.T(i_layer,:),'linewidth',1.5,'color',[0.5 0.5 0.5]);
     fig_layer_handles.hsh = plot(taxis,Ts(i_layer,:),'LineStyle','--','linewidth',1.,'color',[0.5 0.5 0.5]);
     if ~isempty(t_obs)
@@ -155,10 +160,10 @@ for i_layer=1:n_layers
     if i_layer~=n_layers
         set(gca,'xticklabels',{}); 
     else
-        xlabel(['Model time',isdays])     
+        xlabel(['Model time',isdays])
     end
 
-    subplot(4,2,i_plt+1); hold on; box on;
+    subplot(n_layers,2,i_plt+1); hold on; box on;
     plot(taxis,fjord.s.S(i_layer,:),'linewidth',1.5,'color',[0.5 0.5 0.5])
     plot(taxis,Ss(i_layer,:),'LineStyle','--','linewidth',1.,'color',[0.5 0.5 0.5])
     if ~isempty(s_obs)
@@ -174,7 +179,7 @@ for i_layer=1:n_layers
     if i_layer~=n_layers
         set(gca,'xticklabels',{}); 
     else
-        xlabel('Time')        
+        xlabel(['Model time',isdays])
         fig_layer_handles.hl = legend([fig_layer_handles.hfj; fig_layer_handles.hsh],{'fjord','shelf'},'Location','southwest');
         fig_layer_handles.hl.NumColumns=2;
     end
