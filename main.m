@@ -39,7 +39,7 @@ fjord_keys={'KF','SF','KS','IS'};
 id=1;
 name_ctrl = sprintf('%s_ctrl',fjord_keys{id});
 fjord_ctrl = prepare_boxmodel_input(datasets,fjords_processed(fjord_ids(id)),fjord_ids(id)); % arranges into the boxmodel input structure
-[fjord_ctrl.s,fjord_ctrl.f] = boxmodel(fjord_ctrl.p,fjord_ctrl.f,fjord_ctrl.a,fjord_ctrl.t); % runs and gets the results    
+[fjord_ctrl.s,fjord_ctrl.f] = boxmodel(fjord_ctrl.p,fjord_ctrl.t,fjord_ctrl.f,fjord_ctrl.a); % runs and gets the results    
 fjord_ctrl.o = postprocess_boxmodel(fjord_ctrl);
 fjord_ctrl.m.name = name_ctrl;
 % save([outs_path,'/',fjord_ctrl.m.name],'fjord_ctrl','-v7.3') % v7.3 allows files > 2GB
@@ -54,6 +54,7 @@ plot_fw_out(fjord_ctrl); % still WiP
 exp_out_path='/test_benchmark_fjords/';
 mkdir(exp_out_path)
 run exps_benchmark_fjords.m
+% run exps_benchmark_fjords_par.m % not worth running in parallel for only 4 runs
 % save([exp_out_path,'example_benchmark_fjords_',num2str(p.N),'layers'],'fjord_model','-v7.3') % v7.3 allows files > 2GB
 
 % Showing what can go wrong
@@ -61,9 +62,9 @@ run exps_bad_examples.m
 
 %% Exploring parametre space
 
-exp_out_path=[outs_path,'/sens_rlx_time/'];
+exp_out_path=[outs_path,'sens_model_params/'];
 mkdir(exp_out_path)
-run exps_parametre_space.m
+run exps_parameter_space.m
 
 exp_out_path='/sens_icebergs/';
 mkdir(exp_out_path)
@@ -75,7 +76,8 @@ run exps_icebergs.m
 % Obtains some general statistics. Might be useful in case we go for
 % some type of emulator/surrogate model to carry sensitivity tests
 % verbose.print = 1;
-% verbose.plot  = 0;
+% verbose.plot  = 1;
 % fjord_stats = print_fjord_statistics(fjords_processed,verbose);
 % 
-% fjord_model_idealised = prepare_idealised_boxmodel_input(fjord_stats,verbose);
+% fjord_model_idealised =
+% prepare_idealised_boxmodel_input(fjord_stats,verbose); % still WiP
