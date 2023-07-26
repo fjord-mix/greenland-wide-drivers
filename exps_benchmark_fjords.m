@@ -23,6 +23,6 @@ end
 % fjord_model = load([exp_out_path,'example_benchmark_fjords_',num2str(p.N),'layers']).fjord_model;
 for id=1:length(fjord_model)
     fprintf('Plotting model outputs for %s... \n',fjord_model(id).m.name)   
-    % plot_outputs(fjord_model(id))
-    animate(fjord_model(id),[figs_path,'/animations/'],fjord_model(id).m.name,200)
+    plot_outputs(fjord_model(id))
+    % animate(fjord_model(id),[figs_path,'/animations/'],fjord_model(id).m.name,200)
 end
