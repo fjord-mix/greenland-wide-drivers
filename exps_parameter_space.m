@@ -100,7 +100,8 @@ for i_K0=1:length(K0_space)
     tic
     [fjord_run.s,fjord_run.f] = boxmodel(fjord_run.p,fjord_run.t,fjord_run.f,fjord_run.a); % runs and gets the results    
     if ~fjord_run.s.status, disp('Done.'); end
-    toc    
+    toc
+    fjord_run.o = postprocess_boxmodel(fjord_run);
     fjord_run.m.name = name_exp;   
     save([exp_out_path,name_exp,'.mat'],'fjord_run','-v7.3') % v7.3 allows files > 2GB
 end
