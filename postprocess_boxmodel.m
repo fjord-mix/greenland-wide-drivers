@@ -1,16 +1,18 @@
 function outputs = postprocess_boxmodel(fjord)
 
+    run_length = min(length(fjord.s.t),size(fjord.s.H,2));
+
     % output variables of interest
     z_profiles=fjord.f.zs;
     temp_profiles=NaN(size(fjord.f.Ts));
     salt_profiles=NaN(size(fjord.f.Ss));
-    t_export=zeros(size(fjord.t));
-    s_export=zeros(size(fjord.t));
-    v_export=zeros(size(fjord.t));
+    t_export=NaN(size(fjord.t));
+    s_export=NaN(size(fjord.t));
+    v_export=NaN(size(fjord.t));
     z_bnds_export=NaN([2,length(fjord.t)]);
 
     % iterates over all time steps
-    for i=1:length(fjord.s.t) 
+    for i=1:run_length
 
         % copies profile values for all depths corresponding to that box
         box_depths=-[0, cumsum(fjord.s.H(:,i)')];
