@@ -69,15 +69,3 @@ run exps_parameter_space.m
 exp_out_path='/sens_icebergs/';
 mkdir(exp_out_path)
 run exps_icebergs.m
-
-
-%% A more statistically driven approach to sensitivity tests
-
-% Obtains some general statistics. Might be useful in case we go for
-% some type of emulator/surrogate model to carry sensitivity tests
-% verbose.print = 1;
-% verbose.plot  = 1;
-% fjord_stats = print_fjord_statistics(fjords_processed,verbose);
-% 
-% fjord_model_idealised =
-% prepare_idealised_boxmodel_input(fjord_stats,verbose); % still WiP
