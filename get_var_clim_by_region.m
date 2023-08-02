@@ -2,7 +2,7 @@ function [var_clim, var_anom, depths] = get_var_clim_by_region(fjords_processed,
     % Get one average T,S profile per region
     depths = fjords_processed(1).f.zs;
     dims_var = size(fjords_processed(1).f.(var));
-    if size(dims_var,1) > 1
+    if dims_var(1) > 1
         dims = [length(fjords_processed(1).t), length(depths),7];
     else
         dims = [length(fjords_processed(1).t),7];
@@ -30,7 +30,7 @@ function [var_clim, var_anom, depths] = get_var_clim_by_region(fjords_processed,
                 i_reg=7;
         end
         var_detrend = detrend(fjords_processed(i_fjord).f.(var)');
-        if size(dims_var,1) > 1
+        if dims_var(1) > 1
             var_series(:,:,i_reg) = var_series(:,:,i_reg) + var_detrend;
         else
             var_series(:,i_reg) = var_series(:,i_reg) + var_detrend;
@@ -47,7 +47,7 @@ function [var_clim, var_anom, depths] = get_var_clim_by_region(fjords_processed,
         return
     end
     for i_reg=1:length(n_reg)
-        if size(dims_var,1) > 1
+        if dims_var(1) > 1
             var_series(:,:,i_reg) = var_series(:,:,i_reg)./n_reg(i_reg);
         else
             var_series(:,i_reg) = var_series(:,i_reg)./n_reg(i_reg);
@@ -55,7 +55,7 @@ function [var_clim, var_anom, depths] = get_var_clim_by_region(fjords_processed,
     end
     
     % Compute climatology in [month,depth,region] dimensions
-    if size(dims_var,1) > 1
+    if dims_var(1) > 1
         var_reshape = reshape(var_series,12,[],length(fjords_processed(1).f.zs),7);
     else
         var_reshape = reshape(var_series,12,[],7);
@@ -66,7 +66,7 @@ function [var_clim, var_anom, depths] = get_var_clim_by_region(fjords_processed,
     var_anom = NaN(size(var_reshape));
 
     for y=1:size(var_reshape,2)
-        if length(dims_var) > 1
+        if dims_var(1) > 1
             var_anom(:,y,:,:) = squeeze(var_reshape(:,y,:,:)) - var_clim;
         else
             var_anom(:,y,:) = squeeze(var_reshape(:,y,:)) - var_clim;
