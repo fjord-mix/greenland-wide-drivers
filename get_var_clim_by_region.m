@@ -29,7 +29,8 @@ function [var_clim, var_anom, depths] = get_var_clim_by_region(fjords_processed,
             case 'NO'
                 i_reg=7;
         end
-        var_detrend = detrend(fjords_processed(i_fjord).f.(var)');
+        var_mean = mean(fjords_processed(i_fjord).f.(var),2);
+        var_detrend = detrend(fjords_processed(i_fjord).f.(var)') + var_mean';
         if dims_var(1) > 1
             var_series(:,:,i_reg) = var_series(:,:,i_reg) + var_detrend;
         else
