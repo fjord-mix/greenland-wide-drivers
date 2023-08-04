@@ -1,4 +1,4 @@
-function [var_clim, var_anom, depths] = get_var_clim_by_region(fjords_processed,var)
+function [var_clim, var_anom, decay_func, depths] = get_var_clim_by_region(fjords_processed,var)
     % Get one average T,S profile per region
     depths = fjords_processed(1).f.zs;
     dims_var = size(fjords_processed(1).f.(var));
@@ -29,8 +29,11 @@ function [var_clim, var_anom, depths] = get_var_clim_by_region(fjords_processed,
             case 'NO'
                 i_reg=7;
         end
-        var_mean = mean(fjords_processed(i_fjord).f.(var),2);
-        var_detrend = detrend(fjords_processed(i_fjord).f.(var)') + var_mean';
+
+        % we need to add back the mean because it is removed by the detrend function
+        var_mean = mean(fjords_processed(i_fjord).f.(var),2);        
+        var_detrend = detrend(fjords_processed(i_fjord).f.(var)') + var_mean'; 
+
         if dims_var(1) > 1
             var_series(:,:,i_reg) = var_series(:,:,i_reg) + var_detrend;
         else
@@ -74,7 +77,29 @@ function [var_clim, var_anom, depths] = get_var_clim_by_region(fjords_processed,
         end
     end
     
-    % get the anomalies in [time,depth,region] dimensions
+    % get the anomalies in [time,region] dimensions, over the desired depth
+    % range
     var_anom = reshape(var_anom,dims);
+
+    if dims_var(1) > 1
+        % Our "decay function" is computed as the normalised standard
+        % deviation of the time series
+        var_std = std(var_detrend,1);
+        std_norm = (var_std - min(var_std)) / ( max(var_std) - min(var_std) );
+        valid_range = std_norm~=0; % used so we know over which depth range to compute the anomaly from
+
+        var_anom = squeeze(mean(var_anom(:,valid_range,:),2));
+        decay_func = repmat(std_norm,60,1,7);    
+    else        
+        decay_func=[];
+    end
+
+    % Sanity check to see if what we did actually makes sense
+    % var_check = repmat(var_clim(:,:,i_reg),5,1,1)+decay_func(:,:,i_reg).*var_anom(:,i_reg);
+    % figure; 
+    % subplot(1,3,1), imagesc(var_series(:,:,i_reg)); title('original'); colorbar
+    % subplot(1,3,2), imagesc(var_check); title('reconstructed'); colorbar
+    % subplot(1,3,3), imagesc(var_series(:,:,i_reg)-var_check); title('difference'); colorbar
+
     
 end

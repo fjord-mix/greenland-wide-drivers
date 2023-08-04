@@ -19,11 +19,23 @@ Qamp   = X(7);
 dDanom = X(8);
 
 %% Set up model forcings
+Xfrq=1/14; % 1 every 14 days
+Tamp=0.5;  % half a degree, for testing
+Samp=0.1; % 0.1 salinity for testing
+
+Tper = Tamp .* sin(2*pi*Xfrq*Parameters.t);
+Sper = Samp .* sin(2*pi*Xfrq*Parameters.t);
 
 % Ocean forcings
-f.Ts  = Parameters.Tocn' + dTanom;% .* Parameters.Tdecay;
-f.Ss  = Parameters.Socn' + dSanom;% .* Parameters.Sdecay;
+f.Ts  = Parameters.Tocn + Parameters.Tdec .* (dTanom + Tper);
+f.Ss  = Parameters.Socn' + (Parameters.Sdec .* (dSanom + Sper))';
 f.zs  = Parameters.zs;
+
+% TODO: get the high-freq variability to work here
+% sanity check(s)
+% figure; plot(f.Ts(:,1))
+% figure; plot(f.Ts(1,:))
+% figure; plot(Parameters.Tocn(1,:))
 
 zs = flip(-f.zs);
 Ts = flip(f.Ts,1); 
