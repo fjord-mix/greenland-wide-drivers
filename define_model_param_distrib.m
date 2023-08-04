@@ -1,16 +1,7 @@
-function [probs,params] = define_model_param_distrib()
+function [params,iOpts,probs] = define_model_param_distrib(datasets,fjords_compilation,i_reg)
 %% A more statistically driven approach to sensitivity tests
 % derives distributions for all parameters on which our model simulations
 % will depend on: W, L, Zg, Zs, Ta, Sa, Da, Qa
-run load_local_paths.m % sets data_path, import_path, collation_path, model_path, and project_path
-addpath(genpath(import_path))
-addpath(genpath(model_path))
-addpath(genpath(collation_path))
-
-% outs_path = [data_path,'/greenland/FjordMIX/boxmodel/pce/']; % where the model output files will be saved
-% figs_path = [project_path,'/figs/pce/'];                     % where the figures and animations will be saved
-
-[datasets,fjords_compilation,~,~] = compile_datasets(data_path);
 
 %% Get compiled fjord data in pre-processed structure
 % also selects the desired period in time
@@ -29,19 +20,28 @@ end
 % since the geometry does not change with time, we can stick to the
 % original fjords structure
 % verbose.plot=1;
-fjord_stats = print_fjord_statistics(fjords_compilation,verbose);
+fjord_stats = print_fjord_statistics(fjords_compilation);%,verbose);
 
-% W_space  = fjord_stats.W.pd.random(100,1);
-% L_space  = fjord_stats.L.pd.random(100,1);
-% Zg_space = fjord_stats.Zg.pd.random(100,1);
-% Zs_space = fjord_stats.Zs.pd.random(100,1);
 
-% figure for checking how the distribution looks
-% figure; 
-% subplot(2,2,1); histogram(L_space);
-% subplot(2,2,2); histogram(W_space);
-% subplot(2,2,3); histogram(Zg_space);
-% subplot(2,2,4); histogram(Zs_space);
+iOpts.Marginals(1).Type = 'ks';
+iOpts.Marginals(1).Inference.Data = fjord_stats.W.total;
+iOpts.Marginals(1).Parameters     = fjord_stats.W.total;
+probs(1) = fjord_stats.W.pd;
+
+iOpts.Marginals(end+1).Type = 'ks';
+iOpts.Marginals(end).Inference.Data = fjord_stats.L.total;
+iOpts.Marginals(end).Parameters     = fjord_stats.L.total;
+probs(end+1) = fjord_stats.L.pd;
+
+iOpts.Marginals(end+1).Type = 'ks';
+iOpts.Marginals(end).Inference.Data = fjord_stats.Zs.total;
+iOpts.Marginals(end).Parameters     = fjord_stats.Zs.total;
+probs(end+1) = fjord_stats.Zs.pd;
+
+iOpts.Marginals(end+1).Type = 'ks';
+iOpts.Marginals(end).Inference.Data = fjord_stats.Zg.total;
+iOpts.Marginals(end).Parameters     = fjord_stats.Zg.total;
+probs(end+1) = fjord_stats.Zg.pd;
 
 %% Gets the ocean forcing
 
@@ -58,76 +58,86 @@ inds_upper_sfc = depths > -500;
 tocn_anom_upper = squeeze(mean(tocn_anom(:,inds_upper_sfc,:),2));
 socn_anom_upper = squeeze(mean(socn_anom(:,inds_upper_sfc,:),2));
 
-% Compute PDF of anomalies
-% tanom_space = cell(1,7);
-% sanom_space = cell(1,7);
-tocn_pd     = cell(1,7);
-socn_pd     = cell(1,7);
-for i_reg=1:7
-    tocn_pd{i_reg} = fitdist(tocn_anom_upper(:,i_reg),'kernel');    
-    socn_pd{i_reg} = fitdist(socn_anom_upper(:,i_reg),'kernel');
-    % tanom_space{i_reg} = tocn_pd{i_reg}.random(10000,1); sanom_space{i_reg} = socn_pd{i_reg}.random(10000,1);
-end
 
-% Plot to check resulting PDFs
-% iplt=1;
-% figure('T and S parameter space');
-% for i_reg=1:7
-%     subplot(7,2,iplt);
-%     %ksdensity(tocn_anom_upper(:,i_reg));
-%     histogram(tanom_space{i_reg});
-%     subplot(7,2,iplt+1)
-%     %ksdensity(socn_anom_upper(:,i_reg));
-%     histogram(sanom_space{i_reg});
-%     iplt=iplt+2;
-% end
+tocn_pd = fitdist(tocn_anom_upper(:,i_reg),'kernel');    
+socn_pd = fitdist(socn_anom_upper(:,i_reg),'kernel');
+
+iOpts.Marginals(end+1).Type = 'ks';
+iOpts.Marginals(end).Inference.Data = tocn_anom(:,:,i_reg);
+iOpts.Marginals(end).Parameters     = tocn_anom(:,:,i_reg);
+probs(end+1) = tocn_pd;
+
+iOpts.Marginals(end+1).Type = 'ks';
+iOpts.Marginals(end).Inference.Data = socn_anom(:,:,i_reg);
+iOpts.Marginals(end).Parameters     = socn_anom(:,:,i_reg);
+probs(end+1) = socn_pd;
+
+%Plot to check parameter space
+% figure('Name','Tanom parameter space'); histogram(random(tocn_pd,1000));
+% figure('Name','Sanom parameter space'); histogram(random(socn_pd,1000));
 
 %% Gets the glacier forcing
 
 % Subglacial discharge (same procedure as for T and S)
+% TODO: We might need something amplitude-related here, not the anomalies
+% themselves, as small changes from non-summer months will dominate the signal
 [q_clim,q_anom,~] = get_var_clim_by_region(fjords_processed,'Qsg');
-% qanom_space = cell(1,7);
-q_pd        = cell(1,7);
-for i_reg=1:7
-    q_pd{i_reg} = fitdist(q_anom(:,i_reg),'kernel');
-    % qanom_space{i_reg} = q_pd{i_reg}.random(10000,1);
-end
+q_pd = fitdist(q_anom(:,i_reg),'kernel');
 q_forcing = repmat(q_clim,size(q_anom,1)/size(q_clim,1),1,1);
 
+iOpts.Marginals(end+1).Type = 'ks';
+iOpts.Marginals(end).Inference.Data = q_anom(:,i_reg);
+iOpts.Marginals(end).Parameters     = q_anom(:,i_reg);
+probs(end+1) = q_pd;
+
+% It makes no sense to have Qsg in terms of anomalies, because in the
+% frequency distribution, the very small variations in non-summer months would
+% dominate the signal. So we prescribe a uniform distribution of
+% "amplifying factors" instead
+iOpts.Marginals(end+1).Type = 'uniform';
+iOpts.Marginals(end).Parameters     = [0.5 5];
+probs(end+1) = q_pd; % TODO: add uniform distribution here
+
 %Plot to check parameter space
-% figure('Name','Qsg parameter space'); for i_reg=1:7,subplot(7,1,i_reg); histogram(tanom_space{i_reg}); end
+% figure('Name','Qsg parameter space'); histogram(random(q_pd,1000));
 
 % Solid-ice discharge (same procedure as for T and S)
 [d_clim,d_anom,~] = get_var_clim_by_region(fjords_processed,'D');
-% danom_space = cell(1,7);
-d_pd        = cell(1,7);
-for i_reg=1:7
-    d_pd{i_reg} = fitdist(d_anom(:,i_reg),'kernel');
-    % danom_space{i_reg} = d_pd{i_reg}.random(10000,1);
-end
+d_pd = fitdist(d_anom(:,i_reg),'kernel');
 d_forcing = repmat(d_clim,size(d_anom,1)/size(d_clim,1),1,1);
 
+iOpts.Marginals(end+1).Type = 'ks';
+iOpts.Marginals(end).Inference.Data = d_anom(:,i_reg);
+iOpts.Marginals(end).Parameters     = d_anom(:,i_reg);
+probs(end+1) = d_pd;
+
 %Plot to check parameter space
-% figure('Name','Ice discharge parameter space'); for i_reg=1:7,subplot(7,1,i_reg); histogram(danom_space{i_reg}); end
+% figure('Name','D parameter space'); histogram(random(d_pd,1000));
+
+%% interpolates time series variables to the actual time steps used by the model
+datasets.opts.dt            = 1; % time step in days
+fjord_dummy = prepare_boxmodel_input(datasets,fjords_compilation(1));
+time_axis = fjord_dummy.t;
+
+tocn_forcing = interp1(fjords_processed(1).t,tocn_forcing,time_axis,'linear','extrap');
+socn_forcing = interp1(fjords_processed(1).t,socn_forcing,time_axis,'linear','extrap');
+q_forcing    = interp1(fjords_processed(1).t,q_forcing,time_axis,'linear','extrap');
+d_forcing    = interp1(fjords_processed(1).t,d_forcing,time_axis,'linear','extrap');
 
 %% Compiles the parameters and variables into manageable structures
-params = cell(1,7);
-probs = cell(8,7);
-for i_reg=1:7
-    params{i_reg}.zs   = -depths;
-    params{i_reg}.Tocn = tocn_forcing(:,:,i_reg);
-    params{i_reg}.Socn = socn_forcing(:,:,i_reg);
-    params{i_reg}.Qglc = q_forcing(:,i_reg);
-    params{i_reg}.Dglc = d_forcing(:,i_reg);
 
-    probs{1,i_reg} = fjord_stats.L.pd;
-    probs{2,i_reg} = fjord_stats.W.pd;
-    probs{3,i_reg} = fjord_stats.Zs.pd;
-    probs{4,i_reg} = fjord_stats.Zg.pd;
-    probs{5,i_reg} = tocn_pd{i_reg};
-    probs{6,i_reg} = socn_pd{i_reg};
-    probs{7,i_reg} = q_pd{i_reg};
-    probs{8,i_reg} = d_pd{i_reg};
-end
+params.H    = max(fjord_stats.H.total);
+params.zs   = -depths;
+params.Tocn = tocn_forcing(:,:,i_reg);
+params.Socn = socn_forcing(:,:,i_reg);
+params.Qglc = q_forcing(:,i_reg);
+params.Dglc = d_forcing(:,i_reg);
+params.t    = time_axis;
+params.zi   = fjord_dummy.f.zi;
+params.xi   = fjord_dummy.f.xi;
+params.I0   = fjord_dummy.a.I0;
+
 
 end
+
+
