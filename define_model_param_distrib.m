@@ -5,6 +5,8 @@ function [params,iOpts,probs] = define_model_param_distrib(datasets,fjords_compi
 
 %% Get compiled fjord data in pre-processed structure
 % also selects the desired period in time
+verbose.plot=0;  % change to 1 to produce plots of all parameter distributions
+verbose.print=0; % change 1 to print basic fjord statistics
 
 datasets.opts.time_start = datetime(2010,01,15);
 datasets.opts.time_end   = datetime(2014,12,15);
@@ -19,8 +21,7 @@ end
 %% Gets distribution of fjord geometry parameters
 % since the geometry does not change with time, we can stick to the
 % original fjords structure
-% verbose.plot=1;
-fjord_stats = print_fjord_statistics(fjords_compilation);%,verbose);
+fjord_stats = print_fjord_statistics(fjords_compilation,verbose);
 
 probs(1) = fjord_stats.W.pd;
 iOpts.Marginals(1) = uq_KernelMarginals(fjord_stats.W.total',[0, max(fjord_stats.W.total)]);
@@ -37,12 +38,9 @@ iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zg.total', [min(fjord_st
 
 %% Gets the ocean forcing
 
-[tocn_clim, tocn_anom, tocn_decay, depths] = get_var_clim_by_region(fjords_processed,'Ts');
-[socn_clim, socn_anom, socn_decay, ~]      = get_var_clim_by_region(fjords_processed,'Ss');
+[tocn_forcing, tocn_anom, tocn_decay, depths] = get_var_clim_by_region(fjords_processed,'Ts');
+[socn_forcing, socn_anom, socn_decay, ~]      = get_var_clim_by_region(fjords_processed,'Ss');
 
-% repeat the climatology for the same time period
-tocn_forcing = repmat(tocn_clim,size(tocn_anom,1)/size(tocn_clim,1),1,1);
-socn_forcing = repmat(socn_clim,size(socn_anom,1)/size(socn_clim,1),1,1);
 
 % reduce anomaly to a standardised/normalised profile and a "dT factor"
 % Anomaly based on surface, multiplied by an "atenuation profile"?
@@ -54,10 +52,6 @@ iOpts.Marginals(end+1) = uq_KernelMarginals(tocn_anom(:,i_reg),[min(tocn_anom(:,
 
 probs(end+1) = socn_pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(socn_anom(:,i_reg),[min(socn_anom(:,i_reg)), max(socn_anom(:,i_reg))]);
-
-%Plot to check parameter space
-% figure('Name','Tanom parameter space'); histogram(random(tocn_pd,1000));
-% figure('Name','Sanom parameter space'); histogram(random(socn_pd,1000));
 
 %% Gets the glacier forcing
 
@@ -80,15 +74,16 @@ probs(end+1)                    = q_pd;
 % figure('Name','Qsg parameter space'); histogram(random(q_pd,1000));
 
 % Solid-ice discharge (same procedure as for T and S)
-[d_clim,d_anom,~,~] = get_var_clim_by_region(fjords_processed,'D');
-d_forcing         = repmat(d_clim,size(d_anom,1)/size(d_clim,1),1,1);
+[d_forcing,d_anom,~,~] = get_var_clim_by_region(fjords_processed,'D');
 d_pd              = fitdist(d_anom(:,i_reg),'kernel');
 
 probs(end+1) = d_pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom(:,i_reg),[min(d_anom(:,i_reg)), max(d_anom(:,i_reg))]);
 
-%Plot to check parameter space
-% figure('Name','D parameter space'); histogram(random(d_pd,1000));
+p_pd              = makedist('Uniform','lower',15,'upper',35);
+iOpts.Marginals(end+1).Type     = 'uniform';
+iOpts.Marginals(end).Parameters = [15 35];
+probs(end+1)                    = p_pd;
 
 %% interpolates time series variables to the actual time steps used by the model
 datasets.opts.dt            = 1; % time step in days
@@ -126,6 +121,10 @@ iOpts.Marginals(5).Name = 't_anom';
 iOpts.Marginals(6).Name = 's_anom';
 iOpts.Marginals(7).Name = 'q_sg';
 iOpts.Marginals(8).Name = 'q_ice';
+
+if isfield(verbose,'plot') && verbose.plot
+    run plot_distributions.m
+end
 
 end
 
