@@ -1,4 +1,4 @@
-function [var_clim, var_anom, decay_func, depths] = get_var_clim_by_region(fjords_processed,var)
+function [var_clim_forcing, var_anom, decay_func, depths] = get_var_clim_by_region(fjords_processed,var)
     % Get one average T,S profile per region
     depths = fjords_processed(1).f.zs;
     dims_var = size(fjords_processed(1).f.(var));
@@ -83,23 +83,74 @@ function [var_clim, var_anom, decay_func, depths] = get_var_clim_by_region(fjord
 
     if dims_var(1) > 1
         % Our "decay function" is computed as the normalised standard
-        % deviation of the time series
-        var_std = std(var_detrend,1);
-        std_norm = (var_std - min(var_std)) / ( max(var_std) - min(var_std) );
+        % deviation of the time series. Could not use multi-variate
+        % regression b/c our detrended data is not "positive definite"
+        var_std = squeeze(std(var_series,1));
+        std_norm = (var_std - min(var_std)) ./ (max(var_std) - min(var_std));
+        % valid_range = std_norm>=0.75; % used so we know over which depth range to compute the anomaly from
         valid_range = std_norm~=0; % used so we know over which depth range to compute the anomaly from
 
-        var_anom = squeeze(mean(var_anom(:,valid_range,:),2));
-        decay_func = repmat(std_norm,60,1,7);    
+        var_anom_mean = NaN([dims(1),dims(3)]);
+        for i_reg=1:dims(3)
+            var_anom_mean(:,i_reg) = squeeze(mean(var_anom(:,valid_range(:,i_reg),i_reg),2));
+        end
+        decay_func = NaN(dims);
+        for i=1:dims_var(2)
+            decay_func(i,:,:) = std_norm;
+        end
+        var_clim_forcing = repmat(var_clim,size(var_anom,1)/size(var_clim,1),1,1);
+        % var_clim_forcing = var_clim_forcing(:,:,:);
     else        
         decay_func=[];
+        var_clim_forcing = repmat(var_clim,size(var_anom,1)/size(var_clim,1),1,1);
+        % var_clim_forcing = var_clim_forcing(:,:);
     end
+    
 
-    % Sanity check to see if what we did actually makes sense
-    % var_check = repmat(var_clim(:,:,i_reg),5,1,1)+decay_func(:,:,i_reg).*var_anom(:,i_reg);
-    % figure; 
-    % subplot(1,3,1), imagesc(var_series(:,:,i_reg)); title('original'); colorbar
-    % subplot(1,3,2), imagesc(var_check); title('reconstructed'); colorbar
-    % subplot(1,3,3), imagesc(var_series(:,:,i_reg)-var_check); title('difference'); colorbar
+    %% Sanity check to see if what we did actually makes sense    
+    % time_axis = linspace(1,size(var_anom,1),size(var_anom,1));
+    % if dims_var(1) > 1
+    %     var_check = NaN(size(var_series));
+    %     for i_reg=1:size(var_clim_forcing,3)
+    %         var_check(:,:,i_reg) = var_clim_forcing(:,:,i_reg)+decay_func(:,:,i_reg).*var_anom_mean(:,i_reg);
+    %     end
+    %     residuals = (var_check-var_series);%./mean(var_series,1)+1e-10; % add a regularisation term for when Ts->0
+    %     err = squeeze(rmse(var_check,var_series));%./mean(var_series,1))+1e-10;%(max(var_series,1)-min(var_series,1)); % compute RMSE to have a metric for our error
+    %     err_mean = mean(err(std_norm~=0),1);
+    %     fprintf('Mean error for %s: %.4f (%.4f - %.4f)\n',var,mean(err_mean),min(err_mean),max(err_mean));
+    % 
+    %     Plotting the comparison
+    %     cmap = cmocean('balance');
+    %     for i_reg=1:7
+    %     figure; 
+    %     subplot(1,3,1), imagesc(depths,time_axis,var_series(:,:,i_reg)); title(['original ',var]); colorbar; clim([min(var_series(:)),max(var_series(:))]);
+    %     subplot(1,3,2), imagesc(depths,time_axis,var_check(:,:,i_reg)); title('reconstructed'); colorbar;    clim([min(var_series(:)),max(var_series(:))]);
+    %     subplot(1,3,3), imagesc(depths,time_axis,residuals(:,:,i_reg)); title('Residuals'); colorbar        
+    %     colormap(gca,cmap); clim(gca,[-max(max(abs(residuals(:)))),max(max(abs(residuals(:))))]); 
+    %     end
+    %     regs=linspace(1,7,7);%{'SW','SE','CW','CE','NW','NE'};
+    %     figure; imagesc(depths,regs,err'); colorbar; colormap(gca,'hot'); title('mean RMSE')
+    %     % figure; imagesc(depths,regs,std_norm'); colorbar; colormap(gca,cmap); clim(gca,[0,1]); title('Normalised STDev')
+    %     % showcasing how bad the "worst reconstructions" are
+    %     figure; hold on;         
+    %     plot(time_axis,var_series(:,end,3),'-b'); plot(time_axis,var_check(:,end,3),'--b'); 
+    %     plot(time_axis,var_series(:,end,5),'-r'); plot(time_axis,var_check(:,end,5),'--r'); 
+    %     plot(time_axis,var_series(:,end,6),'-m'); plot(time_axis,var_check(:,end,6),'--m'); 
+    %     legend('original CW','reconstructed CW','original NW','reconstructed NW','original NE','reconstructed NE')
+    % 
+    % else
+    %     var_check = var_clim_forcing+var_anom;
+    %     residuals = var_check-var_series;
+    %     err = rmse(var_check,var_series)./(max(var_series,1)-min(var_series,1)); % compute RMSE to have a metric for our error
+    %     for i_reg=1:7
+    %         figure; 
+    %         subplot(1,2,1); hold on; 
+    %         plot(var_series(:,i_reg)); plot(var_check(:,i_reg));
+    %         legend(['original ',var],'reconstructed');
+    %         subplot(1,2,2), plot(residuals(:,i_reg)); title('difference');
+    %     end
+    % end
+    
 
     
 end

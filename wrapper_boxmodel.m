@@ -28,7 +28,7 @@ Sper = Samp .* sin(2*pi*Xfrq*Parameters.t);
 
 % Ocean forcings
 f.Ts  = Parameters.Tocn + Parameters.Tdec .* (dTanom + Tper);
-f.Ss  = Parameters.Socn' + (Parameters.Sdec .* (dSanom + Sper))';
+f.Ss  = Parameters.Socn + (Parameters.Sdec .* (dSanom + Sper));
 f.zs  = Parameters.zs;
 
 % TODO: get the high-freq variability to work here
