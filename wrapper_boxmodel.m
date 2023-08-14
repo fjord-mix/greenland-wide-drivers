@@ -15,27 +15,34 @@ p.zgl       = X(4);
 
 dTanom = X(5);
 dSanom = X(6);
-Qamp   = X(7);
-dDanom = X(8);
+Xfrq   = X(7);
+dQamp  = X(8);
+dDanom = X(9);
 
 %% Set up model forcings
-Xfrq=1/14; % 1 every 14 days
-Tamp=0.5;  % half a degree, for testing
-Samp=0.1; % 0.1 salinity for testing
+Xamp=0.92;  % up to 92% increase (from Fraser & Inall, 2017): avg. of heat transport increase in the three inner-fjord sections
 
-Tper = Tamp .* sin(2*pi*Xfrq*Parameters.t);
-Sper = Samp .* sin(2*pi*Xfrq*Parameters.t);
+% we modulate the "storm events" to only happen in winter
+doy_peak = 173; % june 22nd
+winter_wave = -sin(2*pi/365 .* (Parameters.t - (doy_peak - 365/4))); % 1 at peak winter, -1 at peak summer
+winter_wave(winter_wave < 0) = 0;
+Xper = (Xamp .* sin(-Xfrq*Parameters.t)) .* winter_wave; 
+% figure; plot (Parameters.t,Xper); xlim([0 20])
+
+% Alternatively use a trapezoidal wave?
+% Tper = Tamp./pi.*(asin(sin((pi*Xfrq).*Parameters.t+Xdur))+acos(cos((pi/Xfrq).*Parameters.t+Xdur)))-Tamp./2+0.5;
 
 % Ocean forcings
-f.Ts  = Parameters.Tocn + Parameters.Tdec .* (dTanom + Tper);
-f.Ss  = Parameters.Socn + (Parameters.Sdec .* (dSanom + Sper));
+f.Ts  = Parameters.Tocn + (Parameters.Tdec .* (dTanom + dTanom .* Xper));
+f.Ss  = Parameters.Socn + (Parameters.Sdec .* (dSanom + dSanom .* Xper));
 f.zs  = Parameters.zs;
 
 % TODO: get the high-freq variability to work here
 % sanity check(s)
-% figure; plot(f.Ts(:,1))
-% figure; plot(f.Ts(1,:))
+% figure; plot(Parameters.t, f.Ts(:,end))
+% figure; plot(f.Ts(1,:),-f.zs)
 % figure; plot(Parameters.Tocn(1,:))
+% figure; imagesc(Parameters.t, -f.zs, flipud(f.Ts'))
 
 zs = flip(-f.zs);
 Ts = flip(f.Ts,1); 
@@ -46,7 +53,7 @@ a.H0 = double(get_fjord_boxes_from_density(mean(Ts,2),mean(Ss,2),zs,p));
 p.Snudge = get_interface_salinities(zs,mean(Ts,2),mean(Ss,2),p);
 
 % Glacier forcings
-f.Qsg = Parameters.Qglc .* Qamp;
+f.Qsg = Parameters.Qglc .* dQamp;
 f.D   = Parameters.Dglc + dDanom;
 f.zi = Parameters.zi;
 f.xi = Parameters.xi;

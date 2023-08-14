@@ -51,8 +51,12 @@ xlabel('PW','fontsize',14); text(0.05,0.95,'(c)','Units','normalized','fontsize'
 %% Ocean parameter distributions
 x_t = linspace(min(tocn_anom(:,i_reg)), max(tocn_anom(:,i_reg)),1000);
 x_s = linspace(min(socn_anom(:,i_reg)), max(socn_anom(:,i_reg)),1000);
+x_w = linspace(0, 0.5,1000);
+
 figure('Name','Ocean-anomalies parameter space'); hold on
-subplot(1,2,1); plot(x_t,pdf(tocn_pd,x_t),'linewidth',1.5); box on
+subplot(1,3,1); plot(x_t,pdf(tocn_pd,x_t),'linewidth',1.5); box on
 xlabel('T_a','fontsize',14); ylabel('Kernel density','fontsize',14); text(0.05,0.95,'(a)','Units','normalized','fontsize',14)
-subplot(1,2,2); plot(x_s,pdf(socn_pd,x_s),'linewidth',1.5); box on
+subplot(1,3,2); plot(x_s,pdf(socn_pd,x_s),'linewidth',1.5); box on
 xlabel('S_a','fontsize',14); text(0.05,0.95,'(b)','Units','normalized','fontsize',14)
+subplot(1,3,3); plot(x_w,pdf(omeg_pd,x_w),'linewidth',1.5); box on
+xlabel('\omega','fontsize',14); text(0.05,0.95,'(c)','Units','normalized','fontsize',14)

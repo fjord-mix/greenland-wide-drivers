@@ -46,12 +46,17 @@ iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zg.total', [min(fjord_st
 % Anomaly based on surface, multiplied by an "atenuation profile"?
 tocn_pd = fitdist(tocn_anom(:,i_reg),'kernel');    
 socn_pd = fitdist(socn_anom(:,i_reg),'kernel');
+omeg_pd = makedist('Normal','mu',0.1429,'sigma',0.1167);
 
 probs(end+1) = tocn_pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(tocn_anom(:,i_reg),[min(tocn_anom(:,i_reg)), max(tocn_anom(:,i_reg))]);
 
 probs(end+1) = socn_pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(socn_anom(:,i_reg),[min(socn_anom(:,i_reg)), max(socn_anom(:,i_reg))]);
+
+probs(end+1) = omeg_pd;
+iOpts.Marginals(end+1).Type     = 'Normal';
+iOpts.Marginals(end).Parameters = [0.1429 0.1167];
 
 %% Gets the glacier forcing
 
@@ -119,8 +124,9 @@ iOpts.Marginals(3).Name = 'z_sill';
 iOpts.Marginals(4).Name = 'z_gl';
 iOpts.Marginals(5).Name = 't_anom';
 iOpts.Marginals(6).Name = 's_anom';
-iOpts.Marginals(7).Name = 'q_sg';
-iOpts.Marginals(8).Name = 'q_ice';
+iOpts.Marginals(7).Name = 'omega';
+iOpts.Marginals(8).Name = 'q_sg';
+iOpts.Marginals(9).Name = 'q_ice';
 
 if isfield(verbose,'plot') && verbose.plot
     run plot_distributions.m
