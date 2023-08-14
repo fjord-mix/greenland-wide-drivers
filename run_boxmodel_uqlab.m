@@ -31,8 +31,8 @@ end
 end
 
 % check of anomaly PDFs
-for i=1:7 
-    [Parameters,IOpts,probs] = define_model_param_distrib(datasets,fjords_compilation,i);
+for i_reg=1:7
+    [Parameters,IOpts,probs] = define_model_param_distrib(datasets,fjords_compilation,i_reg);
     figure; hold on; 
     histogram(random(probs(8),1000)); 
 end
