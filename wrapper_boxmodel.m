@@ -6,7 +6,12 @@ function [heat_content,salt_content,status] = wrapper_boxmodel(X,Parameters)
 
 [p,a] = get_model_default_parameters(); % default params, standard initialisation
 p.H = Parameters.H;
-
+% p.sill=0;
+% p.N=2;
+p.trelax=365;
+p.Hmin=10;
+p.C0=1e3;
+p.P0=20;
 %% Getting the parameters to be explored into variables that we can more easily recall
 p.L         = X(1);
 p.W         = X(2);
@@ -33,9 +38,11 @@ Xper = (Xamp .* sin(-Xfrq*Parameters.t)) .* winter_wave;
 % Tper = Tamp./pi.*(asin(sin((pi*Xfrq).*Parameters.t+Xdur))+acos(cos((pi/Xfrq).*Parameters.t+Xdur)))-Tamp./2+0.5;
 
 % Ocean forcings
-f.Ts  = Parameters.Tocn + (Parameters.Tdec .* (dTanom + dTanom .* Xper));
-f.Ss  = Parameters.Socn + (Parameters.Sdec .* (dSanom + dSanom .* Xper));
-f.zs  = Parameters.zs;
+f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* (dTanom + dTanom .* Xper)))';
+f.Ss  = (Parameters.Socn + (Parameters.Sdec .* (dSanom + dSanom .* Xper)))';
+% f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* dTanom))';
+% f.Ss  = (Parameters.Socn + (Parameters.Sdec .* dSanom))';
+f.zs  = -Parameters.zs;
 
 % TODO: get the high-freq variability to work here
 % sanity check(s)
@@ -44,11 +51,16 @@ f.zs  = Parameters.zs;
 % figure; plot(Parameters.Tocn(1,:))
 % figure; imagesc(Parameters.t, -f.zs, flipud(f.Ts'))
 
-zs = flip(-f.zs);
+zs = flip(f.zs);
 Ts = flip(f.Ts,1); 
 Ss = flip(f.Ss,1);
 
 a.H0 = double(get_fjord_boxes_from_density(mean(Ts,2),mean(Ss,2),zs,p));
+
+% Alternative: evenly distribute layer thicknesses above the sill
+% a.H0 = ones([1,p.N]).*(abs(p.silldepth.*p.sill)/p.N);
+% if p.sill, a.H0 = [a.H0,p.H-abs(p.silldepth)]; end
+
 [a.T0, a.S0] = bin_ocean_profiles(Ts(:,1),Ss(:,1),zs,a.H0,p); 
 p.Snudge = get_interface_salinities(zs,mean(Ts,2),mean(Ss,2),p);
 
@@ -59,6 +71,22 @@ f.zi = Parameters.zi;
 f.xi = Parameters.xi;
 a.I0 = Parameters.I0;
 
+p.plot_runtime=0;
+% figure('Position',[100 100 1000 500]);
+% subplot(1,4,1), plot(f.Ts(:,1),-f.zs); xlabel('T_0'); ylabel('Depth');
+% yline(-cumsum(a.H0),':k','linewidth',0.5); ylim([-sum(a.H0) 0])
+% subplot(1,4,2), plot(f.Ss(:,1),-f.zs); xlabel('S_0');
+% yline(-cumsum(a.H0),':k','linewidth',0.5); ylim([-sum(a.H0) 0])
+% 
+% subplot(2,4,3), plot(Parameters.t,f.Ts(1,:)); xlabel('time'); ylabel('f.Ts at surface');
+% subplot(2,4,4), plot(Parameters.t,f.Ss(1,:)); xlabel('time'); ylabel('f.Ss at surface');
+% subplot(2,4,7), plot(Parameters.t,f.Qsg); xlabel('time'); ylabel('Qsg');
+% subplot(2,4,8), plot(Parameters.t,f.D); xlabel('time'); ylabel('D');
+% 
+% 
+% heat_content=0;
+% salt_content=0;
+% status=0;
 %% Preparing fjord encapsulating structure
 fjord_run.t = Parameters.t;
 fjord_run.p = p;
