@@ -23,11 +23,11 @@ end
 % original fjords structure
 fjord_stats = print_fjord_statistics(fjords_compilation,verbose);
 
-probs(1) = fjord_stats.W.pd;
-iOpts.Marginals(1) = uq_KernelMarginals(fjord_stats.W.total',[0, max(fjord_stats.W.total)]);
+probs(1) = fjord_stats.L.pd;
+iOpts.Marginals(1) = uq_KernelMarginals(fjord_stats.L.total', [0 max(fjord_stats.L.total)]);
 
-probs(end+1) = fjord_stats.L.pd;
-iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.L.total', [0 max(fjord_stats.L.total)]);
+probs(end+1) = fjord_stats.W.pd;
+iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.W.total',[0, max(fjord_stats.W.total)]);
 
 probs(end+1) = fjord_stats.Zs.pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zs.total', [min(fjord_stats.Zs.total) -50]);
