@@ -1,4 +1,4 @@
-function [params,iOpts,probs] = define_model_param_distrib(datasets,fjords_compilation,i_reg)
+function [params,iOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,i_reg)
 %% A more statistically driven approach to sensitivity tests
 % derives distributions for all parameters on which our model simulations
 % will depend on: W, L, Zg, Zs, Ta, Sa, Da, Qa
@@ -26,15 +26,21 @@ fjord_stats = print_fjord_statistics(fjords_compilation,verbose);
 probs(1) = fjord_stats.W.pd;
 iOpts.Marginals(1) = uq_KernelMarginals(fjord_stats.W.total',[0, max(fjord_stats.W.total)]);
 
-
 probs(end+1) = fjord_stats.L.pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.L.total', [0 max(fjord_stats.L.total)]);
 
 probs(end+1) = fjord_stats.Zs.pd;
-iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zs.total', [min(fjord_stats.Zs.total) 0]);
+iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zs.total', [min(fjord_stats.Zs.total) -50]);
 
 probs(end+1) = fjord_stats.Zg.pd;
-iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zg.total', [min(fjord_stats.Zg.total) 0]);
+iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zg.total', [min(fjord_stats.Zg.total) -50]);
+
+% Xgeom = [fjord_stats.H.total;-fjord_stats.Zg.total;-fjord_stats.Zs.total];
+% opts.Inference.Data = Xgeom';
+% opts.Copula.Inference.Data = Xgeom;
+% opts.Copula.Type='auto';
+% InputHat = uq_createInput(opts);
+
 
 %% Gets the ocean forcing
 
@@ -91,7 +97,7 @@ iOpts.Marginals(end).Parameters = [15 35];
 probs(end+1)                    = p_pd;
 
 %% interpolates time series variables to the actual time steps used by the model
-datasets.opts.dt            = 1; % time step in days
+datasets.opts.dt            = 0.2; % time step in days
 fjord_dummy = prepare_boxmodel_input(datasets,fjords_compilation(1));
 time_axis = fjord_dummy.t;
 
