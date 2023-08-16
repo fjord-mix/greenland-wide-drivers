@@ -14,19 +14,23 @@ addpath(genpath(uqlab_path))
 
 
 %% evaluate the wrapper by itself first
-[Parameters,IOpts,probs] = define_model_param_distrib(datasets,fjords_compilation,1);
+[Parameters,IOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,1);
 
 rng('default')
 status=1;
-while status==1
+% while status==1
+n_runs = 10;
+ohc_ensemble=NaN([n_runs,length(Parameters.t(1:end-1))]);
+for k=1:n_runs
 try
     X = zeros(size(probs));
     for i=1:length(probs)
         X(i) = random(probs(i));
     end    
-    [ohc,osc,status] = wrapper_boxmodel(X,Parameters);
+    [ohc_ensemble(k,:),osc,status] = wrapper_boxmodel(X,Parameters);
 catch ME
-    disp('Unsuccessful run')
+    fprintf('Something went wrong on %s line %d\n',ME.stack(1).name,ME.stack(1).line)
+    fprintf('The error message was:\n%s\n',ME.message)
 end
 end
 
