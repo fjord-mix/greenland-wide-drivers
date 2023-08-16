@@ -46,7 +46,7 @@ f.zs  = -Parameters.zs;
 
 % TODO: get the high-freq variability to work here
 % sanity check(s)
-% figure; plot(Parameters.t, f.Ts(:,end))
+% figure; plot(Parameters.t, f.Ts(end,:))
 % figure; plot(f.Ts(1,:),-f.zs)
 % figure; plot(Parameters.Tocn(1,:))
 % figure; imagesc(Parameters.t, -f.zs, flipud(f.Ts'))
@@ -72,16 +72,20 @@ f.xi = Parameters.xi;
 a.I0 = Parameters.I0;
 
 p.plot_runtime=0;
-% figure('Position',[100 100 1000 500]);
-% subplot(1,4,1), plot(f.Ts(:,1),-f.zs); xlabel('T_0'); ylabel('Depth');
-% yline(-cumsum(a.H0),':k','linewidth',0.5); ylim([-sum(a.H0) 0])
-% subplot(1,4,2), plot(f.Ss(:,1),-f.zs); xlabel('S_0');
-% yline(-cumsum(a.H0),':k','linewidth',0.5); ylim([-sum(a.H0) 0])
-% 
-% subplot(2,4,3), plot(Parameters.t,f.Ts(1,:)); xlabel('time'); ylabel('f.Ts at surface');
-% subplot(2,4,4), plot(Parameters.t,f.Ss(1,:)); xlabel('time'); ylabel('f.Ss at surface');
-% subplot(2,4,7), plot(Parameters.t,f.Qsg); xlabel('time'); ylabel('Qsg');
-% subplot(2,4,8), plot(Parameters.t,f.D); xlabel('time'); ylabel('D');
+figure('Position',[100 100 1000 500]);
+subplot(1,4,1), plot(f.Ts(:,1),f.zs); xlabel('T_0'); ylabel('Depth');
+yline(-cumsum(a.H0),':k','linewidth',0.5); ylim([-sum(a.H0) 0])
+text(0.02,(p.H+p.zgl)/p.H,'grounding line','units','normalized')
+text(0.98,(p.H+p.silldepth)/p.H,'sill','units','normalized','HorizontalAlignment','right')
+
+subplot(1,4,2), plot(f.Ss(:,1),f.zs); xlabel('S_0');
+yline(-cumsum(a.H0),':k','linewidth',0.5); ylim([-sum(a.H0) 0])
+text(0.02,0.08,sprintf('Fjord length: %.2f km',p.L*1e-3),'units','normalized');
+text(0.02,0.05,sprintf('Fjord width: %.2f km',p.W*1e-3),'units','normalized');
+subplot(2,4,3), plot(Parameters.t,f.Ts(end,:)); xlabel('time'); ylabel('f.Ts at surface');
+subplot(2,4,4), plot(Parameters.t,f.Ss(end,:)); xlabel('time'); ylabel('f.Ss at surface');
+subplot(2,4,7), plot(Parameters.t,f.Qsg); xlabel('time'); ylabel('Qsg');
+subplot(2,4,8), plot(Parameters.t,f.D); xlabel('time'); ylabel('D');
 % 
 % 
 % heat_content=0;
