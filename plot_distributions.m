@@ -60,3 +60,37 @@ subplot(1,3,2); plot(x_s,pdf(socn_pd,x_s),'linewidth',1.5); box on
 xlabel('S_a','fontsize',14); text(0.05,0.95,'(b)','Units','normalized','fontsize',14)
 subplot(1,3,3); plot(x_w,pdf(omeg_pd,x_w),'linewidth',1.5); box on
 xlabel('\omega','fontsize',14); text(0.05,0.95,'(c)','Units','normalized','fontsize',14)
+
+%% Checking for interdependencies
+
+zgl   = NaN(size(fjords_processed));
+zsill = NaN(size(fjords_processed));
+zfjord= NaN(size(fjords_processed));
+lfjord= NaN(size(fjords_processed));
+wfjord= NaN(size(fjords_processed));
+for i=1:length(fjords_processed)
+    zgl(i)   = fjords_processed(i).p.zgl;
+    zsill(i) = fjords_processed(i).p.silldepth;
+    zfjord(i)= fjords_processed(i).p.H;
+    lfjord(i)= fjords_processed(i).p.L;
+    wfjord(i)= fjords_processed(i).p.W;
+end
+[rho_zgl,p_zgl]     = corrcoef(zfjord,-zgl);
+[rho_zsill,p_zsill] = corrcoef(zfjord,-zsill);
+[rho_lw,p_lw] = corrcoef(lfjord,wfjord);
+
+figure('Name','Relationship between fjord geometry parameters'); 
+subplot(1,3,1); hold on; box on; grid on
+scatter(zfjord,-zgl,'.k');
+xlabel('Fjord depth (m)'); ylabel('Grounding line depth (m)')
+text(0.95,0.95,sprintf('R=%.2f\np=%.2f',rho_zgl(1,2),p_zgl(1,2)),'HorizontalAlignment','right','Units','normalized')
+subplot(1,3,2); hold on; box on; grid on
+scatter(zfjord,-zsill,'.k')
+xlabel('Fjord depth (m)'); ylabel('Sill depth (m)')
+text(0.95,0.95,sprintf('R=%.2f\np=%.2f',rho_zsill(1,2),p_zsill(1,2)),'HorizontalAlignment','right','Units','normalized')
+subplot(1,3,3); hold on; box on; grid on
+scatter(1e-3.*lfjord,1e-3.*wfjord,'.k')
+xlabel('Fjord length (km)'); ylabel('Fjord width (km)')
+text(0.95,0.95,sprintf('R=%.2f\np=%.2f',rho_lw(1,2),p_lw(1,2)),'HorizontalAlignment','right','Units','normalized')
+
+%clear zgl zsill zfjord lfjord wfjord rho_zgl p_zgl rho_zsill p_zsill rho_lw p_lw
