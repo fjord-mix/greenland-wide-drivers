@@ -25,15 +25,19 @@ fjord_stats = print_fjord_statistics(fjords_compilation,verbose);
 
 probs(1) = fjord_stats.L.pd;
 iOpts.Marginals(1) = uq_KernelMarginals(fjord_stats.L.total', [0 max(fjord_stats.L.total)]);
+iOpts.Marginals(1).Name = 'length';
 
 probs(end+1) = fjord_stats.W.pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.W.total',[0, max(fjord_stats.W.total)]);
+iOpts.Marginals(end).Name = 'width';
 
 probs(end+1) = fjord_stats.Zs.pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zs.total', [min(fjord_stats.Zs.total) -50]);
+iOpts.Marginals(end).Name = 'z_sill';
 
 probs(end+1) = fjord_stats.Zg.pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zg.total', [min(fjord_stats.Zg.total) -50]);
+iOpts.Marginals(end).Name = 'z_gl';
 
 % Xgeom = [fjord_stats.H.total;-fjord_stats.Zg.total;-fjord_stats.Zs.total];
 % opts.Inference.Data = Xgeom';
@@ -56,13 +60,16 @@ omeg_pd = makedist('Normal','mu',0.1429,'sigma',0.1167);
 
 probs(end+1) = tocn_pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(tocn_anom(:,i_reg),[min(tocn_anom(:,i_reg)), max(tocn_anom(:,i_reg))]);
+iOpts.Marginals(end).Name = 't_anom';
 
 probs(end+1) = socn_pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(socn_anom(:,i_reg),[min(socn_anom(:,i_reg)), max(socn_anom(:,i_reg))]);
+iOpts.Marginals(end).Name = 's_anom';
 
 probs(end+1) = omeg_pd;
 iOpts.Marginals(end+1).Type     = 'Normal';
 iOpts.Marginals(end).Parameters = [0.1429 0.1167];
+iOpts.Marginals(end).Name = 'omega';
 
 %% Gets the glacier forcing
 
@@ -79,6 +86,7 @@ q_pd              = makedist('Uniform','lower',0.5,'upper',1.5);
 % "amplifying factors" instead
 iOpts.Marginals(end+1).Type     = 'uniform';
 iOpts.Marginals(end).Parameters = [0.5 1.5];
+iOpts.Marginals(end).Name       = 'q_amp';
 probs(end+1)                    = q_pd;
 
 %Plot to check parameter space
@@ -90,10 +98,12 @@ d_pd              = fitdist(d_anom(:,i_reg),'kernel');
 
 probs(end+1) = d_pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom(:,i_reg),[min(d_anom(:,i_reg)), max(d_anom(:,i_reg))]);
+iOpts.Marginals(end).Name = 'd_anom';
 
 p_pd              = makedist('Uniform','lower',15,'upper',35);
 iOpts.Marginals(end+1).Type     = 'uniform';
 iOpts.Marginals(end).Parameters = [15 35];
+iOpts.Marginals(end).Name       = 'P0';
 probs(end+1)                    = p_pd;
 
 %% interpolates time series variables to the actual time steps used by the model
