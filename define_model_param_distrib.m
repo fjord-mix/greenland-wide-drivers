@@ -61,8 +61,9 @@ probs(end+1) = socn_pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(socn_anom(:,i_reg),[min(socn_anom(:,i_reg)), max(socn_anom(:,i_reg))]);
 
 probs(end+1) = omeg_pd;
-iOpts.Marginals(end+1).Type     = 'Normal';
+iOpts.Marginals(end+1).Type     = 'Gaussian';
 iOpts.Marginals(end).Parameters = [0.1429 0.1167];
+iOpts.Marginals(end).Bounds     = [0 1];
 
 %% Gets the glacier forcing
 
@@ -79,6 +80,7 @@ q_pd              = makedist('Uniform','lower',0.5,'upper',1.5);
 % "amplifying factors" instead
 iOpts.Marginals(end+1).Type     = 'uniform';
 iOpts.Marginals(end).Parameters = [0.5 1.5];
+iOpts.Marginals(end).Bounds     = [0 3];
 probs(end+1)                    = q_pd;
 
 %Plot to check parameter space
@@ -91,13 +93,14 @@ d_pd              = fitdist(d_anom(:,i_reg),'kernel');
 probs(end+1) = d_pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom(:,i_reg),[min(d_anom(:,i_reg)), max(d_anom(:,i_reg))]);
 
-p_pd              = makedist('Uniform','lower',15,'upper',35);
+p_pd              = makedist('Uniform','lower',5,'upper',20);
 iOpts.Marginals(end+1).Type     = 'uniform';
-iOpts.Marginals(end).Parameters = [15 35];
+iOpts.Marginals(end).Parameters = [5 20];
+iOpts.Marginals(end).Bounds     = [5 20];
 probs(end+1)                    = p_pd;
 
 %% interpolates time series variables to the actual time steps used by the model
-datasets.opts.dt            = 0.2; % time step in days
+datasets.opts.dt            = 0.05; % time step in days
 fjord_dummy = prepare_boxmodel_input(datasets,fjords_compilation(1));
 time_axis = fjord_dummy.t;
 
