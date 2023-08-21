@@ -1,4 +1,5 @@
-function [heat_content,salt_content,status] = wrapper_boxmodel(X,Parameters)
+function ohc_mean = wrapper_boxmodel(X,Parameters)
+% function [output_time,heat_content,salt_content,status,fjord_run] = wrapper_boxmodel(X,Parameters)
 % Wrapper function for running the boxmodel in UQLab
 % X contains all parameters we want to explore (M=8)
 % Parameters contain all parameters "in common" that we use for all model
@@ -6,12 +7,13 @@ function [heat_content,salt_content,status] = wrapper_boxmodel(X,Parameters)
 
 [p,a] = get_model_default_parameters(); % default params, standard initialisation
 p.H = Parameters.H;
-% p.sill=0;
-% p.N=2;
-p.trelax=365;
-p.Hmin=10;
+p.trelax=365/2;
+p.Hmin=5;
 p.C0=1e3;
+p.M0=0;
 p.P0=20;
+% p.K0 = 0;
+p.dt = Parameters.t(2)-Parameters.t(1);
 %% Getting the parameters to be explored into variables that we can more easily recall
 p.L         = X(1);
 p.W         = X(2);
@@ -32,10 +34,6 @@ doy_peak = 173; % june 22nd
 winter_wave = -sin(2*pi/365 .* (Parameters.t - (doy_peak - 365/4))); % 1 at peak winter, -1 at peak summer
 winter_wave(winter_wave < 0) = 0;
 Xper = (Xamp .* sin(-Xfrq*Parameters.t)) .* winter_wave; 
-% figure; plot (Parameters.t,Xper); xlim([0 20])
-
-% Alternatively use a trapezoidal wave?
-% Tper = Tamp./pi.*(asin(sin((pi*Xfrq).*Parameters.t+Xdur))+acos(cos((pi/Xfrq).*Parameters.t+Xdur)))-Tamp./2+0.5;
 
 % Ocean forcings
 f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* (dTanom + dTanom .* Xper)))';
@@ -43,13 +41,6 @@ f.Ss  = (Parameters.Socn + (Parameters.Sdec .* (dSanom + dSanom .* Xper)))';
 % f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* dTanom))';
 % f.Ss  = (Parameters.Socn + (Parameters.Sdec .* dSanom))';
 f.zs  = -Parameters.zs;
-
-% TODO: get the high-freq variability to work here
-% sanity check(s)
-% figure; plot(Parameters.t, f.Ts(end,:))
-% figure; plot(f.Ts(1,:),-f.zs)
-% figure; plot(Parameters.Tocn(1,:))
-% figure; imagesc(Parameters.t, -f.zs, flipud(f.Ts'))
 
 zs = flip(f.zs);
 Ts = flip(f.Ts,1); 
@@ -71,26 +62,10 @@ f.zi = Parameters.zi;
 f.xi = Parameters.xi;
 a.I0 = Parameters.I0;
 
+%% For plotting purposes
 p.plot_runtime=0;
-figure('Position',[100 100 1000 500]);
-subplot(1,4,1), plot(f.Ts(:,1),f.zs); xlabel('T_0'); ylabel('Depth');
-yline(-cumsum(a.H0),':k','linewidth',0.5); ylim([-sum(a.H0) 0])
-text(0.02,(p.H+p.zgl)/p.H,'grounding line','units','normalized')
-text(0.98,(p.H+p.silldepth)/p.H,'sill','units','normalized','HorizontalAlignment','right')
+% run figure_forcings_summary.m
 
-subplot(1,4,2), plot(f.Ss(:,1),f.zs); xlabel('S_0');
-yline(-cumsum(a.H0),':k','linewidth',0.5); ylim([-sum(a.H0) 0])
-text(0.02,0.08,sprintf('Fjord length: %.2f km',p.L*1e-3),'units','normalized');
-text(0.02,0.05,sprintf('Fjord width: %.2f km',p.W*1e-3),'units','normalized');
-subplot(2,4,3), plot(Parameters.t,f.Ts(end,:)); xlabel('time'); ylabel('f.Ts at surface');
-subplot(2,4,4), plot(Parameters.t,f.Ss(end,:)); xlabel('time'); ylabel('f.Ss at surface');
-subplot(2,4,7), plot(Parameters.t,f.Qsg); xlabel('time'); ylabel('Qsg');
-subplot(2,4,8), plot(Parameters.t,f.D); xlabel('time'); ylabel('D');
-% 
-% 
-% heat_content=0;
-% salt_content=0;
-% status=0;
 %% Preparing fjord encapsulating structure
 fjord_run.t = Parameters.t;
 fjord_run.p = p;
@@ -106,9 +81,12 @@ fjord_run.o               = postprocess_boxmodel(fjord_run);
 % gets output quantities in "per unit volume"
 heat_content = sum(fjord_run.o.hc)./(fjord_run.p.L.*fjord_run.p.W.*sum(fjord_run.p.H));
 salt_content = sum(fjord_run.o.sc)./(fjord_run.p.L.*fjord_run.p.W.*sum(fjord_run.p.H));
-
+output_time  = fjord_run.s.t;
+ohc_mean = mean(heat_content);
 % average over the last N years of the run - to be implemented when runs
 % are more stable
-
-
+% if status
+%     plot_fluxes(fjord_run)
+%     plot_outputs(fjord_run)
+% end
 end
