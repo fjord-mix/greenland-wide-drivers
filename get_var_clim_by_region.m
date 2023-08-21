@@ -119,14 +119,14 @@ function [var_clim_forcing, var_anom, decay_func, depths] = get_var_clim_by_regi
     %     err_mean = mean(err(std_norm~=0),1);
     %     fprintf('Mean error for %s: %.4f (%.4f - %.4f)\n',var,mean(err_mean),min(err_mean),max(err_mean));
     % 
-    %     Plotting the comparison
+    %     %Plotting the comparison
     %     cmap = cmocean('balance');
     %     for i_reg=1:7
-    %     figure; 
-    %     subplot(1,3,1), imagesc(depths,time_axis,var_series(:,:,i_reg)); title(['original ',var]); colorbar; clim([min(var_series(:)),max(var_series(:))]);
-    %     subplot(1,3,2), imagesc(depths,time_axis,var_check(:,:,i_reg)); title('reconstructed'); colorbar;    clim([min(var_series(:)),max(var_series(:))]);
-    %     subplot(1,3,3), imagesc(depths,time_axis,residuals(:,:,i_reg)); title('Residuals'); colorbar        
-    %     colormap(gca,cmap); clim(gca,[-max(max(abs(residuals(:)))),max(max(abs(residuals(:))))]); 
+    %         figure; 
+    %         subplot(1,3,1), imagesc(depths,time_axis,var_series(:,:,i_reg)); title(['original ',var]); colorbar; clim([min(var_series(:)),max(var_series(:))]);
+    %         subplot(1,3,2), imagesc(depths,time_axis,var_check(:,:,i_reg)); title('reconstructed'); colorbar;    clim([min(var_series(:)),max(var_series(:))]);
+    %         subplot(1,3,3), imagesc(depths,time_axis,residuals(:,:,i_reg)); title('Residuals'); colorbar        
+    %         colormap(gca,cmap); clim(gca,[-max(max(abs(residuals(:)))),max(max(abs(residuals(:))))]); 
     %     end
     %     regs=linspace(1,7,7);%{'SW','SE','CW','CE','NW','NE'};
     %     figure; imagesc(depths,regs,err'); colorbar; colormap(gca,'hot'); title('mean RMSE')
@@ -141,7 +141,7 @@ function [var_clim_forcing, var_anom, decay_func, depths] = get_var_clim_by_regi
     % else
     %     var_check = var_clim_forcing+var_anom;
     %     residuals = var_check-var_series;
-    %     err = rmse(var_check,var_series)./(max(var_series,1)-min(var_series,1)); % compute RMSE to have a metric for our error
+    %     %err = rmse(var_check,var_series)./(max(var_series,1)-min(var_series,1)); % compute RMSE to have a metric for our error
     %     for i_reg=1:7
     %         figure; 
     %         subplot(1,2,1); hold on; 
