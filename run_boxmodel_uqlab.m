@@ -18,15 +18,19 @@ addpath(genpath(uqlab_path))
 
 rng('default')
 n_runs = 10;
+clear ensemble fjord run
 ensemble(length(n_runs)) = struct('time',[],'ohc',[],'osc',[]);
-clear fjord_run
+% ohc_out = NaN([n_runs, 1]);
 for k=1:n_runs
 try
     X = zeros(size(probs));
     for i=1:length(probs)
         X(i) = random(probs(i));
     end    
+    tic
     [ensemble(k).time,ensemble(k).ohc,ensemble(k).osc,status,fjord_run(k)] = wrapper_boxmodel(X,Parameters);
+    % ohc_out(k) = wrapper_boxmodel(X,Parameters);
+    toc
 catch ME
     fprintf('Crash on iteration #%d\n',k)
     if ~isempty(ME.stack) > 0
@@ -35,15 +39,9 @@ catch ME
     end
 end
 end
+figure; hold on; for k=1:n_runs, plot(ensemble(k).time,ensemble(k).ohc); end
 
-% check of anomaly PDFs
-for i_reg=1:7
-    [Parameters,IOpts,probs] = define_model_param_distrib(datasets,fjords_compilation,i_reg);
-    figure; hold on; 
-    histogram(random(probs(8),1000)); 
-end
-
-%% Setting up the runs per region - UNTESTED
+%% Setting up the runs per region
 
 for i_reg=1:1
     [Parameters,IOpts,~] = define_model_param_distrib(datasets,fjords_compilation,i_reg);
