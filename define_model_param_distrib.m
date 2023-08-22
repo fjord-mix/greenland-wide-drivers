@@ -11,7 +11,8 @@ verbose.print=0; % change 1 to print basic fjord statistics
 datasets.opts.time_start = datetime(2010,01,15);
 datasets.opts.time_end   = datetime(2014,12,15);
 datasets.opts.time_interval = [datasets.opts.time_start,datasets.opts.time_end]; 
-datasets.opts.dt            = 30.0; % time step in days
+datasets.opts.dt            = 30.0; % time step (in days) for creating the forcings
+experiments_time_step       = 0.01; % time step (in days) for the actual experiments
 
 fjords_processed(size(fjords_compilation)) = struct("p",[],"a",[],"f",[],"t",[],"m",[]);
 for i=1:length(fjords_compilation)
@@ -93,14 +94,14 @@ d_pd              = fitdist(d_anom(:,i_reg),'kernel');
 probs(end+1) = d_pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom(:,i_reg),[min(d_anom(:,i_reg)), max(d_anom(:,i_reg))]);
 
-p_pd              = makedist('Uniform','lower',5,'upper',20);
+p_pd              = makedist('Uniform','lower',5,'upper',30);
 iOpts.Marginals(end+1).Type     = 'uniform';
-iOpts.Marginals(end).Parameters = [5 20];
-iOpts.Marginals(end).Bounds     = [5 20];
+iOpts.Marginals(end).Parameters = [5 30];
+iOpts.Marginals(end).Bounds     = [5 30];
 probs(end+1)                    = p_pd;
 
 %% interpolates time series variables to the actual time steps used by the model
-datasets.opts.dt            = 0.05; % time step in days
+datasets.opts.dt            = experiments_time_step; % time step in days
 fjord_dummy = prepare_boxmodel_input(datasets,fjords_compilation(1));
 time_axis = fjord_dummy.t;
 

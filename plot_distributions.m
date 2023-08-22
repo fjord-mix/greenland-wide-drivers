@@ -39,7 +39,7 @@ xlabel('Sill depth (m)');
 %% Glacier parameter distributions
 x_d = linspace(min(d_anom(:,i_reg)), max(d_anom(:,i_reg)),3000);
 x_q = linspace(0, 2,3000);
-x_p = linspace(5,45,3000);
+x_p = linspace(0,40,3000);
 figure('Name','Discharge-anomalies parameter space'); hold on
 subplot(1,3,1); plot(x_d,pdf(d_pd,x_d),'linewidth',1.5); box on
 xlabel('D_a','fontsize',14); ylabel('Kernel density','fontsize',14); text(0.05,0.95,'(a)','Units','normalized','fontsize',14)
