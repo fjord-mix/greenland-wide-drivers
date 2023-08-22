@@ -1,5 +1,5 @@
-function ohc_mean = wrapper_boxmodel(X,Parameters)
-% function [output_time,heat_content,salt_content,status,fjord_run] = wrapper_boxmodel(X,Parameters)
+% function ohc_mean = wrapper_boxmodel(X,Parameters)
+function [output_time,heat_content,salt_content,status,fjord_run] = wrapper_boxmodel(X,Parameters)
 % Wrapper function for running the boxmodel in UQLab
 % X contains all parameters we want to explore (M=8)
 % Parameters contain all parameters "in common" that we use for all model
@@ -9,9 +9,7 @@ function ohc_mean = wrapper_boxmodel(X,Parameters)
 p.H = Parameters.H;
 p.trelax=365/2;
 p.Hmin=5;
-p.C0=1e3;
 p.M0=0;
-p.P0=20;
 % p.K0 = 0;
 p.dt = Parameters.t(2)-Parameters.t(1);
 %% Getting the parameters to be explored into variables that we can more easily recall
