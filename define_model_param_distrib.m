@@ -12,7 +12,7 @@ datasets.opts.time_start = datetime(2010,01,15);
 datasets.opts.time_end   = datetime(2014,12,15);
 datasets.opts.time_interval = [datasets.opts.time_start,datasets.opts.time_end]; 
 datasets.opts.dt            = 30.0; % time step (in days) for creating the forcings
-experiments_time_step       = 0.01; % time step (in days) for the actual experiments
+experiments_time_step       = 1.;%0.01; % time step (in days) for the actual experiments
 
 fjords_processed(size(fjords_compilation)) = struct("p",[],"a",[],"f",[],"t",[],"m",[]);
 for i=1:length(fjords_compilation)
@@ -68,20 +68,31 @@ iOpts.Marginals(end).Bounds     = [0 1];
 
 %% Gets the glacier forcing
 
-% Subglacial discharge (same procedure as for T and S)
-% TODO: We might need something amplitude-related here, not the anomalies
-% themselves, as small changes from non-summer months will dominate the signal
+% Subglacial discharge - we want the variation in amplitude rather than
+% anomalies; otherwise the signal will be dominated by small variations in non-summer months
+str_reg = {'SW','SE','CW','CE','NW','NE','NO'};
+q_amp_max=NaN(size(fjords_processed));
+q_amp_min=NaN(size(fjords_processed));
+for k=1:length(fjords_processed)
+    if strcmp(fjords_processed(k).m.region,str_reg{i_reg})
+        [v_peaks,~] = findpeaks(fjords_processed(k).f.Qsg,'MinPeakProminence',10);
+        q_amp_max(k) = max(v_peaks)./mean(v_peaks);
+        q_amp_min(k) = min(v_peaks)./mean(v_peaks);
+    end
+end
+q_amp_max = mean(q_amp_max,'omitnan');
+q_amp_min = mean(q_amp_min,'omitnan');
 [q_clim,q_anom,~,~] = get_var_clim_by_region(fjords_processed,'Qsg');
 q_forcing         = repmat(q_clim,size(q_anom,1)/size(q_clim,1),1,1);
-q_pd              = makedist('Uniform','lower',0.5,'upper',1.5);
+q_pd              = makedist('Uniform','lower',q_amp_min,'upper',q_amp_max);
 
 % It makes no sense to have Qsg in terms of anomalies, because in the
 % frequency distribution, the very small variations in non-summer months would
 % dominate the signal. So we prescribe a uniform distribution of
 % "amplifying factors" instead
 iOpts.Marginals(end+1).Type     = 'uniform';
-iOpts.Marginals(end).Parameters = [0.5 1.5];
-iOpts.Marginals(end).Bounds     = [0 3];
+iOpts.Marginals(end).Parameters = [q_amp_min q_amp_max];
+iOpts.Marginals(end).Bounds     = [0 1.5*q_amp_max];
 probs(end+1)                    = q_pd;
 
 %Plot to check parameter space
