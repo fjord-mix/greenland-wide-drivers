@@ -9,9 +9,12 @@ addpath(genpath(uqlab_path))
 
 [datasets,fjords_compilation,~,~] = compile_datasets(data_path);
 
-% outs_path = [data_path,'/greenland/FjordMIX/boxmodel/pce/']; % where the model output files will be saved
-% figs_path = [project_path,'/figs/pce/'];                     % where the figures and animations will be saved
+outs_path = [data_path,'/greenland/FjordMIX/boxmodel/pce/']; % where the model output files will be saved
+figs_path = [project_path,'/figs/pce/'];                     % where the figures and animations will be saved
 
+%% Showing all input parameters first
+hf = plot_distributions(datasets,fjords_compilation);
+exportgraphics(hf,[figs_path,'summary_input_params.png'],'Resolution',300)
 
 %% evaluate the wrapper by itself first
 [Parameters,IOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,1);
@@ -43,35 +46,33 @@ figure; hold on; for k=1:n_runs, plot(ensemble(k).time,ensemble(k).ohc); end
 
 %% Setting up the runs per region
 
+% Initialise UQLab
+uqlab
 for i_reg=1:1
-    [Parameters,IOpts,~] = define_model_param_distrib(datasets,fjords_compilation,i_reg);
+    [Parameters,IOpts,~,~] = define_model_param_distrib(datasets,fjords_compilation,i_reg);
 
-    % Initialise UQLab
-    uqlab
-
-    % create model
-    % MOpts.mFile = 'uq_ishigami';
+    % create numerical model object
     ModelOpts.mFile = 'wrapper_boxmodel';
     ModelOpts.isVectorized = false;
     ModelOpts.Parameters=Parameters;
     num_model = uq_createModel(ModelOpts);
     
-    % create inputs    
+    % create inputs object
     input = uq_createInput(IOpts);
     X = uq_getSample(input,10,'LHS');
 
-    % create Meta Model: specification of 14th degree LARS−based PCE     
+    % create Meta (surrogate) Model: specification of 14th degree LARS−based PCE     
     MetaOpts.Type = 'Metamodel';
     MetaOpts.MetaType = 'PCE';    
     MetaOpts.FullModel = num_model;
     MetaOpts.Method = 'LARS';
     MetaOpts.Degree = 14;
     MetaOpts.ExpDesign.NSamples = 10;
-    model=uq_createModel(MetaOpts);
-    % uq_print(model)
-    % uq_display(model)
+    sur_model=uq_createModel(MetaOpts);
+    % uq_print(sur_model)
+    % uq_display(sur_model)
 
-    Y = uq_evalModel(model,X);
+    Y = uq_evalModel(sur_model,X);
     Yvalidation = uq_evalModel(num_model,X);
     uq_plot(Yvalidation,Y,'+')
 end

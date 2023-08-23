@@ -1,96 +1,106 @@
+function hf = plot_distributions(datasets,fjords_compilation)
 %% Geometry parameter distributions
-figure;
-subplot(2,3,1); hold on; box on
-plot(fjord_stats.L.xi,fjord_stats.L.kern,'linewidth',1.5);
+fjord_stats = print_fjord_statistics(fjords_compilation);
+
+figure("Name",'Probability functions','Position',[50 50 1200 700]);
+subplot(2,5,1); hold on; box on
+plot(fjord_stats.L.xi,fjord_stats.L.kern,'linewidth',1.5,'color','k');
 % plot(fjord_stats.L.xi,pdf(fjord_stats.L.pd,fjord_stats.L.xi),':r','linewidth',1.5)
 % xlim([0 max(fjord_stats.L.xi)]);
-text(0.05,0.95,'(a)','Units','normalized')
-xlabel('Fjord length (m)'); ylabel('Kernel density')
+text(0.95,0.95,'(a)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+xlabel('L (m)','fontsize',14); ylabel('Probability function','fontsize',14)
 
-subplot(2,3,2); hold on; box on
-plot(fjord_stats.W.xi,fjord_stats.W.kern,'linewidth',1.5);
+subplot(2,5,2); hold on; box on
+plot(fjord_stats.W.xi,fjord_stats.W.kern,'linewidth',1.5,'color','k');
 % plot(fjord_stats.W.xi,pdf(fjord_stats.W.pd,fjord_stats.W.xi),':r','linewidth',1.5)
 % xlim([0 max(fjord_stats.W.xi)]);
-text(0.05,0.95,'(b)','Units','normalized')
-xlabel('Fjord width (m)');
+text(0.95,0.95,'(b)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+xlabel('W (m)','fontsize',14);
 
-subplot(2,3,3); hold on; box on
-plot(fjord_stats.H.xi,fjord_stats.H.kern,'linewidth',1.5);
-% plot(fjord_stats.H.xi,pdf(fjord_stats.H.pd,fjord_stats.H.xi),':r','linewidth',1.5)
-% xlim([0 max(fjord_stats.W.xi)]);
-text(0.05,0.95,'(c)','Units','normalized')
-xlabel('Fjord depth (m)');
-
-subplot(2,3,4); hold on; box on
-plot(fjord_stats.Zg.xi,fjord_stats.Zg.kern,'linewidth',1.5);
+subplot(2,5,3); hold on; box on
+plot(fjord_stats.Zg.xi,fjord_stats.Zg.kern,'linewidth',1.5,'color','k');
 % plot(fjord_stats.Zg.xi,pdf(fjord_stats.Zg.pd,fjord_stats.Zg.xi),':r','linewidth',1.5)
 % xlim([min(fjord_stats.Zg.xi) 0]);
-text(0.05,0.95,'(d)','Units','normalized')
-xlabel('Grounding line depth (m)'); ylabel('Kernel density')
+text(0.95,0.95,'(c)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+xlabel('z_{gl} (m)','fontsize',14);
 
-subplot(2,3,5); hold on; box on
-plot(fjord_stats.Zs.xi,fjord_stats.Zs.kern,'linewidth',1.5);
+subplot(2,5,4); hold on; box on
+plot(fjord_stats.Zs.xi,fjord_stats.Zs.kern,'linewidth',1.5,'color','k');
 % plot(fjord_stats.Zs.xi,pdf(fjord_stats.Zs.pd,fjord_stats.Zs.xi),':r','linewidth',1.5)
 % xlim([min(fjord_stats.Zs.xi) 0]);
-text(0.05,0.95,'(e)','Units','normalized')
-xlabel('Sill depth (m)');
+text(0.95,0.95,'(d)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+xlabel('z_s (m)','fontsize',14);
 
 
-%% Glacier parameter distributions
-x_d = linspace(min(d_anom(:,i_reg)), max(d_anom(:,i_reg)),3000);
-x_q = linspace(0, 2,3000);
-x_p = linspace(0,40,3000);
-figure('Name','Discharge-anomalies parameter space'); hold on
-subplot(1,3,1); plot(x_d,pdf(d_pd,x_d),'linewidth',1.5); box on
-xlabel('D_a','fontsize',14); ylabel('Kernel density','fontsize',14); text(0.05,0.95,'(a)','Units','normalized','fontsize',14)
-subplot(1,3,2); plot(x_q,pdf(q_pd,x_q),'linewidth',1.5); box on
-xlabel('Q_a','fontsize',14); text(0.05,0.95,'(b)','Units','normalized','fontsize',14)
-subplot(1,3,3); plot(x_p,pdf(p_pd,x_p),'linewidth',1.5); box on
-xlabel('PW','fontsize',14); text(0.05,0.95,'(c)','Units','normalized','fontsize',14)
 
-%% Ocean parameter distributions
-x_t = linspace(min(tocn_anom(:,i_reg)), max(tocn_anom(:,i_reg)),1000);
-x_s = linspace(min(socn_anom(:,i_reg)), max(socn_anom(:,i_reg)),1000);
-x_w = linspace(0, 0.5,1000);
+for i_reg=1:7
+    [~,~,probs,~] = define_model_param_distrib(datasets,fjords_compilation,i_reg);
+    
+    %% Ocean parameter distributions
+    x_t = linspace(-2, 2,1000);
+    x_s = linspace(-0.5, 0.5,1000);
+    x_w = linspace(0, 0.6,1000);
+    
+    subplot(2,5,5);  hold on; box on; plot(x_t,pdf(probs(5),x_t),'linewidth',1.5);
+    subplot(2,5,10); hold on; box on; plot(x_s,pdf(probs(6),x_s),'linewidth',1.5);
+    subplot(2,5,9);  hold on; box on; plot(x_w,pdf(probs(7),x_w),'linewidth',1.5,'color','k');
 
-figure('Name','Ocean-anomalies parameter space'); hold on
-subplot(1,3,1); plot(x_t,pdf(tocn_pd,x_t),'linewidth',1.5); box on
-xlabel('T_a','fontsize',14); ylabel('Kernel density','fontsize',14); text(0.05,0.95,'(a)','Units','normalized','fontsize',14)
-subplot(1,3,2); plot(x_s,pdf(socn_pd,x_s),'linewidth',1.5); box on
-xlabel('S_a','fontsize',14); text(0.05,0.95,'(b)','Units','normalized','fontsize',14)
-subplot(1,3,3); plot(x_w,pdf(omeg_pd,x_w),'linewidth',1.5); box on
-xlabel('\omega','fontsize',14); text(0.05,0.95,'(c)','Units','normalized','fontsize',14)
+    %% Glacier parameter distributions    
+    x_d = linspace(-30, 30,3000);
+    x_q = linspace(0, 2,3000);
+    x_p = linspace(0,40,3000);
+    subplot(2,5,6); hold on; box on; plot(x_q,pdf(probs(8),x_q),'linewidth',1.5); 
+    subplot(2,5,7); hold on; box on; plot(x_d,pdf(probs(9),x_d),'linewidth',1.5);
+    subplot(2,5,8); hold on; box on; plot(x_p,pdf(probs(10),x_p),'linewidth',1.5,'color','k'); 
+end
 
+subplot(2,5,6);
+xlabel('Q_a (m^3s^{-1})','fontsize',14); text(0.95,0.95,'(f)','Units','normalized','fontsize',14,'HorizontalAlignment','right'); 
+ylabel('Probability function','fontsize',14); 
+subplot(2,5,7);
+xlabel('D_a (m^3s^{-1})','fontsize',14); text(0.95,0.95,'(g)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+subplot(2,5,8);
+xlabel('PW (m)','fontsize',14); text(0.95,0.95,'(h)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+subplot(2,5,5);
+xlabel('T_a (^oC)','fontsize',14); text(0.95,0.95,'(e)','Units','normalized','fontsize',14,'HorizontalAlignment','right');
+hl = legend('SW','SE','CW','CE','NW','NE','NO','fontsize',14); hl.Position=[0.91,0.735,0.06,0.19];
+subplot(2,5,10);
+xlabel('S_a (-)','fontsize',14); text(0.95,0.95,'(i)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+subplot(2,5,9);
+xlabel('\omega','fontsize',18); text(0.95,0.95,'(j)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+
+hf = gcf;
+end
 %% Checking for interdependencies
 
-zgl   = NaN(size(fjords_processed));
-zsill = NaN(size(fjords_processed));
-zfjord= NaN(size(fjords_processed));
-lfjord= NaN(size(fjords_processed));
-wfjord= NaN(size(fjords_processed));
-for i=1:length(fjords_processed)
-    zgl(i)   = fjords_processed(i).p.zgl;
-    zsill(i) = fjords_processed(i).p.silldepth;
-    zfjord(i)= fjords_processed(i).p.H;
-    lfjord(i)= fjords_processed(i).p.L;
-    wfjord(i)= fjords_processed(i).p.W;
-end
-[rho_zgl,p_zgl]     = corrcoef(zfjord,-zgl);
-[rho_zsill,p_zsill] = corrcoef(zfjord,-zsill);
-[rho_lw,p_lw] = corrcoef(lfjord,wfjord);
-
-figure('Name','Relationship between fjord geometry parameters'); 
-subplot(1,3,1); hold on; box on; grid on
-scatter(zfjord,-zgl,'.k');
-xlabel('Fjord depth (m)'); ylabel('Grounding line depth (m)')
-text(0.95,0.95,sprintf('R=%.2f\np=%.2f',rho_zgl(1,2),p_zgl(1,2)),'HorizontalAlignment','right','Units','normalized')
-subplot(1,3,2); hold on; box on; grid on
-scatter(zfjord,-zsill,'.k')
-xlabel('Fjord depth (m)'); ylabel('Sill depth (m)')
-text(0.95,0.95,sprintf('R=%.2f\np=%.2f',rho_zsill(1,2),p_zsill(1,2)),'HorizontalAlignment','right','Units','normalized')
-subplot(1,3,3); hold on; box on; grid on
-scatter(1e-3.*lfjord,1e-3.*wfjord,'.k')
-xlabel('Fjord length (km)'); ylabel('Fjord width (km)')
-text(0.95,0.95,sprintf('R=%.2f\np=%.2f',rho_lw(1,2),p_lw(1,2)),'HorizontalAlignment','right','Units','normalized')
+% zgl   = NaN(size(fjords_processed));
+% zsill = NaN(size(fjords_processed));
+% zfjord= NaN(size(fjords_processed));
+% lfjord= NaN(size(fjords_processed));
+% wfjord= NaN(size(fjords_processed));
+% for i=1:length(fjords_processed)
+%     zgl(i)   = fjords_processed(i).p.zgl;
+%     zsill(i) = fjords_processed(i).p.silldepth;
+%     zfjord(i)= fjords_processed(i).p.H;
+%     lfjord(i)= fjords_processed(i).p.L;
+%     wfjord(i)= fjords_processed(i).p.W;
+% end
+% [rho_zgl,p_zgl]     = corrcoef(zfjord,-zgl);
+% [rho_zsill,p_zsill] = corrcoef(zfjord,-zsill);
+% [rho_lw,p_lw] = corrcoef(lfjord,wfjord);
+% 
+% figure('Name','Relationship between fjord geometry parameters'); 
+% subplot(1,3,1); hold on; box on; grid on
+% scatter(zfjord,-zgl,'.k');
+% xlabel('Fjord depth (m)'); ylabel('Grounding line depth (m)')
+% text(0.95,0.95,sprintf('R=%.2f\np=%.2f',rho_zgl(1,2),p_zgl(1,2)),'HorizontalAlignment','right','Units','normalized')
+% subplot(1,3,2); hold on; box on; grid on
+% scatter(zfjord,-zsill,'.k')
+% xlabel('Fjord depth (m)'); ylabel('Sill depth (m)')
+% text(0.95,0.95,sprintf('R=%.2f\np=%.2f',rho_zsill(1,2),p_zsill(1,2)),'HorizontalAlignment','right','Units','normalized')
+% subplot(1,3,3); hold on; box on; grid on
+% scatter(1e-3.*lfjord,1e-3.*wfjord,'.k')
+% xlabel('Fjord length (km)'); ylabel('Fjord width (km)')
+% text(0.95,0.95,sprintf('R=%.2f\np=%.2f',rho_lw(1,2),p_lw(1,2)),'HorizontalAlignment','right','Units','normalized')
 
 %clear zgl zsill zfjord lfjord wfjord rho_zgl p_zgl rho_zsill p_zsill rho_lw p_lw
