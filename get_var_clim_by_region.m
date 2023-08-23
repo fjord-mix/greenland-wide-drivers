@@ -98,6 +98,7 @@ function [var_clim_forcing, var_anom, decay_func, depths] = get_var_clim_by_regi
         for i=1:dims_var(2)
             decay_func(i,:,:) = std_norm;
         end
+        var_anom = var_anom_mean;
         var_clim_forcing = repmat(var_clim,size(var_anom,1)/size(var_clim,1),1,1);
         % var_clim_forcing = var_clim_forcing(:,:,:);
     else        
