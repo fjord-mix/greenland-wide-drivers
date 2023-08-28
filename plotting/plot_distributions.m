@@ -67,7 +67,7 @@ hl = legend('SW','SE','CW','CE','NW','NE','NO','fontsize',14); hl.Position=[0.91
 subplot(2,5,10);
 xlabel('S_a (-)','fontsize',14); text(0.95,0.95,'(i)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
 subplot(2,5,9);
-xlabel('\omega','fontsize',18); text(0.95,0.95,'(j)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+xlabel('\omega (day^{-1})','fontsize',14); text(0.95,0.95,'(j)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
 
 hf = gcf;
 end
