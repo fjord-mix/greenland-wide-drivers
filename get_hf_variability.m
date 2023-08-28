@@ -75,12 +75,20 @@ P1 = P2(1:Lsw/2+1);
 P1(2:end-1) = 2*P1(2:end-1);
 f = Fs*(0:(Lsw/2))/Lsw;
 figure; plot(f,P1); xlim([0 20]*1e-8)
-%% Restrict data to the same fjord
-max_dst = 50e3; % will treat all profiles within 50 km as from the same place
 
-% get first cast
-% for each following cast
-%     check if next cast coordinates are within max_dst
-%         if it is, then add to the same vector
-%         otherwise, starts a new time series
-%     otherwise check the following time series
+%% Alternative: Using T data from a longer mooring in Kangerlussuaq fjord
+
+kf_data = process_noaa_ctd('~/data_common/greenland/obs/NOAA/0127320/1.1/data/1-data/','GP09_GP3_TidbiT');
+Fs = 1/86400; % daily frequency in Hz
+P_total=zeros([1,ceil(length(kf_data.time)/2)]);
+for k=1:length(sf_data.depth)
+    kf_temp_fft = fft(kf_data.temp(k,:));
+    Lsw = length(kf_data.time);
+    P2 = abs(kf_temp_fft./Lsw);
+    P1 = P2(1:Lsw/2+1);
+    P1(2:end-1) = 2*P1(2:end-1);
+    f = Fs*(0:(Lsw/2))/Lsw;
+    P_total = P_total+P1;
+end
+figure; plot((1./f)./86400,P_total./length(sf_data.depth)); xlim([0 60])
+ylabel('Power'); xlabel('Period (days)')% x axis in period(days) instead of frequency
