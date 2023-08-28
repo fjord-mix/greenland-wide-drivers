@@ -12,7 +12,7 @@ datasets.opts.time_start = datetime(2010,01,15);
 datasets.opts.time_end   = datetime(2014,12,15);
 datasets.opts.time_interval = [datasets.opts.time_start,datasets.opts.time_end]; 
 datasets.opts.dt            = 30.0; % time step (in days) for creating the forcings
-experiments_time_step       = 1.;%0.01; % time step (in days) for the actual experiments
+experiments_time_step       = 0.01; % time step (in days) for the actual experiments
 
 fjords_processed(size(fjords_compilation)) = struct("p",[],"a",[],"f",[],"t",[],"m",[]);
 for i=1:length(fjords_compilation)
@@ -63,7 +63,7 @@ iOpts.Marginals(end+1) = uq_KernelMarginals(socn_anom(:,i_reg),[min(socn_anom(:,
 
 probs(end+1) = omeg_pd;
 iOpts.Marginals(end+1).Type     = 'Gaussian';
-iOpts.Marginals(end).Parameters = [0.1429 0.1167];
+iOpts.Marginals(end).Parameters = [0.1429 0.1167]; % [1/7 days, 3.5/30 days] as per Harden et al. (2011; JClimate)
 iOpts.Marginals(end).Bounds     = [0 1];
 
 %% Gets the glacier forcing
