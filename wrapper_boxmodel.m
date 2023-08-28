@@ -1,5 +1,5 @@
-% function ohc_mean = wrapper_boxmodel(X,Parameters)
-function [output_time,heat_content,salt_content,status,fjord_run] = wrapper_boxmodel(X,Parameters)
+function [ohc_mean,osc_mean] = wrapper_boxmodel(X,Parameters)
+% function [output_time,heat_content,salt_content,status,fjord_run] = wrapper_boxmodel(X,Parameters)
 % Wrapper function for running the boxmodel in UQLab
 % X contains all parameters we want to explore (M=8)
 % Parameters contain all parameters "in common" that we use for all model
@@ -31,7 +31,7 @@ Xamp=0.92;  % up to 92% increase (from Fraser & Inall, 2017): avg. of heat trans
 doy_peak = 173; % june 22nd
 winter_wave = -sin(2*pi/365 .* (Parameters.t - (doy_peak - 365/4))); % 1 at peak winter, -1 at peak summer
 winter_wave(winter_wave < 0) = 0;
-Xper = (Xamp .* sin(-Xfrq*Parameters.t)) .* winter_wave; 
+Xper = (Xamp .* sin(-2*pi*Xfrq*Parameters.t)) .* winter_wave; 
 
 % Ocean forcings
 f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* (dTanom + dTanom .* Xper)))';
@@ -73,18 +73,18 @@ fjord_run.a = a;
 %% Run the model itself, postprocess, and return the desired metrics for evaluation
 
 [fjord_run.s,fjord_run.f] = boxmodel(fjord_run.p, fjord_run.t, fjord_run.f, fjord_run.a);
-status = fjord_run.s.status;
+% status = fjord_run.s.status;
 fjord_run.o               = postprocess_boxmodel(fjord_run);
 
 % gets output quantities in "per unit volume"
 heat_content = sum(fjord_run.o.hc)./(fjord_run.p.L.*fjord_run.p.W.*sum(fjord_run.p.H));
 salt_content = sum(fjord_run.o.sc)./(fjord_run.p.L.*fjord_run.p.W.*sum(fjord_run.p.H));
-output_time  = fjord_run.s.t;
-ohc_mean = mean(heat_content);
-% average over the last N years of the run - to be implemented when runs
-% are more stable
-% if status
-%     plot_fluxes(fjord_run)
-%     plot_outputs(fjord_run)
-% end
+% output_time  = fjord_run.s.t;
+if length(heat_content) > 365
+    ohc_mean = mean(heat_content(end-365:end)); % get the mean for the last year
+    osc_mean = mean(salt_content(end-365:end)); % get the mean for the last year
+else
+    ohc_mean = NaN; % returns NaN if we dont have a full year to average over
+    osc_mean = NaN;
+end
 end
