@@ -21,7 +21,7 @@ figs_path = [project_path,'/figs/pce/'];                     % where the figures
 [Parameters,IOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,1);
 
 rng('default')
-n_runs = 30;
+n_runs = 50;
 clear ensemble fjord_run
 % ensemble(length(n_runs)) = struct('time',[],'ohc',[],'osc',[]);
 
@@ -72,12 +72,21 @@ text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
 xlim([3.4 4]);
 legend(regions,'fontsize',14)
-exportgraphics(gcf,[figs_path,'test_output_ohc_osc_pdfs.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'test_output_ohc_osc_pdfs_n50.png'],'Resolution',300)
 
 
 % figure; hold on; for k=1:n_runs, plot(ensemble(k).time,ensemble(k).ohc); end
 
-%% Setting up the runs per region
+%% Setting up the runs per region using UQLab
+
+Ysur   = cell([7,1]);
+Ynum   = cell([7,1]);
+sobolA = cell([7,1]);
+
+SobolOpts.Type             = 'Sensitivity';
+SobolOpts.Method           = 'Sobol';
+SobolOpts.Sobol.Order      = 1;
+% SobolOpts.Sobol.SampleSize = 1e5; % only needed for MC?
 
 % Initialise UQLab
 uqlab
@@ -104,11 +113,39 @@ for i_reg=1:1
     sur_model=uq_createModel(MetaOpts);
     % uq_print(sur_model)
     % uq_display(sur_model)
-    Y = uq_evalModel(sur_model,X);
-    Yvalidation = uq_evalModel(num_model,X);
-    uq_plot(Yvalidation,Y,'+')
+    Ysur{i_reg} = uq_evalModel(sur_model,X);
+    Ynum{i_reg} = uq_evalModel(num_model,X);
+    % uq_plot(Yvalidation,Y,'+')
+    % uq_figure
+    % uq_histogram(Y)    
+    sobolA{i_reg} = uq_createAnalysis(SobolOpts);
 end
 
-% 
-% uq_figure
-% uq_histogram(Y)
+%% Sensitivity analysis - not tested yet!
+sobolTotal = [];
+sobolFirstOrder = [];
+
+% Gather up all regions here
+for i_reg=1:7
+    sobolResults  = sobolA{i_reg}.Results;
+    % uq_print(sobolAnalysis)
+    sobolTotal      = [sobolTotal sobolResults.Total];
+    sobolFirstOrder = [sobolFirstOrder sobolResults.FirstOrder];
+end
+
+% Plotting indices
+uq_figure('Name', 'Total Sobol'' Indices')
+barWidth = 1;
+uq_bar(1:length(IOpts.Marginals), SobolTotal, barWidth)
+ylim([0 1]); xlim([0 length(IOpts.Marginals)+1])
+xlabel('Variable name'); ylabel('Total Sobol'' indices')
+set(gca,'XTick', 1:length(IOpts.Marginals),'XTickLabel', sobolResults.VariableNames)
+uq_legend(regions,'Location', 'northeast')
+
+uq_figure('Name', 'First-Order Sobol'' Indices')
+barWidth = 1;
+uq_bar(1:length(IOpts.Marginals), sobolFirstOrder, barWidth)
+ylim([0 1]); xlim([0 length(IOpts.Marginals)+1])
+xlabel('Variable name'); ylabel('First-Order Sobol'' indices')
+set(gca,'XTick', 1:length(IOpts.Marginals),'XTickLabel', sobolResults.VariableNames)
+uq_legend(regions,'Location', 'northeast')
