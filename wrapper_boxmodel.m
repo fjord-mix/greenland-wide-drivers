@@ -72,19 +72,28 @@ fjord_run.a = a;
 
 %% Run the model itself, postprocess, and return the desired metrics for evaluation
 
+% add try-catch statement so the wrapper returns the initial HC in case of a crash
+try
 [fjord_run.s,fjord_run.f] = boxmodel(fjord_run.p, fjord_run.t, fjord_run.f, fjord_run.a);
+catch ME
+    osc = fjord.a.S0  .*               (fjord.p.betaS*fjord.a.S0 - fjord.p.betaT*fjord.a.T0)  .* fjord.p.L.*fjord.p.W.*fjord.a.H0;
+    ohc = (fjord.a.T0 .* fjord.p.cw .* (fjord.p.betaS*fjord.a.S0 - fjord.p.betaT*fjord.a.T0)) .* fjord.p.L.*fjord.p.W.*fjord.a.H0;
+    ohc_mean = sum(ohc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+    osc_mean = sum(osc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+    return
+end
 % status = fjord_run.s.status;
-fjord_run.o               = postprocess_boxmodel(fjord_run);
+fjord_run.o = postprocess_boxmodel(fjord_run);
 
 % gets output quantities in "per unit volume"
-heat_content = sum(fjord_run.o.hc)./(fjord_run.p.L.*fjord_run.p.W.*sum(fjord_run.p.H));
-salt_content = sum(fjord_run.o.sc)./(fjord_run.p.L.*fjord_run.p.W.*sum(fjord_run.p.H));
+heat_content = sum(fjord_run.o.hc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+salt_content = sum(fjord_run.o.sc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
 % output_time  = fjord_run.s.t;
 if length(heat_content) > 365
     ohc_mean = mean(heat_content(end-365:end)); % get the mean for the last year
-    osc_mean = mean(salt_content(end-365:end)); % get the mean for the last year
-else
-    ohc_mean = NaN; % returns NaN if we dont have a full year to average over
-    osc_mean = NaN;
+    osc_mean = mean(salt_content(end-365:end));
+else % if the time series is too short
+    ohc_mean = mean(heat_content); % get the mean for the whole period
+    osc_mean = mean(salt_content);
 end
 end
