@@ -139,15 +139,15 @@ params.xi   = fjord_dummy.f.xi;
 params.I0   = fjord_dummy.a.I0;
 
 % Add the names to the input distributions we created
-iOpts.Marginals(1).Name = 'length';
-iOpts.Marginals(2).Name = 'width';
-iOpts.Marginals(3).Name = 'z_sill';
-iOpts.Marginals(4).Name = 'z_gl';
-iOpts.Marginals(5).Name = 't_anom';
-iOpts.Marginals(6).Name = 's_anom';
+iOpts.Marginals(1).Name = 'L';
+iOpts.Marginals(2).Name = 'W';
+iOpts.Marginals(3).Name = 'Zs';
+iOpts.Marginals(4).Name = 'Zg';
+iOpts.Marginals(5).Name = 'Ta';
+iOpts.Marginals(6).Name = 'Sa';
 iOpts.Marginals(7).Name = 'omega';
-iOpts.Marginals(8).Name = 'q_sg';
-iOpts.Marginals(9).Name = 'q_ice';
+iOpts.Marginals(8).Name = 'Qsg';
+iOpts.Marginals(9).Name = 'Qice';
 iOpts.Marginals(10).Name = 'P0';
 
 if isfield(verbose,'plot') && verbose.plot
