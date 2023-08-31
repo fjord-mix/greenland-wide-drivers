@@ -76,10 +76,13 @@ fjord_run.a = a;
 try
 [fjord_run.s,fjord_run.f] = boxmodel(fjord_run.p, fjord_run.t, fjord_run.f, fjord_run.a);
 catch ME
-    osc = fjord.a.S0  .*               (fjord.p.betaS*fjord.a.S0 - fjord.p.betaT*fjord.a.T0)  .* fjord.p.L.*fjord.p.W.*fjord.a.H0;
-    ohc = (fjord.a.T0 .* fjord.p.cw .* (fjord.p.betaS*fjord.a.S0 - fjord.p.betaT*fjord.a.T0)) .* fjord.p.L.*fjord.p.W.*fjord.a.H0;
-    ohc_mean = sum(ohc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-    osc_mean = sum(osc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+    % osc = fjord.a.S0  .*               (fjord.p.betaS*fjord.a.S0 - fjord.p.betaT*fjord.a.T0)  .* fjord.p.L.*fjord.p.W.*fjord.a.H0;
+    % ohc = (fjord.a.T0 .* fjord.p.cw .* (fjord.p.betaS*fjord.a.S0 - fjord.p.betaT*fjord.a.T0)) .* fjord.p.L.*fjord.p.W.*fjord.a.H0;
+    % ohc_mean = sum(ohc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+    % osc_mean = sum(osc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+    % return
+    ohc_mean = NaN;
+    osc_mean = NaN;
     return
 end
 % status = fjord_run.s.status;
@@ -93,7 +96,9 @@ if length(heat_content) > 365
     ohc_mean = mean(heat_content(end-365:end)); % get the mean for the last year
     osc_mean = mean(salt_content(end-365:end));
 else % if the time series is too short
-    ohc_mean = mean(heat_content); % get the mean for the whole period
-    osc_mean = mean(salt_content);
+    % ohc_mean = mean(heat_content); % get the mean for the whole period
+    % osc_mean = mean(salt_content);
+    ohc_mean = NaN;
+    osc_mean = NaN;
 end
 end
