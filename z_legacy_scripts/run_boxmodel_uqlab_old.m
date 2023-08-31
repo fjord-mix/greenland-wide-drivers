@@ -18,8 +18,7 @@ figs_path = [project_path,'/figs/pce/'];                     % where the figures
 % exportgraphics(hf,[figs_path,'summary_input_params.png'],'Resolution',300)
 
 %% evaluate the wrapper by itself first
-[Parameters,IOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,1);
-
+% [Parameters,IOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,1);
 rng('default')
 n_runs = 50;
 clear ensemble fjord_run
@@ -30,6 +29,7 @@ ohc_out = NaN([n_runs, 7]);
 osc_pd = cell([7,1]);
 osc_out = NaN([n_runs, 7]);
 for i_reg=1:7    
+    [Parameters,~,probs,~] = define_model_param_distrib(datasets,fjords_compilation,i_reg);
     for k=1:n_runs
         try
             X = zeros(size(probs));
@@ -38,8 +38,10 @@ for i_reg=1:7
             end    
             tic
             % [ensemble(k).time,ensemble(k).ohc,ensemble(k).osc,status,fjord_run(k)] = wrapper_boxmodel(X,Parameters);
-            [ohc_out(k,i_reg),osc_out(k,i_reg)] = wrapper_boxmodel(X,Parameters);
+            [ohc_mout,osc_mout] = wrapper_boxmodel(X,Parameters);
             toc
+            ohc_out(:,i_reg) = ohc_mout(ohc_mout>0);
+            osc_out(:,i_reg) = ohc_mout(osc_mout>0);
             ohc_pd{i_reg} = makedist('Normal','mu',mean(ohc_out(:,i_reg),'omitnan'),'sigma',std(ohc_out(:,i_reg),'omitnan'));
             osc_pd{i_reg} = makedist('Normal','mu',mean(osc_out(:,i_reg),'omitnan'),'sigma',std(osc_out(:,i_reg),'omitnan'));
         catch ME
@@ -60,17 +62,26 @@ for i_reg=1:7
 end
 ohc_x = linspace(400,1600,1000);
 osc_x = linspace(3.4,4,1000);
+max_pdf=0;
 figure('Position',[40 40 850 300]); 
-subplot(1,2,1), hold on; for i_reg=1:7, plot(ohc_x,pdf(ohc_pd{i_reg},ohc_x),'linewidth',2); end
+subplot(1,2,1), hold on; 
+for i_reg=1:7
+    pdf_ohc = pdf(ohc_pd{i_reg},ohc_x);
+    plot(ohc_x,pdf_ohc,'linewidth',2); 
+end
 xlabel('Heat content (J m^{-3})',fontsize=14); ylabel('Probability',fontsize=14);  box on
 text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
-xlim([800 1600]);
-subplot(1,2,2), hold on; for i_reg=1:7, plot(osc_x,pdf(osc_pd{i_reg},osc_x),'linewidth',2); end
+% xlim([800 1600]); 
+subplot(1,2,2), hold on; 
+for i_reg=1:7
+    pdf_osc = pdf(osc_pd{i_reg},ohc_x);
+    plot(osc_x,pdf_osc,'linewidth',2); 
+end
 xlabel('Salt content (g m^{-3})',fontsize=14); box on
 text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
-xlim([3.4 4]);
+% xlim([3.4 4]);
 legend(regions,'fontsize',14)
 % exportgraphics(gcf,[figs_path,'test_output_ohc_osc_pdfs_n50.png'],'Resolution',300)
 
