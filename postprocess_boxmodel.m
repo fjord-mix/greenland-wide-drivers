@@ -38,7 +38,7 @@ function outputs = postprocess_boxmodel(fjord)
 
     % computes total fjord salt (kg) and heat content (J)    
     outputs.sc = fjord.s.S  .*               (fjord.p.betaS*fjord.s.S - fjord.p.betaT*fjord.s.T)  .* fjord.p.L.*fjord.p.W.*fjord.s.H;
-    outputs.hc = (fjord.s.T .* fjord.p.cw .* (fjord.p.betaS*fjord.s.S - fjord.p.betaT*fjord.s.T)) .* fjord.p.L.*fjord.p.W.*fjord.s.H;
+    outputs.hc = ((fjord.s.T+273.15) .* fjord.p.cw .* (fjord.p.betaS*fjord.s.S - fjord.p.betaT*fjord.s.T)) .* fjord.p.L.*fjord.p.W.*fjord.s.H;
 
     % copies all into output structure
     outputs.Tf = temp_profiles;
