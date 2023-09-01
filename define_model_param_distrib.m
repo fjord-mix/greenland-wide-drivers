@@ -1,7 +1,7 @@
 function [params,iOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,i_reg)
 %% A more statistically driven approach to sensitivity tests
 % derives distributions for all parameters on which our model simulations
-% will depend on: W, L, Zg, Zs, Ta, Sa, Da, Qa
+% will depend on: W, L, Zg, Zs, Ta, Sa, Qa, Da
 
 %% Get compiled fjord data in pre-processed structure
 % also selects the desired period in time
@@ -36,6 +36,7 @@ iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zs.total', [min(fjord_st
 probs(end+1) = fjord_stats.Zg.pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zg.total', [min(fjord_stats.Zg.total) -50]);
 
+% this is likely where/how we would tweak the distributions to ensure Zg and Zs shallower than fjord depth
 % Xgeom = [fjord_stats.H.total;-fjord_stats.Zg.total;-fjord_stats.Zs.total];
 % opts.Inference.Data = Xgeom';
 % opts.Copula.Inference.Data = Xgeom;
@@ -146,8 +147,8 @@ iOpts.Marginals(4).Name = 'Zg';
 iOpts.Marginals(5).Name = 'Ta';
 iOpts.Marginals(6).Name = 'Sa';
 iOpts.Marginals(7).Name = 'omega';
-iOpts.Marginals(8).Name = 'Qsg';
-iOpts.Marginals(9).Name = 'Qice';
+iOpts.Marginals(8).Name = 'Qa';
+iOpts.Marginals(9).Name = 'Da';
 iOpts.Marginals(10).Name = 'P0';
 
 if isfield(verbose,'plot') && verbose.plot

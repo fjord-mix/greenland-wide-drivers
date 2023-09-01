@@ -10,7 +10,8 @@ p.H = Parameters.H;
 p.trelax=365/2;
 p.Hmin=5;
 p.M0=0;
-% p.K0 = 0;
+p.P0=X(10);
+
 p.dt = Parameters.t(2)-Parameters.t(1);
 %% Getting the parameters to be explored into variables that we can more easily recall
 p.L         = X(1);
@@ -25,7 +26,8 @@ dQamp  = X(8);
 dDanom = X(9);
 
 %% Set up model forcings
-Xamp=0.92;  % up to 92% increase (from Fraser & Inall, 2017): avg. of heat transport increase in the three inner-fjord sections
+% Xamp=0.92;  % if using anomaly to profiles
+Xamp=40; % if using isopycnal stretching; maximum range in isopycnal depth STD from Jackson & Straneo (2016; JPO)
 
 % we modulate the "storm events" to only happen in winter
 doy_peak = 173; % june 22nd
@@ -34,11 +36,14 @@ winter_wave(winter_wave < 0) = 0;
 Xper = (Xamp .* sin(-2*pi*Xfrq*Parameters.t)) .* winter_wave; 
 
 % Ocean forcings
-f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* (dTanom + dTanom .* Xper)))';
-f.Ss  = (Parameters.Socn + (Parameters.Sdec .* (dSanom + dSanom .* Xper)))';
-% f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* dTanom))';
-% f.Ss  = (Parameters.Socn + (Parameters.Sdec .* dSanom))';
+% f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* (dTanom + dTanom .* Xper)))'; % if using anomaly to profiles
+% f.Ss  = (Parameters.Socn + (Parameters.Sdec .* (dSanom + dSanom .* Xper)))'; % if using anomaly to profiles
+f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* dTanom))'; % if using isopycnal stretching
+f.Ss  = (Parameters.Socn + (Parameters.Sdec .* dSanom))'; % if using isopycnal stretching
 f.zs  = -Parameters.zs;
+
+[f.Ts,f.Ss] = heave_profiles(f.Ts,f.Ss,f.zs,[],Xper); % if using isopycnal stretching
+
 
 zs = flip(f.zs);
 Ts = flip(f.Ts,1); 

@@ -1,0 +1,64 @@
+function [temp_out,salt_out] = heave_profiles(Tz,Sz,z_in,depression)
+warning('off','all')
+% default is to heave the isopycnal by 20 m
+if nargin < 4, depression = ones(size(Sz,2))*20; end
+
+% Make the vertical profiles at regular depth intervals (1m)
+
+% nz_orig = 1:np;
+z_reg = min(z_in):1:-0.5;
+temp_reg = interp1(z_in,Tz,z_reg);
+salt_reg = interp1(z_in,Sz,z_reg);
+np = length(z_reg); % number of points in profile
+
+% The algorithm below is adapted from Cowton et al. (2016; Journal of Glaciology)
+temp_stretch=NaN(size(temp_reg));
+salt_stretch=NaN(size(salt_reg));
+for i=1:size(salt_reg,2)
+    % we only apply the isopycnal heaving if the change is larger than 1m because of the profile vertical resolution
+    if depression(i) > 1        
+        % find where the pycnocline is
+        sigma_profile = gsw_sigma0(salt_reg(:,i),temp_reg(:,i)); % depth in m is roughly equivalent to pressure in dbar
+        [~,i_z] = findpeaks(-diff(sigma_profile),'NPeaks',3);
+        pyc=sigma_profile(i_z(3));
+        oldstrat = findnearest(pyc,sigma_profile);
+        oldstrat = oldstrat(1);
+        newstrat = oldstrat-abs(depression(i)); % determine where it should end up at
+        
+        % stretch salinity
+        var = salt_reg(:,i);
+        varnew = NaN([np,1]);
+        varnew(1:newstrat) = interp1(1:oldstrat,var(1:oldstrat),oldstrat/newstrat:oldstrat/newstrat:oldstrat);
+        varnew(newstrat+1:np) = interp1(oldstrat+1:np,var(oldstrat+1:np),oldstrat+1:((np-oldstrat-1)/(np-newstrat-1)):np);
+        X = ~isnan(varnew); % get rid of potential gaps
+        Y = cumsum(X-diff([1;X])/2);
+        varnew = interp1(1:nnz(X),varnew(X),Y);
+        salt_stretch(:,i) = varnew;
+        
+        % stretch temperature
+        var = temp_reg(:,i);
+        varnew = NaN([np,1]);
+        varnew(1:newstrat) = interp1(1:oldstrat,var(1:oldstrat),oldstrat/newstrat:oldstrat/newstrat:oldstrat);
+        varnew(newstrat+1:np) = interp1(oldstrat+1:np,var(oldstrat+1:np),oldstrat+1:((np-oldstrat-1)/(np-newstrat-1)):np);
+        X = ~isnan(varnew);
+        Y = cumsum(X-diff([1;X])/2);
+        varnew = interp1(1:nnz(X),varnew(X),Y);
+        temp_stretch(:,i) = varnew;
+    else
+        salt_stretch(:,i) = salt_reg(:,i);
+        temp_stretch(:,i) = temp_reg(:,i);
+    end
+end
+
+salt_out = interp1(z_reg,salt_stretch,z_in);
+temp_out = interp1(z_reg,temp_stretch,z_in);
+
+% sanity check for the isopycnal heaving
+% for i=1:100:size(Sz,2)
+%     figure(99);
+%     subplot(1,2,1), plot(salt_stretch(:,i),z_reg); xlim([33 36])
+%     subplot(1,2,2), plot(temp_stretch(:,i),z_reg); xlim([-0.5 5])
+% end
+
+warning('on','all')
+end
