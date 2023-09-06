@@ -42,7 +42,7 @@ f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* dTanom))'; % if using isopycnal s
 f.Ss  = (Parameters.Socn + (Parameters.Sdec .* dSanom))'; % if using isopycnal stretching
 f.zs  = -Parameters.zs;
 
-[f.Ts,f.Ss] = heave_profiles(f.Ts,f.Ss,f.zs,[],Xper); % if using isopycnal stretching
+[f.Ts,f.Ss] = heave_profiles(f.Ts,f.Ss,f.zs,Xper); % if using isopycnal stretching
 
 
 zs = flip(f.zs);
