@@ -28,21 +28,21 @@ for i=1:size(salt_reg,2)
         % stretch salinity
         var = salt_reg(:,i);
         varnew = NaN([np,1]);
-        varnew(1:newstrat) = interp1(1:oldstrat,var(1:oldstrat),oldstrat/newstrat:oldstrat/newstrat:oldstrat);
-        varnew(newstrat+1:np) = interp1(oldstrat+1:np,var(oldstrat+1:np),oldstrat+1:((np-oldstrat-1)/(np-newstrat-1)):np);
+        varnew(1:newstrat) = interp1(1:oldstrat,var(1:oldstrat),oldstrat/newstrat:oldstrat/newstrat:oldstrat,'linear',var(oldstrat));
+        varnew(newstrat+1:np) = interp1(oldstrat+1:np,var(oldstrat+1:np),oldstrat+1:((np-oldstrat-1)/(np-newstrat-1)):np,'linear',var(end));
         X = ~isnan(varnew); % get rid of potential gaps
         Y = cumsum(X-diff([1;X])/2);
-        varnew = interp1(1:nnz(X),varnew(X),Y);
+        varnew = interp1(1:nnz(X),varnew(X),Y,'linear',varnew(end));
         salt_stretch(:,i) = varnew;
         
         % stretch temperature
         var = temp_reg(:,i);
         varnew = NaN([np,1]);
-        varnew(1:newstrat) = interp1(1:oldstrat,var(1:oldstrat),oldstrat/newstrat:oldstrat/newstrat:oldstrat);
-        varnew(newstrat+1:np) = interp1(oldstrat+1:np,var(oldstrat+1:np),oldstrat+1:((np-oldstrat-1)/(np-newstrat-1)):np);
+        varnew(1:newstrat) = interp1(1:oldstrat,var(1:oldstrat),oldstrat/newstrat:oldstrat/newstrat:oldstrat,'linear',var(oldstrat));
+        varnew(newstrat+1:np) = interp1(oldstrat+1:np,var(oldstrat+1:np),oldstrat+1:((np-oldstrat-1)/(np-newstrat-1)):np,'linear',var(end));
         X = ~isnan(varnew);
         Y = cumsum(X-diff([1;X])/2);
-        varnew = interp1(1:nnz(X),varnew(X),Y);
+        varnew = interp1(1:nnz(X),varnew(X),Y,'linear',varnew(end));
         temp_stretch(:,i) = varnew;
     else
         salt_stretch(:,i) = salt_reg(:,i);
@@ -52,6 +52,14 @@ end
 
 salt_out = interp1(z_reg,salt_stretch,z_in);
 temp_out = interp1(z_reg,temp_stretch,z_in);
+for i=1:size(salt_out,2)
+    for k=1:size(salt_out,1)
+        if isnan(salt_out(k,i))
+            salt_out(k,i) = salt_out(k-1,i);
+            temp_out(k,i) = temp_out(k-1,i);
+        end
+    end
+end
 
 % sanity check for the isopycnal heaving
 % for i=1:100:size(Sz,2)
