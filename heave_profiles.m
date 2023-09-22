@@ -1,5 +1,6 @@
 function [temp_out,salt_out] = heave_profiles(Tz,Sz,z_in,depression)
 warning('off','all')
+try
 % default is to heave the isopycnal by 20 m
 if nargin < 4, depression = ones(size(Sz,2))*20; end
 
@@ -20,7 +21,7 @@ for i=1:size(salt_reg,2)
         % find where the pycnocline is
         sigma_profile = gsw_sigma0(salt_reg(:,i),temp_reg(:,i)); % depth in m is roughly equivalent to pressure in dbar
         [~,i_z] = findpeaks(-diff(sigma_profile),'NPeaks',3);
-        pyc=sigma_profile(i_z(3));
+        pyc=sigma_profile(i_z(end));
         oldstrat = findnearest(pyc,sigma_profile);
         oldstrat = oldstrat(1);
         newstrat = oldstrat-abs(depression(i)); % determine where it should end up at
@@ -69,4 +70,7 @@ end
 % end
 
 warning('on','all')
+catch ME
+    disp('heave did not work here')
+end
 end
