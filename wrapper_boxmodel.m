@@ -4,7 +4,6 @@ function [ohc_mean,osc_mean] = wrapper_boxmodel(X,Parameters)
 % X contains all parameters we want to explore (M=8)
 % Parameters contain all parameters "in common" that we use for all model
 % runs
-
 [p,a] = get_model_default_parameters(); % default params, standard initialisation
 p.H = Parameters.H;
 p.trelax=365/2;
@@ -50,7 +49,11 @@ Ts = flip(f.Ts,1);
 Ss = flip(f.Ss,1);
 
 a.H0 = double(get_fjord_boxes_from_density(mean(Ts,2),mean(Ss,2),zs,p));
-
+% Check sum of layer thicknesses is equal to fjord depth.
+if abs(sum(a.H0)-p.H) > 1e-10
+    disp('Error: box thicknesses must sum to fjord depth');
+    return
+end
 % Alternative: evenly distribute layer thicknesses above the sill
 % a.H0 = ones([1,p.N]).*(abs(p.silldepth.*p.sill)/p.N);
 % if p.sill, a.H0 = [a.H0,p.H-abs(p.silldepth)]; end
@@ -78,18 +81,21 @@ fjord_run.a = a;
 %% Run the model itself, postprocess, and return the desired metrics for evaluation
 
 % add try-catch statement so the wrapper returns the initial HC in case of a crash
-try
-[fjord_run.s,fjord_run.f] = boxmodel(fjord_run.p, fjord_run.t, fjord_run.f, fjord_run.a);
-catch ME
-    % osc = fjord.a.S0  .*               (fjord.p.betaS*fjord.a.S0 - fjord.p.betaT*fjord.a.T0)  .* fjord.p.L.*fjord.p.W.*fjord.a.H0;
-    % ohc = (fjord.a.T0 .* fjord.p.cw .* (fjord.p.betaS*fjord.a.S0 - fjord.p.betaT*fjord.a.T0)) .* fjord.p.L.*fjord.p.W.*fjord.a.H0;
-    % ohc_mean = sum(ohc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-    % osc_mean = sum(osc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-    % return
-    ohc_mean = NaN;
-    osc_mean = NaN;
-    return
-end
+% try
+    [fjord_run.s,fjord_run.f] = boxmodel(fjord_run.p, fjord_run.t, fjord_run.f, fjord_run.a);
+    if fjord_run.s.status
+        disp('this is a crash example')
+    end
+% catch ME
+%     % osc = fjord.a.S0  .*               (fjord.p.betaS*fjord.a.S0 - fjord.p.betaT*fjord.a.T0)  .* fjord.p.L.*fjord.p.W.*fjord.a.H0;
+%     % ohc = (fjord.a.T0 .* fjord.p.cw .* (fjord.p.betaS*fjord.a.S0 - fjord.p.betaT*fjord.a.T0)) .* fjord.p.L.*fjord.p.W.*fjord.a.H0;
+%     % ohc_mean = sum(ohc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+%     % osc_mean = sum(osc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+%     % return
+%     ohc_mean = NaN;
+%     osc_mean = NaN;
+%     return
+% end
 % status = fjord_run.s.status;
 fjord_run.o = postprocess_boxmodel(fjord_run);
 
