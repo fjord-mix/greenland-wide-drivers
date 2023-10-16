@@ -7,7 +7,6 @@ function [output_time,heat_content,salt_content] = wrapper_boxmodel(X,Parameters
 % runs
 [p,a] = get_model_default_parameters(); % default params, standard initialisation
 p.H = Parameters.H;
-% p.trelax=365/2;
 p.Hmin=5;
 p.M0=0;
 p.P0=X(10);
@@ -93,19 +92,5 @@ fjord_run.o = postprocess_boxmodel(fjord_run);
 heat_content = sum(fjord_run.o.hc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
 salt_content = sum(fjord_run.o.sc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
 output_time = fjord_run.s.t;
-% if length(heat_content) > 365*2
-%     ohc_start = mean(heat_content(1:365)); % get the mean for the last year
-%     osc_start = mean(salt_content(1:365));
-% 
-%     ohc_end = mean(heat_content(end-365:end)); % get the mean for the last year
-%     osc_end = mean(salt_content(end-365:end));
-% 
-%     % get the difference to account for total warming/freshening
-%     ohc_mean = ohc_end-ohc_start; 
-%     osc_mean = osc_end-osc_start;
-% else % if the time series is too short
-%     ohc_mean = NaN;
-%     osc_mean = NaN;
-% end
 
 end

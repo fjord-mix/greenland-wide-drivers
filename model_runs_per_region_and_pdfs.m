@@ -1,10 +1,22 @@
+% Uncomment the code snipper below if running in parallel,
+% and remember to substitute the inner for loop for a parfor!
+% Obs. (1) it might be necessary to "flatten" the ensemble structure array
+% Obs. (2) using a parfor inside the for loop will likely increase overhead time, 
+%          but will significantly reduce the amount of memory used
+%          by enabling us to slice X and Prameters before the parallel runs
+
+% num_workers=4;
+% checkPool = gcp('nocreate'); % If no pool, do not create one
+% if isempty(checkPool) % if there is no pool
+%     parpool(num_workers);
+% end
+
 for i_reg=1:n_regions
     Xreg = squeeze(X(:,i_reg,:));
     Params_reg = Parameters{i_reg};
     tic
     for k_run=1:n_runs
         try
-            % [ensemble(k).time,ensemble(k).ohc,ensemble(k).osc,status,fjord_run(k)] = wrapper_boxmodel(X,Parameters);
             % [ohc_out(k_run,i_reg),osc_out(k_run,i_reg)] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
             [ensemble(k_run,i_reg).time,ensemble(k_run,i_reg).ohc,ensemble(k_run,i_reg).osc] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
             fprintf('run %d complete\n',k_run)
@@ -24,7 +36,8 @@ for i_reg=1:n_regions
             % get the difference to account for total warming/freshening
             ohc_out(k_run,i_reg) = ohc_end-ohc_start; 
             osc_out(k_run,i_reg) = osc_end-osc_start;
-        else % if the time series is too short
+        else 
+            % if the time series is too short, i.e., the model crashed
             ohc_out(k_run,i_reg) = NaN;
             osc_out(k_run,i_reg) = NaN;
         end
@@ -33,7 +46,7 @@ for i_reg=1:n_regions
     fprintf('region %d complete\n',i_reg)
 end
 
-% This is the trouble boy
+%% Separate tests of specific runs for debugging model instabilities
 % wrapper_boxmodel(X(36,1,:),Parameters{1});
 % ohc_out(36,1) = NaN;
 % osc_out(36,1) = NaN;

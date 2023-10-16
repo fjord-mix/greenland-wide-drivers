@@ -44,23 +44,18 @@ rng('default') % set the seed for reproducibility
 for i_reg=1:n_regions
     [Parameters{i_reg},IOpts,~,~] = define_model_param_distrib(datasets,fjords_compilation,i_reg,time_step); % available outputs: [Parameters,IOpts,probs,fjords_processed]
     input = uq_createInput(IOpts);
-    X(:,i_reg,:) = uq_getSample(input,n_runs,'LHS'); % perform latin hypercube sampling
+    X(:,i_reg,:) = uq_getSample(input,n_runs,'LHS'); % perform latin hypercube sampling of our parametre space
 end
 
 %% Run the model for all iterations
-% num_workers=4;
-% checkPool = gcp('nocreate'); % If no pool, do not create one
-% if isempty(checkPool) % if there is no pool
-%     parpool(num_workers);
-% end
-
-% Using a parfor inside the for loop will likely increase overhead time, 
-% but will significantly reduce the amount of memory used used 
-% by slicing X and Prameters before the parallel runs
+% load([outs_path,'hc_sc_ensemble_n',num2str(n_runs)],'ensemble') % if we have the results saved already
 run model_runs_per_region_and_pdfs.m
 
+% save ensemble structure so we do not need to rerun it all the time
 save([outs_path,'hc_sc_ensemble_n',num2str(n_runs)],'-v7.3','ensemble')
+
 %% Calculate the distributions based on the numerical outputs alone
+% load([outs_path,'ohc_osc_runs_probs_n',num2str(n_runs)]) % if we have the results saved already
 
 for i_reg=1:n_regions
     ohc_pd{i_reg} = makedist('Normal','mu',mean(ohc_out(:,i_reg),'omitnan'),'sigma',std(ohc_out(:,i_reg),'omitnan'));
@@ -68,24 +63,23 @@ for i_reg=1:n_regions
     ohc_ks{i_reg} = fitdist(ohc_out(:,i_reg),'kernel');
     osc_ks{i_reg} = fitdist(osc_out(:,i_reg),'kernel');
 end
-% save outputs in case matlab crashes, or so we dont have to re-run it
+% save outputs so we dont have to re-run it
 save([outs_path,'ohc_osc_change_runs_probs_n',num2str(n_runs)],...
       'ohc_out','osc_out','ohc_pd','osc_pd','ohc_ks','osc_ks')
-% load([outs_path,'ohc_osc_runs_probs_n',num2str(n_runs)])
 %% Setting up the PCE model per region using UQLab
 
-Ysur_ohc      = cell([1,n_regions]); % surrogate model results evaluated at the same points as the numerical model
-Ysur_osc      = cell([1,n_regions]);
-Ynum_ohc      = cell([1,n_regions]); % numerical model results
+Ynum_ohc      = cell([1,n_regions]); % Ynum: numerical model results
 Ynum_osc      = cell([1,n_regions]);
-Yeval_ohc     = cell([1,n_regions]); % surrogate model results evaluated at a much larger input range
+Ysur_ohc      = cell([1,n_regions]); % Ysur: surrogate model results evaluated at the same points
+Ysur_osc      = cell([1,n_regions]); % as the numerical model, used to evaluate model fit
+Yeval_ohc     = cell([1,n_regions]); % Yeval: surrogate model results evaluated at a much larger input range
 Yeval_osc     = cell([1,n_regions]);
-sur_model_ohc = cell([1,n_regions]);
+sur_model_ohc = cell([1,n_regions]); % sur_model: UQLab model objects
 sur_model_osc = cell([1,n_regions]);
-ohc_ks_eval   = cell([1,n_regions]);
+ohc_ks_eval   = cell([1,n_regions]); % ks_eval: kernel density functions for Yeval
 osc_ks_eval   = cell([1,n_regions]);
 
-sobolA_ohc    = cell([1,n_regions]);
+sobolA_ohc    = cell([1,n_regions]); % sobolA: Sobol indices analysis structures
 sobolA_osc    = cell([1,n_regions]);
 SobolOpts.Type             = 'Sensitivity';
 SobolOpts.Method           = 'Sobol';
@@ -93,6 +87,7 @@ SobolOpts.Sobol.Order      = 1;
 SobolSensOpts.SaveEvaluations = false; % to prevent excessive memory usage!
 % SobolOpts.Sobol.SampleSize = 1e5; % only needed for MC, but we are using the PCE model itself
 
+% ANCOVA analysis was not as successful as originally envisioned...
 % ANCOVA_ohc    = cell([1,n_regions]);
 % ANCOVA_osc    = cell([1,n_regions]);
 % ANCOVASensOpts_ohc.Type = 'Sensitivity';
@@ -102,8 +97,8 @@ SobolSensOpts.SaveEvaluations = false; % to prevent excessive memory usage!
 % ANCOVAAnalysis = uq_createAnalysis(ANCOVASensOpts);
 
 
-% Initialise UQLab
-% uqlab
+% Initialise UQLab - commented out because we initialised it earlier
+% uqlab % uncomment if loading model results run in a previous Matlab session
 for i_reg=1:n_regions
     [Params_reg,IOpts,~,~] = define_model_param_distrib(datasets,fjords_compilation,i_reg);
 
@@ -125,9 +120,12 @@ for i_reg=1:n_regions
     MetaOpts.Degree = 14;
 
     % Specifying NSamples would get UQLab to perform the runs for us
+    % we do not do that here because we need to exclude the unstable runs
+    % from the analysis
     % MetaOpts.ExpDesign.NSamples = n_runs;
 
-    % Instead we ran the simulations before to be able to ignore unstable/crashed runs
+    % So instead we ran the simulations before, and just filtered the runs
+    % with NaN as a result (as defined in the wrapper_boxmodel function)
     Xreg = X(:,i_reg,:);                    
     ohc_reg = ohc_out(:,i_reg);
     osc_reg = osc_out(:,i_reg);
@@ -160,6 +158,8 @@ for i_reg=1:n_regions
     % ANCOVA_osc{i_reg}  = uq_createAnalysis(ANCOVASensOpts_osc);
     % uq_histogram(Yeval)
 end
+% ideally we would save these variables as well, but Matlab always returns an error
+% when trying to save them
 % save([outs_path,'ohc_osc_pce_n50_n1e6'],'sur_model_ohc','sur_model_osc','Ysur_ohc','Ysur_osc','Yeval_ohc','Yeval_osc','sobolA_ohc','sobolA_osc')
 
 %% Plotting the outputs
