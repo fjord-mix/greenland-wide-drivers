@@ -1,19 +1,20 @@
-function [params,iOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,i_reg)
+function [params,iOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,i_reg,experiments_time_step)
 %% A more statistically driven approach to sensitivity tests
 % derives distributions for all parameters on which our model simulations
 % will depend on: W, L, Zg, Zs, Ta, Sa, Qa, Da
 
 %% Get compiled fjord data in pre-processed structure
 % also selects the desired period in time
-verbose.plot=0;  % change to 1 to produce plots of all parameter distributions
+verbose.plot=1;  % change to 1 to produce plots of all parameter distributions
 verbose.print=0; % change 1 to print basic fjord statistics
 
 datasets.opts.time_start = datetime(2010,01,15);
-datasets.opts.time_end   = datetime(2014,12,15);
+datasets.opts.time_end   = datetime(2018,12,15);
 datasets.opts.time_interval = [datasets.opts.time_start,datasets.opts.time_end]; 
 datasets.opts.dt            = 30.0; % time step (in days) for creating the forcings
-experiments_time_step       = 0.01; % time step (in days) for the actual experiments
-
+if nargin < 4
+    experiments_time_step       = 0.10; % time step (in days) for the actual experiments
+end
 fjords_processed(size(fjords_compilation)) = struct("p",[],"a",[],"f",[],"t",[],"m",[]);
 for i=1:length(fjords_compilation)
     fjords_processed(i) = prepare_boxmodel_input(datasets,fjords_compilation(i));
@@ -46,21 +47,22 @@ iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zg.total', [min(fjord_st
 
 %% Gets the ocean forcing
 
-[tocn_forcing, tocn_anom, tocn_decay, depths] = get_var_clim_by_region(fjords_processed,'Ts');
-[socn_forcing, socn_anom, socn_decay, ~]      = get_var_clim_by_region(fjords_processed,'Ss');
-
+% [tocn_forcing, tocn_anom, tocn_decay, depths] = get_var_clim_by_region(fjords_processed,'Ts');
+% [socn_forcing, socn_anom, socn_decay, ~]      = get_var_clim_by_region(fjords_processed,'Ss');
+[tocn_forcing, tocn_anom, tocn_decay, depths] = get_var_forcing_by_region(fjords_processed,'Ts');
+[socn_forcing, socn_anom, socn_decay, ~]      = get_var_forcing_by_region(fjords_processed,'Ss');
 
 % reduce anomaly to a standardised/normalised profile and a "dT factor"
-% Anomaly based on surface, multiplied by an "atenuation profile"?
-tocn_pd = fitdist(tocn_anom(:,i_reg),'kernel');    
-socn_pd = fitdist(socn_anom(:,i_reg),'kernel');
+% Anomaly based on surface, multiplied by an "atenuation profile/decay function"
+tocn_pd = fitdist(tocn_anom{i_reg},'kernel');    
+socn_pd = fitdist(socn_anom{i_reg},'kernel');
 omeg_pd = makedist('Normal','mu',0.1429,'sigma',0.1167);
 
 probs(end+1) = tocn_pd;
-iOpts.Marginals(end+1) = uq_KernelMarginals(tocn_anom(:,i_reg),[min(tocn_anom(:,i_reg)), max(tocn_anom(:,i_reg))]);
+iOpts.Marginals(end+1) = uq_KernelMarginals(tocn_anom{i_reg},[min(tocn_anom{i_reg}), max(tocn_anom{i_reg})]);
 
 probs(end+1) = socn_pd;
-iOpts.Marginals(end+1) = uq_KernelMarginals(socn_anom(:,i_reg),[min(socn_anom(:,i_reg)), max(socn_anom(:,i_reg))]);
+iOpts.Marginals(end+1) = uq_KernelMarginals(socn_anom{i_reg},[min(socn_anom{i_reg}), max(socn_anom{i_reg})]);
 
 probs(end+1) = omeg_pd;
 iOpts.Marginals(end+1).Type     = 'Gaussian';
@@ -83,8 +85,8 @@ for k=1:length(fjords_processed)
 end
 q_amp_max = mean(q_amp_max,'omitnan');
 q_amp_min = mean(q_amp_min,'omitnan');
-[q_clim,q_anom,~,~] = get_var_clim_by_region(fjords_processed,'Qsg');
-q_forcing         = repmat(q_clim,size(q_anom,1)/size(q_clim,1),1,1);
+% [q_clim,q_anom,~,~] = get_var_clim_by_region(fjords_processed,'Qsg');
+[q_forcing,~,~,~] = get_var_forcing_by_region(fjords_processed,'Qsg');
 q_pd              = makedist('Uniform','lower',q_amp_min,'upper',q_amp_max);
 
 % It makes no sense to have Qsg in terms of anomalies, because in the
@@ -100,11 +102,12 @@ probs(end+1)                    = q_pd;
 % figure('Name','Qsg parameter space'); histogram(random(q_pd,1000));
 
 % Solid-ice discharge (same procedure as for T and S)
-[d_forcing,d_anom,~,~] = get_var_clim_by_region(fjords_processed,'D');
-d_pd              = fitdist(d_anom(:,i_reg),'kernel');
+% [d_forcing,d_anom,~,~] = get_var_clim_by_region(fjords_processed,'D');
+[d_forcing,d_anom,~,~] = get_var_forcing_by_region(fjords_processed,'D');
+d_pd              = fitdist(d_anom{i_reg},'kernel');
 
 probs(end+1) = d_pd;
-iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom(:,i_reg),[min(d_anom(:,i_reg)), max(d_anom(:,i_reg))]);
+iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom{i_reg},[min(d_anom{i_reg}), max(d_anom{i_reg})]);
 
 p_pd              = makedist('Uniform','lower',5,'upper',30);
 iOpts.Marginals(end+1).Type     = 'uniform';
@@ -151,9 +154,6 @@ iOpts.Marginals(8).Name = 'Qa';
 iOpts.Marginals(9).Name = 'Da';
 iOpts.Marginals(10).Name = 'P0';
 
-if isfield(verbose,'plot') && verbose.plot
-    run plot_distributions.m
-end
 
 end
 
