@@ -18,8 +18,8 @@ datasets.opts.dt            = 1.0; % time step in days
 %% Summary of data compilation 
 % useful to check the link of glaciers and shelf profiles with their respective fjord and if all data was properly loaded
 
-plt_handles     = plot_fjords_summary(datasets,fjords_map,fjords_processed); %plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off'; 
-plt_obs_handles = plot_obs(datasets);
+% plt_handles     = plot_fjords_summary(datasets,fjords_map,fjords_processed); %plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off'; 
+% plt_obs_handles = plot_obs(datasets);
 % plt_obs_handles = plot_obs(datasets,datasets.obs.ctd_data.omg); % plots only a specific obs dataset
 %plt_obs_handles.cb1.Visible = 'off'; plt_obs_handles.cb2.Visible = 'off'; plt_obs_handles.cb3.Visible = 'off'; 
 
@@ -39,6 +39,7 @@ fjord_keys={'KF','SF','KS','IS'};
 id=1;
 name_ctrl = sprintf('%s_ctrl',fjord_keys{id});
 fjord_ctrl = prepare_boxmodel_input(datasets,fjords_processed(fjord_ids(id)),fjord_ids(id)); % arranges into the boxmodel input structure
+fjord_ctrl.p.plot_runtime=1;
 [fjord_ctrl.s,fjord_ctrl.f] = boxmodel(fjord_ctrl.p,fjord_ctrl.t,fjord_ctrl.f,fjord_ctrl.a); % runs and gets the results    
 fjord_ctrl.o = postprocess_boxmodel(fjord_ctrl);
 fjord_ctrl.m.name = name_ctrl;
