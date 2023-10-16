@@ -37,8 +37,8 @@ for i_reg=1:7
     [~,~,probs,~] = define_model_param_distrib(datasets,fjords_compilation,i_reg);
     
     %% Ocean parameter distributions
-    x_t = linspace(-2, 2,1000);
-    x_s = linspace(-0.5, 0.5,1000);
+    x_t = linspace(-5, 5,1000);
+    x_s = linspace(-5, 5,1000);
     x_w = linspace(0, 0.6,1000);
     
     subplot(2,5,5);  hold on; box on; plot(x_t,pdf(probs(5),x_t),'linewidth',1.5);
@@ -46,7 +46,7 @@ for i_reg=1:7
     subplot(2,5,9);  hold on; box on; plot(x_w,pdf(probs(7),x_w),'linewidth',1.5,'color','k');
 
     %% Glacier parameter distributions    
-    x_d = linspace(-30, 30,3000);
+    x_d = linspace(-500,500,3000);
     x_q = linspace(0, 2,3000);
     x_p = linspace(0,40,3000);
     subplot(2,5,6); hold on; box on; plot(x_q,pdf(probs(8),x_q),'linewidth',1.5); 
@@ -59,13 +59,16 @@ xlabel('Q_a (m^3s^{-1})','fontsize',14); text(0.95,0.95,'(f)','Units','normalize
 ylabel('Probability function','fontsize',14); 
 subplot(2,5,7);
 xlabel('D_a (m^3s^{-1})','fontsize',14); text(0.95,0.95,'(g)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+ylim([0 0.02]); xlim([-300 500]);
 subplot(2,5,8);
 xlabel('PW (m)','fontsize',14); text(0.95,0.95,'(h)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
 subplot(2,5,5);
 xlabel('T_a (^oC)','fontsize',14); text(0.95,0.95,'(e)','Units','normalized','fontsize',14,'HorizontalAlignment','right');
+ylim([0 3]); xlim([-2 3]);
 hl = legend('SW','SE','CW','CE','NW','NE','NO','fontsize',14); hl.Position=[0.91,0.735,0.06,0.19];
 subplot(2,5,10);
 xlabel('S_a (-)','fontsize',14); text(0.95,0.95,'(i)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+ylim([0 6]); xlim([-1.2 1]);
 subplot(2,5,9);
 xlabel('\omega (day^{-1})','fontsize',14); text(0.95,0.95,'(j)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
 
