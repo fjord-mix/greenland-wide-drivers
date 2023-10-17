@@ -16,11 +16,11 @@ letters = {'a','b','c','d','e','f','g','h'};
 %% Showing all input parameters first
 % hs = plot_fjords_summary(datasets,fjords_map,fjords_compilation); %plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off'; 
 % hf = plot_distributions(datasets,fjords_compilation);
-% exportgraphics(hf,[figs_path,'summary_input_params2010-2018.png'],'Resolution',300)
+% exportgraphics(hf,[figs_path,'summary_input_probs2010-2018.png'],'Resolution',300)
 
 %% Initialise all needed variables
 regions = {'SW','SE','CW','CE','NW','NE','NO'};
-n_runs    = 50;
+n_runs    = 200;
 time_step = 0.1; % in days
 n_regions = length(regions);
 
@@ -34,7 +34,7 @@ osc_ks  = cell([1, n_regions]);
 
 
 Parameters = cell([1, n_regions]);
-X         = zeros([n_runs,n_regions,10]);
+X          = zeros([n_runs,n_regions,10]);
 
 % Initialise UQLab
 uqlab
@@ -162,5 +162,11 @@ end
 % when trying to save them
 % save([outs_path,'ohc_osc_pce_n50_n1e6'],'sur_model_ohc','sur_model_osc','Ysur_ohc','Ysur_osc','Yeval_ohc','Yeval_osc','sobolA_ohc','sobolA_osc')
 
-%% Plotting the outputs
+%% Plotting the outputs and an input summary
+close all
+plot_reg_ocn_forcings(datasets,fjords_compilation)
+figure(1); exportgraphics(gcf,[figs_path,'hovmoller_Ts.png'],'Resolution',300)
+figure(2); exportgraphics(gcf,[figs_path,'hovmoller_Ss.png'],'Resolution',300)
+figure(3); exportgraphics(gcf,[figs_path,'series_discharge_hc_sc.png'],'Resolution',300)
+
 run make_figs_uqlab_outputs.m
