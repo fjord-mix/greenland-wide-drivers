@@ -1,8 +1,8 @@
 function [temp_out,salt_out] = heave_profiles(Tz,Sz,z_in,depression)
 warning('off','all')
 try
-% default is to heave the isopycnal by 20 m
-if nargin < 4, depression = ones(size(Sz,2))*20; end
+% default is to heave the isopycnal by 20 m ("depression" amplitude of 40)
+if nargin < 4, depression = ones(size(Sz,2))*40; end
 
 % Make the vertical profiles at regular depth intervals (1m)
 
@@ -62,15 +62,23 @@ for i=1:size(salt_out,2)
     end
 end
 
-% sanity check for the isopycnal heaving
+% % sanity check for the isopycnal heaving
 % for i=1:100:size(Sz,2)
 %     figure(99);
-%     subplot(1,2,1), plot(salt_stretch(:,i),z_reg); xlim([33 36])
-%     subplot(1,2,2), plot(temp_stretch(:,i),z_reg); xlim([-0.5 5])
+%     subplot(1,2,1)
+%     plot(Sz(:,i),z_in); hold on;
+%     plot(salt_stretch(:,i),z_reg); 
+%     hold off;
+%     xlim([33 36])
+%     subplot(1,2,2)
+%     plot(Tz(:,i),z_in); hold on;
+%     plot(temp_stretch(:,i),z_reg);
+%     hold off;
+%     xlim([-0.5 5])
 % end
 
 warning('on','all')
 catch ME
-    disp('heave did not work here')
+    fprintf('heave did not work here: %s\n',ME.message)
 end
 end
