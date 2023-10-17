@@ -53,4 +53,4 @@ end
 
 % [ohc_out(k_run,i_reg),osc_out(k_run,i_reg)] = wrapper_boxmodel(X(50,7,:),Parameters{7});
 % [ensemble(1,1).time,ensemble(1,1).ohc,ensemble(1,1).osc] = wrapper_boxmodel(X(1,1,:),Parameters{1});
-% wrapper_boxmodel(X(6,1,:),Parameters{1});
+% wrapper_boxmodel(X(7,5,:),Parameters{5});
