@@ -42,7 +42,7 @@ hl = legend(region_handles,regions_lbl,'fontsize',14,'Location','northeastoutsid
 % hl.NumColumns=3;
 xlabel('Time'); ylabel('Heat content (kJ m^{-3})');
 set(gca,'fontsize',14)
-
+exportgraphics(gcf,[figs_path,'ensemble_series_ohc_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% construct the numerical model kernel density plot
 ohc_x = linspace(0.99*min(ohc_out(:)),1.01*max(ohc_out(:)),1000);
@@ -60,7 +60,7 @@ xlabel('Salt content change (g m^{-3})',fontsize=14); box on
 text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
 hl = legend(regions_lbl,'fontsize',14,'Location','west');
-% exportgraphics(gcf,[figs_path,'test_output_ohc_osc_ks_n50.png'],'Resolution',300)
+exportgraphics(gcf,[figs_path,'ksnum_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
 
 
@@ -75,7 +75,7 @@ for i_reg=1:n_regions
     if ismember(i_reg,[1,5]), ylabel('Surrogate model'); end
 end
 % savefig([figs_path,'pce_fit_indices_n30.png'],'Resolution',300)
-% exportgraphics(gcf,[figs_path,'pce_fit_indices_n30.png'],'Resolution',300)
+exportgraphics(gcf,[figs_path,'pce_fit_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plotting the surrogate model kernel density
 figure('Name','Surrogate model kernel density','Position',[40 40 850 300]); hold on;
@@ -90,7 +90,7 @@ xlabel('Salt content change (g m^{-3})',fontsize=14);
 text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
 hl = legend(regions,'fontsize',14,'Location','west');
-% exportgraphics(gcf,[figs_path,'test_pce_ks_n1e6_n30.png'],'Resolution',300)
+exportgraphics(gcf,[figs_path,'kssur_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
 
 %% Plotting the Sobol indices
@@ -111,6 +111,7 @@ for i_reg=1:7
 end
 hl = legend(hb,{'Heat content','Salt content'},'fontsize',12);
 hl.Position(1)=hl.Position(1)+0.175;
+exportgraphics(gcf,[figs_path,'sobol_total_n',num2str(n_runs),'.png'],'Resolution',300)
 
 % % Plotting indices grouped per region
 % sobolTotal_ohc = [];
