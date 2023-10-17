@@ -14,7 +14,7 @@ p.P0=X(10);
 p.dt = Parameters.t(2)-Parameters.t(1);
 %% Getting the parameters to be explored into variables that we can more easily recall
 p.L         = X(1);
-p.W         = X(2);
+p.W         = X(1)./X(2); % X(2);
 p.silldepth = X(3);
 p.zgl       = X(4);
 
@@ -26,7 +26,7 @@ dDanom = X(9);
 
 %% Set up model forcings
 % Xamp=0.92;  % if using anomaly to profiles
-Xamp=40; % if using isopycnal stretching; maximum range in isopycnal depth STD from Jackson & Straneo (2016; JPO)
+Xamp=80; % if using isopycnal stretching; maximum range in isopycnal depth STD from Jackson & Straneo (2016; JPO)
 
 % we modulate the "storm events" to only happen in winter
 doy_peak = 173; % june 22nd

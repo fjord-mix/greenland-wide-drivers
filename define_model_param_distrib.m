@@ -28,8 +28,10 @@ fjord_stats = print_fjord_statistics(fjords_compilation,verbose);
 probs(1) = fjord_stats.L.pd;
 iOpts.Marginals(1) = uq_KernelMarginals(fjord_stats.L.total', [0 max(fjord_stats.L.total)]);
 
-probs(end+1) = fjord_stats.W.pd;
-iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.W.total',[0, max(fjord_stats.W.total)]);
+% probs(end+1) = fjord_stats.W.pd;
+% iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.W.total',[0, max(fjord_stats.W.total)]);
+probs(end+1) = fjord_stats.a.pd;
+iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.a.total',[1, max(fjord_stats.a.total)]);
 
 probs(end+1) = fjord_stats.Zs.pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zs.total', [min(fjord_stats.Zs.total) -50]);
@@ -104,7 +106,7 @@ probs(end+1)                    = q_pd;
 % Solid-ice discharge (same procedure as for T and S)
 % [d_forcing,d_anom,~,~] = get_var_clim_by_region(fjords_processed,'D');
 [d_forcing,d_anom,~,~] = get_var_forcing_by_region(fjords_processed,'D');
-d_pd              = fitdist(d_anom{i_reg},'kernel');
+d_pd                   = fitdist(d_anom{i_reg},'kernel');
 
 probs(end+1) = d_pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom{i_reg},[min(d_anom{i_reg}), max(d_anom{i_reg})]);
@@ -144,7 +146,7 @@ params.I0   = fjord_dummy.a.I0;
 
 % Add the names to the input distributions we created
 iOpts.Marginals(1).Name = 'L';
-iOpts.Marginals(2).Name = 'W';
+iOpts.Marginals(2).Name = 'alpha'; % iOpts.Marginals(2).Name = 'W';
 iOpts.Marginals(3).Name = 'Zs';
 iOpts.Marginals(4).Name = 'Zg';
 iOpts.Marginals(5).Name = 'Ta';

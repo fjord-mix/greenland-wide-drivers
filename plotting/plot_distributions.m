@@ -11,11 +11,12 @@ text(0.95,0.95,'(a)','Units','normalized','fontsize',14,'HorizontalAlignment','r
 xlabel('L (m)','fontsize',14); ylabel('Probability function','fontsize',14)
 
 subplot(2,5,2); hold on; box on
-plot(fjord_stats.W.xi,fjord_stats.W.kern,'linewidth',1.5,'color','k');
+% plot(fjord_stats.W.xi,fjord_stats.W.kern,'linewidth',1.5,'color','k');
+plot(fjord_stats.a.xi,fjord_stats.a.kern,'linewidth',1.5,'color','k');
 % plot(fjord_stats.W.xi,pdf(fjord_stats.W.pd,fjord_stats.W.xi),':r','linewidth',1.5)
 % xlim([0 max(fjord_stats.W.xi)]);
 text(0.95,0.95,'(b)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
-xlabel('W (m)','fontsize',14);
+xlabel('\alpha','fontsize',14); % xlabel('W (m)','fontsize',14);
 
 subplot(2,5,3); hold on; box on
 plot(fjord_stats.Zg.xi,fjord_stats.Zg.kern,'linewidth',1.5,'color','k');
