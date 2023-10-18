@@ -67,15 +67,43 @@ exportgraphics(gcf,[figs_path,'ksnum_ohc_osc_n',num2str(n_runs),'.png'],'Resolut
 %% Plotting surrogate vs numerical model
 figure('Name','Model fit','position',[40 40 1000 400])
 for i_reg=1:n_regions
-    subplot(2,4,i_reg)
-    uq_plot(gca,Ynum_ohc{i_reg},Ysur_ohc{i_reg},'o')
-    text(0.05,0.95,['(',letters{i_reg},') ',regions_lbl{i_reg}],'units','normalized','fontsize',14)
+    subplot(2,4,i_reg); hold on
+    hl = refline(1,0); hl.LineStyle='--'; hl.Color='r';
+    uq_plot(gca,Ynum_ohc{i_reg},Ysur_ohc{i_reg},'+')
+    box on; grid on;
+
+    rms = rmse(Ysur_ohc{i_reg},Ynum_ohc{i_reg},'omitnan');
+    mdl = fitlm(Ynum_ohc{i_reg},Ysur_ohc{i_reg});
+
+    text(0.05,0.95,sprintf('(%s) %s',letters{i_reg},regions_lbl{i_reg}),'units','normalized','fontsize',14)
+    % text(0.98,0.07,sprintf('RMSE=%0.2f J m^{-3}',rms),'units','normalized','horizontalAlignment','right','fontsize',14)
+    text(0.98,0.09,sprintf('R^2=%0.2f',mdl.Rsquared.Adjusted),'units','normalized','horizontalAlignment','right','fontsize',14)
     set(gca,'fontsize',14,'XTickLabel',[],'YTickLabel',[])
     if i_reg > 3, xlabel('Numerical model'); end
     if ismember(i_reg,[1,5]), ylabel('Surrogate model'); end
 end
 % savefig([figs_path,'pce_fit_indices_n30.png'],'Resolution',300)
-exportgraphics(gcf,[figs_path,'pce_fit_n',num2str(n_runs),'.png'],'Resolution',300)
+exportgraphics(gcf,[figs_path,'pce_fit_ohc_n',num2str(n_runs),'.png'],'Resolution',300)
+
+figure('Name','Model fit','position',[40 40 1000 400])
+for i_reg=1:n_regions
+    subplot(2,4,i_reg); hold on;
+    hl = refline(1,0); hl.LineStyle='--'; hl.Color='r';
+    uq_plot(gca,Ynum_osc{i_reg},Ysur_osc{i_reg},'+')    
+    box on; grid on;
+
+    rms = rmse(Ysur_osc{i_reg},Ynum_osc{i_reg},'omitnan');
+    mdl = fitlm(Ynum_osc{i_reg},Ysur_osc{i_reg});
+
+    text(0.05,0.95,sprintf('(%s) %s',letters{i_reg},regions_lbl{i_reg}),'units','normalized','fontsize',14)
+    % text(0.98,0.07,sprintf('RMSE=%0.2f J m^{-3}',rms),'units','normalized','horizontalAlignment','right','fontsize',14)
+    text(0.98,0.09,sprintf('R^2=%0.2f',mdl.Rsquared.Adjusted),'units','normalized','horizontalAlignment','right','fontsize',14)
+    set(gca,'fontsize',14,'XTickLabel',[],'YTickLabel',[])
+    if i_reg > 3, xlabel('Numerical model'); end
+    if ismember(i_reg,[1,5]), ylabel('Surrogate model'); end
+end
+% savefig([figs_path,'pce_fit_indices_n30.png'],'Resolution',300)
+exportgraphics(gcf,[figs_path,'pce_fit_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plotting the surrogate model kernel density
 figure('Name','Surrogate model kernel density','Position',[40 40 850 300]); hold on;
@@ -108,6 +136,7 @@ for i_reg=1:7
     set(gca,'XTick', 1:length(IOpts.Marginals),'XTickLabel', sobolResults_ohc.VariableNames)
     if i_reg < 4, xlabel(''); end
     if i_reg==1 || i_reg==5, ylabel('Total Sobol indices'); end
+    ylim([0 1])
 end
 hl = legend(hb,{'Heat content','Salt content'},'fontsize',12);
 hl.Position(1)=hl.Position(1)+0.175;
