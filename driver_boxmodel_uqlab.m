@@ -59,7 +59,7 @@ end
 %% Run the model for all iterations
 % load([outs_path,'hc_sc_ensemble_n',num2str(n_runs)],'ensemble') % if we have the results saved already
 
-run model_runs_per_region_and_pdfs.m
+run run_model_compute_pdfs.m
 save([outs_path,'hc_sc_ensemble_n',num2str(n_runs)],'-v7.3','ensemble') % save ensemble structure so we do not need to rerun it all the time
 
 % save outputs so we dont have to re-run it
