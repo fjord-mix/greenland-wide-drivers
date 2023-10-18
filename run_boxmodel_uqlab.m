@@ -27,7 +27,7 @@ regions = {'SW','SE','CW','CE','NW','NE','NO'};
 % exportgraphics(hf,[figs_path,'summary_input_probs2010-2018.png'],'Resolution',300)
 
 %% Initialise all needed variables
-n_runs    = 200;
+n_runs    = 300;
 time_step = 0.1; % in days
 n_regions = length(regions);
 
