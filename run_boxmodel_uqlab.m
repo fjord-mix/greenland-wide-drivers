@@ -33,11 +33,15 @@ n_regions = length(regions);
 
 ohc_out = NaN([n_runs, n_regions]);
 osc_out = NaN([n_runs, n_regions]);
-ensemble(n_runs,n_regions) = struct("time",[],"ohc",[],"osc",[]);
+ohc_out_as = NaN([n_runs, n_regions]);
+osc_out_as = NaN([n_runs, n_regions]);
+ensemble(n_runs,n_regions) = struct("time",[],"ohc",[],"osc",[],"ohc_as",[],"osc_as",[]);
 ohc_pd  = cell([1,n_regions]);
 osc_pd  = cell([1,n_regions]);
 ohc_ks  = cell([1, n_regions]);
 osc_ks  = cell([1, n_regions]);
+ohc_ks_as  = cell([1, n_regions]);
+osc_ks_as  = cell([1, n_regions]);
 
 Parameters = cell([1, n_regions]);
 X          = zeros([n_runs,n_regions,10]);
@@ -58,17 +62,6 @@ end
 run model_runs_per_region_and_pdfs.m
 save([outs_path,'hc_sc_ensemble_n',num2str(n_runs)],'-v7.3','ensemble') % save ensemble structure so we do not need to rerun it all the time
 
-%% Calculate the distributions based on the numerical outputs alone
-% this is just for comparison with the surrogate model outputs
-% load([outs_path,'ohc_osc_runs_probs_n',num2str(n_runs)]) % if we have the results saved already
-
-for i_reg=1:n_regions
-    ohc_pd{i_reg} = makedist('Normal','mu',mean(ohc_out(:,i_reg),'omitnan'),'sigma',std(ohc_out(:,i_reg),'omitnan'));
-    osc_pd{i_reg} = makedist('Normal','mu',mean(osc_out(:,i_reg),'omitnan'),'sigma',std(osc_out(:,i_reg),'omitnan'));
-    ohc_ks{i_reg} = fitdist(ohc_out(:,i_reg),'kernel');
-    osc_ks{i_reg} = fitdist(osc_out(:,i_reg),'kernel');
-end
-
 % save outputs so we dont have to re-run it
 save([outs_path,'ohc_osc_change_runs_probs_n',num2str(n_runs)],...
       'ohc_out','osc_out','ohc_pd','osc_pd','ohc_ks','osc_ks')
@@ -76,7 +69,7 @@ save([outs_path,'ohc_osc_change_runs_probs_n',num2str(n_runs)],...
 
 run compute_surrogate_and_sobol_indices.m
 
-% ideally we would save these variables as well, but Matlab always returns an error
+% ideally we would save the PCE-related variables as well, but Matlab always returns an error
 % when trying to save them
 % save([outs_path,'ohc_osc_pce_n50_n1e6'],'sur_model_ohc','sur_model_osc','Ysur_ohc','Ysur_osc','Yeval_ohc','Yeval_osc','sobolA_ohc','sobolA_osc')
 

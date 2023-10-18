@@ -1,4 +1,4 @@
-function [output_time,heat_content,salt_content] = wrapper_boxmodel(X,Parameters,flag_debug)
+function [output_time,heat_content,salt_content,hc_as,sc_as] = wrapper_boxmodel(X,Parameters,flag_debug)
 % function [ohc_mean,osc_mean] = wrapper_boxmodel(X,Parameters,flag_debug)
 % function [output_time,heat_content,salt_content,status,fjord_run] = wrapper_boxmodel(X,Parameters)
 % Wrapper function for running the boxmodel in UQLab
@@ -92,5 +92,9 @@ fjord_run.o = postprocess_boxmodel(fjord_run);
 heat_content = sum(fjord_run.o.hc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
 salt_content = sum(fjord_run.o.sc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
 output_time = fjord_run.s.t;
+
+% considering only the boxes above the sill
+hc_as = sum(fjord_run.o.hc(1:p.N))./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+sc_as = sum(fjord_run.o.sc(1:p.N))./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
 
 end

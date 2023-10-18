@@ -112,11 +112,13 @@ for i_reg=1:n_regions,plot(ohc_x,pdf(ohc_ks_eval{i_reg},ohc_x),'linewidth',2); e
 xlabel('Heat content change (J m^{-3})',fontsize=14); ylabel('Kernel density',fontsize=14);  
 text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
+xlim([-180 100])
 subplot(1,2,2), hold on; box on
 for i_reg=1:n_regions,plot(osc_x,pdf(osc_ks_eval{i_reg},osc_x),'linewidth',2); end
 xlabel('Salt content change (g m^{-3})',fontsize=14); 
 text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
+xlim([-6e-3 5e-3])
 hl = legend(regions,'fontsize',14,'Location','west');
 exportgraphics(gcf,[figs_path,'kssur_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
