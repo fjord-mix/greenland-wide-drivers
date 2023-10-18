@@ -94,7 +94,7 @@ salt_content = sum(fjord_run.o.sc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H
 output_time = fjord_run.s.t;
 
 % considering only the boxes above the sill
-hc_as = sum(fjord_run.o.hc(1:p.N))./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-sc_as = sum(fjord_run.o.sc(1:p.N))./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+hc_as = sum(fjord_run.o.hc(1:p.N,:))./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+sc_as = sum(fjord_run.o.sc(1:p.N,:))./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
 
 end
