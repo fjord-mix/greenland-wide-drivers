@@ -56,7 +56,7 @@ for i_reg=1:7
 end
 
 subplot(2,5,6);
-xlabel('Q_a (m^3s^{-1})','fontsize',14); text(0.95,0.95,'(f)','Units','normalized','fontsize',14,'HorizontalAlignment','right'); 
+xlabel('Q_a','fontsize',14); text(0.95,0.95,'(f)','Units','normalized','fontsize',14,'HorizontalAlignment','right'); 
 ylabel('Probability function','fontsize',14); 
 subplot(2,5,7);
 xlabel('D_a (m^3s^{-1})','fontsize',14); text(0.95,0.95,'(g)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
