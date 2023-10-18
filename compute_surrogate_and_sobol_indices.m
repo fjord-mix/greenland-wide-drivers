@@ -47,7 +47,8 @@ for i_reg=1:n_regions
     MetaOpts.MetaType = 'PCE';    
     MetaOpts.FullModel = num_model;
     MetaOpts.Method = 'LARS';
-    MetaOpts.Degree = 14;
+    MetaOpts.Degree = 1:1:15;
+    MetaOpts.TruncOptions.qNorm = 0.1:0.1:1;
 
     % Specifying NSamples would get UQLab to perform the runs for us
     % we do not do that here because we need to exclude the unstable runs
