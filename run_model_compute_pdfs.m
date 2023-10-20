@@ -16,6 +16,7 @@ for i_reg=1:n_regions
     Params_reg = Parameters{i_reg};
     tic
     for k_run=1:n_runs
+        % if isnan(ohc_out(k_run,i_reg)) % saves time after a bug/crash fix, but requires reinitialising the variable
         try
             % [ohc_out(k_run,i_reg),osc_out(k_run,i_reg)] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
             [ensemble(k_run,i_reg).time,ensemble(k_run,i_reg).ohc,ensemble(k_run,i_reg).osc,ensemble(k_run,i_reg).p] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
@@ -25,6 +26,7 @@ for i_reg=1:n_regions
             ensemble(k_run,i_reg).osc = NaN(size(ensemble(k_run,i_reg).time));
             fprintf('run %d %s\n',k_run,ME.message)
         end
+        % end
     end
     toc
     fprintf('region %d complete\n',i_reg)
@@ -70,7 +72,7 @@ fprintf('Computation of heat/salt contents complete.\n')
 % end
 
 %% Separate tests of specific runs for debugging model instabilities
-% wrapper_boxmodel(X(36,1,:),Parameters{1});
+% wrapper_boxmodel(X(99,2,:),Parameters{2});
 % ohc_out(36,1) = NaN;
 % osc_out(36,1) = NaN;
 
