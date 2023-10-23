@@ -11,6 +11,7 @@
 %     parpool(num_workers);
 % end
 
+%% Training dataset
 for i_reg=1:n_regions
     Xreg = squeeze(X(:,i_reg,:));
     Params_reg = Parameters{i_reg};
@@ -28,37 +29,39 @@ for i_reg=1:n_regions
         end
         % end
     end
-    toc
     fprintf('region %d complete\n',i_reg)
+    toc    
 end
-fprintf('Model runs complete. Starting computation of heat/salt contents...\n')
-time_axis = datetime(2010,01,15)+1:1:datetime(2018,12,15);
-for i_reg=1:n_regions
-    for k_run=1:n_runs
-        if length(ensemble(k_run,i_reg).ohc) == length(time_axis)
-            
-            % compute quantities per unit volume
-            fjord_run = ensemble(k_run,i_reg);
-            heat_content = sum(fjord_run.ohc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-            salt_content = sum(fjord_run.osc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+fprintf('Model training runs complete. Starting computation of heat/salt contents...\n')
 
-            ohc_start = mean(heat_content(1:365)); % get the mean for the first year
-            osc_start = mean(salt_content(1:365));
-        
-            ohc_end = mean(heat_content(end-365:end)); % get the mean for the last year
-            osc_end = mean(salt_content(end-365:end));
-        
-            % get the difference to account for total warming/freshening
-            ohc_out(k_run,i_reg) = ohc_end-ohc_start; 
-            osc_out(k_run,i_reg) = osc_end-osc_start;
-        else 
-            % if the time series is too short, i.e., the model crashed
-            ohc_out(k_run,i_reg) = NaN;
-            osc_out(k_run,i_reg) = NaN;
+[ohc_out,osc_out] = compute_ensemble_metric(ensemble,length(time_axis));
+fprintf('Computation of heat/salt contents complete. Creating validation dataset...\n')
+
+%% Validation dataset
+for i_reg=1:n_regions
+    Xreg = squeeze(Xvalid(:,i_reg,:));
+    Params_reg = Parameters{i_reg};
+    tic
+    for k_run=1:n_valid
+        % if isnan(ohc_out(k_run,i_reg)) % saves time after a bug/crash fix, but requires reinitialising the variable
+        try
+            % [ohc_out(k_run,i_reg),osc_out(k_run,i_reg)] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
+            [ensemble_valid(k_run,i_reg).time,ensemble_valid(k_run,i_reg).ohc,ensemble_valid(k_run,i_reg).osc,ensemble_valid(k_run,i_reg).p] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
+            fprintf('run %d complete\n',k_run)
+        catch ME
+            ensemble_valid(k_run,i_reg).ohc = NaN(size(ensemble_valid(k_run,i_reg).time));
+            ensemble_valid(k_run,i_reg).osc = NaN(size(ensemble_valid(k_run,i_reg).time));
+            fprintf('run %d %s\n',k_run,ME.message)
         end
+        % end
     end
+    fprintf('region %d complete\n',i_reg)
+    toc    
 end
-fprintf('Computation of heat/salt contents complete.\n')
+fprintf('Model validation runs complete. Starting computation of heat/salt contents...\n')
+
+[ohc_vld,osc_vld] = compute_ensemble_metric(ensemble_valid,length(time_axis));
+fprintf('Computation of heat/salt contents complete. Creating validation dataset...\n')
 
 %% Calculate the distributions based on the numerical outputs alone
 % this is just for comparison with the surrogate model outputs
