@@ -1,9 +1,13 @@
-Ynum_ohc      = cell([1,n_regions]); % Ynum: numerical model results
+Ynum_ohc      = cell([1,n_regions]); % Ynum: numerical model results for training
 Ynum_osc      = cell([1,n_regions]);
+Yind_ohc      = cell([1,n_regions]); % Yind: numerical model results for validation
+Yind_osc      = cell([1,n_regions]);
 Ysur_ohc      = cell([1,n_regions]); % Ysur: surrogate model results evaluated at the same points
 Ysur_osc      = cell([1,n_regions]); % as the numerical model, used to evaluate model fit
 Yeval_ohc     = cell([1,n_regions]); % Yeval: surrogate model results evaluated at a much larger input range
 Yeval_osc     = cell([1,n_regions]);
+Yvld_ohc      = cell([1,n_regions]); % Yvld: surrogate model results for independent dataset (validation)
+Yvld_osc      = cell([1,n_regions]);
 sur_model_ohc = cell([1,n_regions]); % sur_model: UQLab model objects
 sur_model_osc = cell([1,n_regions]);
 ohc_ks_eval   = cell([1,n_regions]); % ks_eval: kernel density functions for Yeval
@@ -16,15 +20,6 @@ SobolOpts.Method           = 'Sobol';
 SobolOpts.Sobol.Order      = 1;
 SobolSensOpts.SaveEvaluations = false; % to prevent excessive memory usage!
 % SobolOpts.Sobol.SampleSize = 1e5; % only needed for MC, but we are using the PCE model itself
-
-% ANCOVA analysis was not as successful as originally envisioned...
-% ANCOVA_ohc    = cell([1,n_regions]);
-% ANCOVA_osc    = cell([1,n_regions]);
-% ANCOVASensOpts_ohc.Type = 'Sensitivity';
-% ANCOVASensOpts_ohc.Method = 'ANCOVA';
-% ANCOVASensOpts_osc = ANCOVASensOpts_ohc;
-% ANCOVASensOpts.ANCOVA.SampleSize = 150;
-% ANCOVAAnalysis = uq_createAnalysis(ANCOVASensOpts);
 
 
 % Initialise UQLab - commented out because we initialised it earlier
@@ -58,18 +53,25 @@ for i_reg=1:n_regions
     % So instead we ran the simulations before, and just filtered the runs
     % with NaN as a result (as defined in the wrapper_boxmodel function)
     Xreg = X(:,i_reg,:);                    
+    Xind = Xvalid(:,i_reg,:);                    
     ohc_reg = ohc_out(:,i_reg);
     osc_reg = osc_out(:,i_reg);
+    ohc_ind = ohc_vld(:,i_reg);
+    osc_ind = osc_vld(:,i_reg);
     Ynum_ohc{i_reg} = ohc_reg;
     Ynum_osc{i_reg} = osc_reg;
+    Yind_ohc{i_reg} = ohc_ind;
+    Yind_osc{i_reg} = osc_ind;
 
     MetaOpts.ExpDesign.X = Xreg(~isnan(ohc_reg),:);
     MetaOpts.ExpDesign.Y = ohc_reg(~isnan(ohc_reg));
 
-    % Create the surrogate model and evaluate it
-    sur_model_ohc{i_reg} = uq_createModel(MetaOpts);
+    
+    sur_model_ohc{i_reg} = uq_createModel(MetaOpts);                 % Create the surrogate model
     Ysur_ohc{i_reg}      = uq_evalModel(sur_model_ohc{i_reg},Xreg);  % run the surrogate model for the same inputs as the numerical model
+    Yvld_ohc{i_reg}      = uq_evalModel(sur_model_ohc{i_reg},Xvld);  % run the surrogate model for an independent set of inputs (validation)
     Yeval_ohc{i_reg}     = uq_evalModel(sur_model_ohc{i_reg},Xeval); % run the surrogate model for a much larger N
+    
     
     sobolA_ohc{i_reg}  = uq_createAnalysis(SobolOpts);   % compute Sobol indices based on the last model run
     ohc_ks_eval{i_reg} = fitdist(Yeval_ohc{i_reg},'kernel'); % create a kernel density function from the surrogate model outputs
@@ -78,14 +80,31 @@ for i_reg=1:n_regions
     MetaOpts.ExpDesign.Y = osc_reg(~isnan(osc_reg)); 
     sur_model_osc{i_reg} = uq_createModel(MetaOpts);
     Ysur_osc{i_reg}      = uq_evalModel(sur_model_osc{i_reg},Xreg); 
+    Yvld_osc{i_reg}      = uq_evalModel(sur_model_osc{i_reg},Xvld);
     Yeval_osc{i_reg}     = uq_evalModel(sur_model_osc{i_reg},Xeval);
     
     sobolA_osc{i_reg}  = uq_createAnalysis(SobolOpts);
     osc_ks_eval{i_reg} = fitdist(Yeval_osc{i_reg},'kernel');
 
-    % ANCOVASensOpts_ohc.ANCOVA.CustomPCE = sur_model_ohc{i_reg};
-    % ANCOVASensOpts_osc.ANCOVA.CustomPCE = sur_model_osc{i_reg};
-    % ANCOVA_ohc{i_reg}  = uq_createAnalysis(ANCOVASensOpts_ohc);
-    % ANCOVA_osc{i_reg}  = uq_createAnalysis(ANCOVASensOpts_osc);
-    % uq_histogram(Yeval)
 end
+fprintf('Done creating PCEs and Sobol'' indices. Starting convergence test for n_runs...\n')
+
+%% Checking if our choice of n_runs was enough
+x_subsample=10:5:n_runs;
+n_subsample=length(x_subsample);
+Yconv_ohc=NaN([n_subsample,n_regions]);
+Yconv_osc=NaN([n_subsample,n_regions]);
+for i_reg=1:n_regions
+    for i_subsample=1:n_subsample
+        Xsub=X(1:x_subsample(i_subsample),i_reg,:);
+        ohc_conv_sum=0;
+        osc_conv_sum=0;
+        for i_run=1:i_subsample
+            ohc_conv_sum = ohc_conv_sum + uq_evalModel(sur_model_osc{i_reg},Xsub(i_run,:));
+            osc_conv_sum = osc_conv_sum + uq_evalModel(sur_model_osc{i_reg},Xsub(i_run,:));
+        end
+        Yconv_ohc(i_subsample,i_reg)=ohc_conv_sum./x_subsample(i_subsample);
+        Yconv_osc(i_subsample,i_reg)=osc_conv_sum./x_subsample(i_subsample);
+    end
+end
+fprintf('Done with convergence test for n_runs.\n')

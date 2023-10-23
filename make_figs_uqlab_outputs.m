@@ -33,8 +33,10 @@ for i_reg=1:n_regions
             % ohc_reg(k_run,:) = sum(fjord_run.ohc(1:fjord_run.p.N,:),1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
             % osc_reg(k_run,:) = sum(fjord_run.osc(1:fjord_run.p.N,:),1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
             % below sill only
-            % ohc_reg_as(k_run,:) = fjord_run.ohc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-            % osc_reg_as(k_run,:) = fjord_run.osc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+            % ohc_reg(k_run,:) = fjord_run.ohc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+            % osc_reg(k_run,:) = fjord_run.osc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+            
+            
         else
             ohc_reg(k_run,:) = NaN;
             osc_reg(k_run,:) = NaN;
@@ -42,10 +44,10 @@ for i_reg=1:n_regions
     end
     subplot(1,2,1); hold on; box on;
     % multiplying by 1e-3 to change units to kJ
-    % lower_bnd = 1e-3.*min(ohc_reg,[],'omitnan');
-    % upper_bnd = 1e-3.*max(ohc_reg,[],'omitnan');
-    lower_bnd = 1e-3.*prctile(ohc_reg,25,1);
-    upper_bnd = 1e-3.*prctile(ohc_reg,75,1);
+    lower_bnd = 1e-3.*min(ohc_reg,[],'omitnan');
+    upper_bnd = 1e-3.*max(ohc_reg,[],'omitnan');
+    % lower_bnd = 1e-3.*prctile(ohc_reg,25,1);
+    % upper_bnd = 1e-3.*prctile(ohc_reg,75,1);
     
     median_ln = 1e-3.*median(ohc_reg,1,'omitnan');
     x2 = [time_axis, fliplr(time_axis)];
@@ -55,10 +57,10 @@ for i_reg=1:n_regions
     hp = plot(time_axis,median_ln,'Color',region_line_color(i_reg,:),'linewidth',2); 
 
     subplot(1,2,2); hold on; box on;
-    % lower_bnd = min(osc_reg,[],'omitnan');
-    % upper_bnd = max(osc_reg,[],'omitnan');
-    lower_bnd = prctile(osc_reg,25,1);
-    upper_bnd = prctile(osc_reg,75,1);
+    lower_bnd = min(osc_reg,[],'omitnan');
+    upper_bnd = max(osc_reg,[],'omitnan');
+    % lower_bnd = prctile(osc_reg,25,1);
+    % upper_bnd = prctile(osc_reg,75,1);
     
     median_ln = median(osc_reg,1,'omitnan');
     x2 = [time_axis, fliplr(time_axis)];
@@ -74,11 +76,11 @@ xlabel('Time'); ylabel('Heat content (kJ m^{-3})');
 set(gca,'fontsize',14)
 subplot(1,2,2)
 text(0.03,1.03,'(b)','fontsize',14,'units','normalized')
-hl = legend(region_handles,regions_lbl,'fontsize',10,'Location','southwest');
+hl = legend(region_handles,regions_lbl,'fontsize',10,'Location','northeast');
 hl.NumColumns=3;
 xlabel('Time'); ylabel('Salt content (g m^{-3})');
 set(gca,'fontsize',14)
-exportgraphics(gcf,[figs_path,'ensemble_series_n',num2str(n_runs),'.png'],'Resolution',300)
+exportgraphics(gcf,[figs_path,'ensemble_series_totalspread_n',num2str(n_runs),'.png'],'Resolution',300)
 
 
 %% Plotting surrogate vs numerical model
@@ -86,11 +88,12 @@ figure('Name','Model fit for HC','position',[40 40 1000 400])
 for i_reg=1:n_regions
     subplot(2,4,i_reg); hold on    
     uq_plot(gca,Ynum_ohc{i_reg},Ysur_ohc{i_reg},'+')
+    uq_plot(gca,Yind_ohc{i_reg},Yvld_ohc{i_reg},'o','color',[0.8500 0.3250 0.0980])
     hl = refline(1,0); hl.LineStyle='--'; hl.Color='r';
     box on; grid on;
 
-    rms = rmse(Ysur_ohc{i_reg},Ynum_ohc{i_reg},'omitnan');
-    mdl = fitlm(Ynum_ohc{i_reg},Ysur_ohc{i_reg});
+    % rms = rmse(Ysur_ohc{i_reg},Ynum_ohc{i_reg},'omitnan');
+    mdl = fitlm(Yind_ohc{i_reg},Yvld_ohc{i_reg});
 
     text(0.05,0.95,sprintf('(%s) %s',letters{i_reg},regions_lbl{i_reg}),'units','normalized','fontsize',14)
     % text(0.98,0.07,sprintf('RMSE=%0.2f J m^{-3}',rms),'units','normalized','horizontalAlignment','right','fontsize',14)
@@ -99,17 +102,20 @@ for i_reg=1:n_regions
     if i_reg > 3, xlabel('Numerical model'); end
     if ismember(i_reg,[1,5]), ylabel('Surrogate model'); end
 end
+hl = legend(hb,{'Training dataset','Validation dataset'},'fontsize',12);
+hl.Position(1)=hl.Position(1)+0.175;
 exportgraphics(gcf,[figs_path,'pce_fit_ohc_n',num2str(n_runs),'.png'],'Resolution',300)
 
 figure('Name','Model fit for SC','position',[40 40 1000 400])
 for i_reg=1:n_regions
     subplot(2,4,i_reg); hold on;
     uq_plot(gca,Ynum_osc{i_reg},Ysur_osc{i_reg},'+')    
+    uq_plot(gca,Yind_osc{i_reg},Yvld_osc{i_reg},'o','color',[0.8500 0.3250 0.0980])
     hl = refline(1,0); hl.LineStyle='--'; hl.Color='r';
     box on; grid on;
 
-    rms = rmse(Ysur_osc{i_reg},Ynum_osc{i_reg},'omitnan');
-    mdl = fitlm(Ynum_osc{i_reg},Ysur_osc{i_reg});
+    % rms = rmse(Ysur_osc{i_reg},Ynum_osc{i_reg},'omitnan');
+    mdl = fitlm(Yind_osc{i_reg},Yvld_osc{i_reg});
 
     text(0.05,0.95,sprintf('(%s) %s',letters{i_reg},regions_lbl{i_reg}),'units','normalized','fontsize',14)
     % text(0.98,0.07,sprintf('RMSE=%0.2f J m^{-3}',rms),'units','normalized','horizontalAlignment','right','fontsize',14)
@@ -118,6 +124,8 @@ for i_reg=1:n_regions
     if i_reg > 3, xlabel('Numerical model'); end
     if ismember(i_reg,[1,5]), ylabel('Surrogate model'); end
 end
+hl = legend(hb,{'Training dataset','Validation dataset'},'fontsize',12);
+hl.Position(1)=hl.Position(1)+0.175;
 exportgraphics(gcf,[figs_path,'pce_fit_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plotting the resulting kernel density
@@ -192,3 +200,21 @@ end
 hl = legend(hb,{'Heat content','Salt content'},'fontsize',12);
 hl.Position(1)=hl.Position(1)+0.175;
 exportgraphics(gcf,[figs_path,'sobol_total_n',num2str(n_runs),'.png'],'Resolution',300)
+
+%% Convergence test to see if our choice of n_runs was enough
+
+figure('Name','Convergence test for n_runs','Position',[40 40 850 300]); hold on;
+subplot(1,2,1), hold on; box on
+for i_reg=1:n_regions,plot(x_subsample,Yconv_ohc(:,i_reg),'linewidth',2); end
+ylabel('Avg. heat content change (J m^{-3})',fontsize=14); xlabel('n','fontsize',14);  
+text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
+set(gca,'fontsize',14)
+xlim([-200 100])
+subplot(1,2,2), hold on; box on
+for i_reg=1:n_regions,plot(x_subsample,Yconv_osc(:,i_reg),'linewidth',2); end
+xlabel('Avg. salt content change (g m^{-3})','fontsize',14); 
+text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
+set(gca,'fontsize',14)
+xlim([-7e-3 4e-3])
+hl = legend(regions,'fontsize',14,'Location','west');
+exportgraphics(gcf,[figs_path,'nruns_convergence_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
