@@ -1,4 +1,4 @@
-function [params,iOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,i_reg,experiments_time_step)
+function [params,iOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,i_reg,experiments_taxis,experiments_time_dt)
 %% A more statistically driven approach to sensitivity tests
 % derives distributions for all parameters on which our model simulations
 % will depend on: W, L, Zg, Zs, Ta, Sa, Qa, Da
@@ -8,12 +8,17 @@ function [params,iOpts,probs,fjords_processed] = define_model_param_distrib(data
 verbose.plot=1;  % change to 1 to produce plots of all parameter distributions
 verbose.print=0; % change 1 to print basic fjord statistics
 
-datasets.opts.time_start = datetime(2010,01,15);
-datasets.opts.time_end   = datetime(2018,12,15);
+if isempty(experiments_taxis)
+    datasets.opts.time_start = datetime(2010,01,15);
+    datasets.opts.time_end   = datetime(2018,12,15);
+else
+    datasets.opts.time_start = experiments_taxis(1);
+    datasets.opts.time_end   = experiments_taxis(end);
+end
 datasets.opts.time_interval = [datasets.opts.time_start,datasets.opts.time_end]; 
 datasets.opts.dt            = 30.0; % time step (in days) for creating the forcings
-if nargin < 4
-    experiments_time_step       = 0.10; % time step (in days) for the actual experiments
+if nargin < 5
+    experiments_time_dt       = 0.10; % time step (in days) for the actual experiments
 end
 fjords_processed(size(fjords_compilation)) = struct("p",[],"a",[],"f",[],"t",[],"m",[]);
 for i=1:length(fjords_compilation)
@@ -118,7 +123,7 @@ iOpts.Marginals(end).Bounds     = [5 30];
 probs(end+1)                    = p_pd;
 
 %% interpolates time series variables to the actual time steps used by the model
-datasets.opts.dt            = experiments_time_step; % time step in days
+datasets.opts.dt            = experiments_time_dt; % time step in days
 fjord_dummy = prepare_boxmodel_input(datasets,fjords_compilation(1));
 time_axis = fjord_dummy.t;
 
