@@ -1,12 +1,15 @@
 %% Plotting the results of the numerical model alone
 
 % we want to know how many runs were successful
-ok_runs = zeros([1, n_regions]);
+ok_runs  = zeros([1, n_regions]);
+ok_vruns = zeros([1, n_regions]);
 regions_lbl = regions;
 for i_reg=1:n_regions
     total_runs = ohc_out(:,i_reg);
     ok_runs(i_reg) = sum(~isnan(total_runs));
     regions_lbl{i_reg} = [regions_lbl{i_reg},' ( n=',num2str(ok_runs(i_reg)),')'];
+
+    ok_vruns(i_reg) = sum(~isnan(ohc_vld(:,i_reg)));
 end
 
 % get the range of results for computing the probability distributions
@@ -95,7 +98,7 @@ for i_reg=1:n_regions
     % rms = rmse(Ysur_ohc{i_reg},Ynum_ohc{i_reg},'omitnan');
     mdl = fitlm(Yind_ohc{i_reg},Yvld_ohc{i_reg});
 
-    text(0.05,0.95,sprintf('(%s) %s',letters{i_reg},regions_lbl{i_reg}),'units','normalized','fontsize',14)
+    text(0.05,0.95,sprintf('(%s) %s (n=%d)',letters{i_reg},regions{i_reg},ok_vruns(i_reg)),'units','normalized','fontsize',14)
     % text(0.98,0.07,sprintf('RMSE=%0.2f J m^{-3}',rms),'units','normalized','horizontalAlignment','right','fontsize',14)
     text(0.98,0.09,sprintf('R^2=%0.2f',mdl.Rsquared.Adjusted),'units','normalized','horizontalAlignment','right','fontsize',14)
     set(gca,'fontsize',14,'XTickLabel',[],'YTickLabel',[])
@@ -117,7 +120,7 @@ for i_reg=1:n_regions
     % rms = rmse(Ysur_osc{i_reg},Ynum_osc{i_reg},'omitnan');
     mdl = fitlm(Yind_osc{i_reg},Yvld_osc{i_reg});
 
-    text(0.05,0.95,sprintf('(%s) %s',letters{i_reg},regions_lbl{i_reg}),'units','normalized','fontsize',14)
+    text(0.05,0.95,sprintf('(%s) %s (n=%d)',letters{i_reg},regions{i_reg},ok_vruns(i_reg)),'units','normalized','fontsize',14)
     % text(0.98,0.07,sprintf('RMSE=%0.2f J m^{-3}',rms),'units','normalized','horizontalAlignment','right','fontsize',14)
     text(0.98,0.09,sprintf('R^2=%0.2f',mdl.Rsquared.Adjusted),'units','normalized','horizontalAlignment','right','fontsize',14)
     set(gca,'fontsize',14,'XTickLabel',[],'YTickLabel',[])
