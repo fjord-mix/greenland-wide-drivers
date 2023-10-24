@@ -38,7 +38,7 @@ time_axis = datetime(2010,01,15)+1:1:datetime(2018,12,15);
 % ohc_vld = NaN([n_runs, n_regions]);
 % osc_vld = NaN([n_runs, n_regions]);
 ensemble(n_runs,n_regions)       = struct("time",[],"ohc",[],"osc",[],"p",[]);
-ensemble_valid(n_runs,n_regions) = struct("time",[],"ohc",[],"osc",[],"p",[]);
+ensemble_valid(n_valid,n_regions) = struct("time",[],"ohc",[],"osc",[],"p",[]);
 ohc_pd  = cell([1,n_regions]);
 osc_pd  = cell([1,n_regions]);
 ohc_ks  = cell([1, n_regions]);
@@ -65,7 +65,7 @@ end
 % load([outs_path,'hc_sc_ensemble_n',num2str(n_runs)],'ensemble') % if we have the results saved already
 
 run run_model_compute_pdfs.m
-save([outs_path,'hc_sc_ensemble_n',num2str(n_runs)],'-v7.3','ensemble') % save ensemble structure so we do not need to rerun it all the time
+save([outs_path,'hc_sc_ensemble_n',num2str(n_runs)],'-v7.3','ensemble','ensemble_valid') % save ensemble structure so we do not need to rerun it all the time
 
 % save outputs so we dont have to re-run it
 save([outs_path,'ohc_osc_change_runs_probs_n',num2str(n_runs)],'ohc_out','osc_out','ohc_vld','osc_vld');%,'ohc_pd','osc_pd','ohc_ks','osc_ks')

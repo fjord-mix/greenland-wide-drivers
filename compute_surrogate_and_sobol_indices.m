@@ -8,6 +8,8 @@ Yeval_ohc     = cell([1,n_regions]); % Yeval: surrogate model results evaluated 
 Yeval_osc     = cell([1,n_regions]);
 Yvld_ohc      = cell([1,n_regions]); % Yvld: surrogate model results for independent dataset (validation)
 Yvld_osc      = cell([1,n_regions]);
+Yboo_ohc      = cell([1,n_regions]); % Yboo: bootstrap PCEs from Ynum
+Yboo_osc      = cell([1,n_regions]);
 sur_model_ohc = cell([1,n_regions]); % sur_model: UQLab model objects
 sur_model_osc = cell([1,n_regions]);
 ohc_ks_eval   = cell([1,n_regions]); % ks_eval: kernel density functions for Yeval
@@ -44,6 +46,7 @@ for i_reg=1:n_regions
     MetaOpts.Method = 'LARS';
     MetaOpts.Degree = 1:1:15;
     MetaOpts.TruncOptions.qNorm = 0.1:0.1:1;
+    MetaOpts.Bootstrap.Replications = 1e2; % for assessing the model accuracy
 
     % Specifying NSamples would get UQLab to perform the runs for us
     % we do not do that here because we need to exclude the unstable runs
@@ -68,8 +71,8 @@ for i_reg=1:n_regions
 
     
     sur_model_ohc{i_reg} = uq_createModel(MetaOpts);                 % Create the surrogate model
-    Ysur_ohc{i_reg}      = uq_evalModel(sur_model_ohc{i_reg},Xreg);  % run the surrogate model for the same inputs as the numerical model
-    Yvld_ohc{i_reg}      = uq_evalModel(sur_model_ohc{i_reg},Xvld);  % run the surrogate model for an independent set of inputs (validation)
+    [Ysur_ohc{i_reg},~,Yboo_ohc{i_reg}]      = uq_evalModel(sur_model_ohc{i_reg},Xreg);  % run the surrogate model for the same inputs as the numerical model (incl. bootstraping results)
+    Yvld_ohc{i_reg}      = uq_evalModel(sur_model_ohc{i_reg},Xind);  % run the surrogate model for an independent set of inputs (validation)
     Yeval_ohc{i_reg}     = uq_evalModel(sur_model_ohc{i_reg},Xeval); % run the surrogate model for a much larger N
     
     
@@ -80,7 +83,7 @@ for i_reg=1:n_regions
     MetaOpts.ExpDesign.Y = osc_reg(~isnan(osc_reg)); 
     sur_model_osc{i_reg} = uq_createModel(MetaOpts);
     Ysur_osc{i_reg}      = uq_evalModel(sur_model_osc{i_reg},Xreg); 
-    Yvld_osc{i_reg}      = uq_evalModel(sur_model_osc{i_reg},Xvld);
+    Yvld_osc{i_reg}      = uq_evalModel(sur_model_osc{i_reg},Xind);
     Yeval_osc{i_reg}     = uq_evalModel(sur_model_osc{i_reg},Xeval);
     
     sobolA_osc{i_reg}  = uq_createAnalysis(SobolOpts);
