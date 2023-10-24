@@ -206,15 +206,29 @@ exportgraphics(gcf,[figs_path,'sobol_total_n',num2str(n_runs),'.png'],'Resolutio
 figure('Name','Convergence test for n_runs','Position',[40 40 850 300]); hold on;
 subplot(1,2,1), hold on; box on
 for i_reg=1:n_regions,plot(x_subsample,Yconv_ohc(:,i_reg),'linewidth',2); end
-ylabel('Avg. heat content change (J m^{-3})',fontsize=14); xlabel('n','fontsize',14);  
+ylabel('Avg. heat content change (J m^{-3})',fontsize=14); xlabel('experimental design size (n)','fontsize',14);  
 text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
-xlim([-200 100])
+% xlim([-200 100])
 subplot(1,2,2), hold on; box on
 for i_reg=1:n_regions,plot(x_subsample,Yconv_osc(:,i_reg),'linewidth',2); end
-xlabel('Avg. salt content change (g m^{-3})','fontsize',14); 
+ylabel('Avg. salt content change (g m^{-3})','fontsize',14); xlabel('experimental design size (n)','fontsize',14);   
 text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
-xlim([-7e-3 4e-3])
-hl = legend(regions,'fontsize',14,'Location','west');
+% xlim([-7e-3 4e-3])
+hl = legend(regions,'fontsize',14,'Location','southeast');
+hl.NumColumns=2;
 exportgraphics(gcf,[figs_path,'nruns_convergence_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
+
+%% Box plots showing results of bootstrapping
+
+figure('Name','PCE accuracy test','Position',[40 40 850 300]); hold on;
+for i_reg=1:n_regions
+    ohc_boostrap = Yboo_ohc{i_reg};
+    osc_boostrap = Yboo_osc{i_reg};
+    subplot(1,2,1), hold on; box on
+    boxplot(i_reg,ohc_boostrap(:)')
+
+    subplot(1,2,2), hold on; box on
+    boxplot(i_reg,osc_boostrap(:)')
+end
