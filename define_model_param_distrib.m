@@ -8,7 +8,7 @@ function [params,iOpts,probs,fjords_processed] = define_model_param_distrib(data
 verbose.plot=1;  % change to 1 to produce plots of all parameter distributions
 verbose.print=0; % change 1 to print basic fjord statistics
 
-if isempty(experiments_taxis)
+if nargin < 4 || isempty(experiments_taxis)
     datasets.opts.time_start = datetime(2010,01,15);
     datasets.opts.time_end   = datetime(2018,12,15);
 else
