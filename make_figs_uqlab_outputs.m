@@ -129,19 +129,21 @@ xlim([-7e-3 4e-3])
 hl = legend(regions,'fontsize',14,'Location','west');
 exportgraphics(gcf,[figs_path,'kssur_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
-% construct the numerical model kernel density plot (just for comparison
-% figure('Name','Numerical model kernel density','Position',[40 40 850 300]); 
-% subplot(1,2,1), hold on; 
-% for i_reg=1:n_regions,plot(ohc_x,pdf(ohc_ks_as{i_reg},ohc_x),'linewidth',2); end
-% xlabel('Heat content change (J m^{-3})',fontsize=14); ylabel('Probability',fontsize=14);  box on
-% text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
-% set(gca,'fontsize',14)
-% subplot(1,2,2), hold on; 
-% for i_reg=1:n_regions,plot(osc_x,pdf(osc_ks_as{i_reg},osc_x),'linewidth',2); end
-% xlabel('Salt content change (g m^{-3})',fontsize=14); box on
-% text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
-% set(gca,'fontsize',14)
-% hl = legend(regions_lbl,'fontsize',14,'Location','west');
+% construct the numerical model kernel density plot (just for comparison)
+figure('Name','Numerical model kernel density','Position',[40 40 850 300]); 
+subplot(1,2,1), hold on; 
+for i_reg=1:n_regions,plot(ohc_x,pdf(ohc_ks{i_reg},ohc_x),'linewidth',2); end
+xlabel('Heat content change (J m^{-3})',fontsize=14); ylabel('Probability',fontsize=14);  box on
+text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
+set(gca,'fontsize',14)
+xlim([-200 100])
+subplot(1,2,2), hold on; 
+for i_reg=1:n_regions,plot(osc_x,pdf(osc_ks{i_reg},osc_x),'linewidth',2); end
+xlabel('Salt content change (g m^{-3})',fontsize=14); box on
+text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
+set(gca,'fontsize',14)
+xlim([-7e-3 4e-3])
+hl = legend(regions_lbl,'fontsize',14,'Location','west');
 % %exportgraphics(gcf,[figs_path,'ksnum_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
 
