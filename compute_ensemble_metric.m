@@ -6,7 +6,7 @@ ohc_out = NaN([n_runs, n_regions]);
 osc_out = NaN([n_runs, n_regions]);
 for i_reg=1:n_regions
     for k_run=1:n_runs
-        if length(ensemble(k_run,i_reg).ohc) == min_length
+        if length(ensemble(k_run,i_reg).ohc) == min_length-1
             
             % compute quantities per unit volume
             fjord_run = ensemble(k_run,i_reg);
