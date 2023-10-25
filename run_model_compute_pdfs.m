@@ -67,12 +67,16 @@ fprintf('Computation of heat/salt contents complete. Creating validation dataset
 % this is just for comparison with the surrogate model outputs
 % load([outs_path,'ohc_osc_runs_probs_n',num2str(n_runs)]) % if we have the results saved already
 
-% for i_reg=1:n_regions
-%     ohc_pd{i_reg} = makedist('Normal','mu',mean(ohc_out(:,i_reg),'omitnan'),'sigma',std(ohc_out(:,i_reg),'omitnan'));
-%     osc_pd{i_reg} = makedist('Normal','mu',mean(osc_out(:,i_reg),'omitnan'),'sigma',std(osc_out(:,i_reg),'omitnan'));
-%     ohc_ks{i_reg} = fitdist(ohc_out(:,i_reg),'kernel');
-%     osc_ks{i_reg} = fitdist(osc_out(:,i_reg),'kernel');
-% end
+% ohc_pd  = cell([1,n_regions]);
+% osc_pd  = cell([1,n_regions]);
+ohc_ks  = cell([1, n_regions]);
+osc_ks  = cell([1, n_regions]);
+for i_reg=1:n_regions
+    % ohc_pd{i_reg} = makedist('Normal','mu',mean(ohc_out(:,i_reg),'omitnan'),'sigma',std(ohc_out(:,i_reg),'omitnan'));
+    % osc_pd{i_reg} = makedist('Normal','mu',mean(osc_out(:,i_reg),'omitnan'),'sigma',std(osc_out(:,i_reg),'omitnan'));
+    ohc_ks{i_reg} = fitdist(ohc_out(:,i_reg),'kernel');
+    osc_ks{i_reg} = fitdist(osc_out(:,i_reg),'kernel');
+end
 
 %% Separate tests of specific runs for debugging model instabilities
 % wrapper_boxmodel(X(99,2,:),Parameters{2});
