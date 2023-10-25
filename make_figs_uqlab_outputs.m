@@ -9,7 +9,8 @@ for i_reg=1:n_regions
     ok_runs(i_reg) = sum(~isnan(total_runs));
     regions_lbl{i_reg} = [regions_lbl{i_reg},' ( n=',num2str(ok_runs(i_reg)),')'];
 
-    ok_vruns(i_reg) = sum(~isnan(ohc_vld(:,i_reg)));
+    total_runs = ohc_vld(:,i_reg);
+    ok_vruns(i_reg) = sum(~isnan(total_runs));
 end
 
 % get the range of results for computing the probability distributions
@@ -18,59 +19,38 @@ osc_x = linspace(0.99*min(osc_out(:)),1.01*max(osc_out(:)),1000);
 
 %% Plot the time series to see how they all behave
 region_line_color = lines(7);
-time_axis = datetime(2010,01,15)+1:1:datetime(2018,12,15);
+time_axis_plt = datetime(2010,01,15)+1:1:datetime(2018,12,15);
 region_handles = [];
 figure('Name','time series model outputs','Position',[20 20 1000 500])
 hold on; box on
 for i_reg=1:n_regions
-    ohc_reg=NaN([n_runs,length(time_axis)]);
-    osc_reg=NaN([n_runs,length(time_axis)]);
+    ohc_reg=NaN([n_runs,length(time_axis_plt)]);
+    osc_reg=NaN([n_runs,length(time_axis_plt)]);
     for k_run=1:n_runs
         if ~isempty(ensemble(k_run,i_reg).ohc)
-            % ohc_reg(k_run,:) = ensemble(k_run,i_reg).ohc; 
             % compute quantities per unit volume
             fjord_run = ensemble(k_run,i_reg);
-            ohc_reg(k_run,:) = sum(fjord_run.ohc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-            osc_reg(k_run,:) = sum(fjord_run.osc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+            % ohc_reg(k_run,:) = sum(fjord_run.ohc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+            % osc_reg(k_run,:) = sum(fjord_run.osc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
             % above sill only
             % ohc_reg(k_run,:) = sum(fjord_run.ohc(1:fjord_run.p.N,:),1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
             % osc_reg(k_run,:) = sum(fjord_run.osc(1:fjord_run.p.N,:),1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
             % below sill only
-            % ohc_reg(k_run,:) = fjord_run.ohc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-            % osc_reg(k_run,:) = fjord_run.osc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-            
-            
+            ohc_reg(k_run,:) = fjord_run.ohc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+            osc_reg(k_run,:) = fjord_run.osc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
         else
             ohc_reg(k_run,:) = NaN;
             osc_reg(k_run,:) = NaN;
         end
     end
     subplot(1,2,1); hold on; box on;
-    % multiplying by 1e-3 to change units to kJ
-    lower_bnd = 1e-3.*min(ohc_reg,[],'omitnan');
-    upper_bnd = 1e-3.*max(ohc_reg,[],'omitnan');
-    % lower_bnd = 1e-3.*prctile(ohc_reg,25,1);
-    % upper_bnd = 1e-3.*prctile(ohc_reg,75,1);
-    
-    median_ln = 1e-3.*median(ohc_reg,1,'omitnan');
-    x2 = [time_axis, fliplr(time_axis)];
-    inBetween = [lower_bnd, fliplr(upper_bnd)];
-
-    fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
-    hp = plot(time_axis,median_ln,'Color',region_line_color(i_reg,:),'linewidth',2); 
+    mean_ln = 1e-3.*mean(bootstrp(100,@(x)[mean(x,1,'omitnan')],ohc_reg)); % multiplying by 1e-3 to change units to kJ
+    plot(time_axis_plt,mean_ln,'Color',region_line_color(i_reg,:),'linewidth',2); 
 
     subplot(1,2,2); hold on; box on;
-    lower_bnd = min(osc_reg,[],'omitnan');
-    upper_bnd = max(osc_reg,[],'omitnan');
-    % lower_bnd = prctile(osc_reg,25,1);
-    % upper_bnd = prctile(osc_reg,75,1);
-    
-    median_ln = median(osc_reg,1,'omitnan');
-    x2 = [time_axis, fliplr(time_axis)];
-    inBetween = [lower_bnd, fliplr(upper_bnd)];
+    mean_ln = mean(bootstrp(100,@(x)[mean(x,1,'omitnan')],osc_reg));
+    hp = plot(time_axis_plt,mean_ln,'Color',region_line_color(i_reg,:),'linewidth',2); 
 
-    fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
-    hp = plot(time_axis,median_ln,'Color',region_line_color(i_reg,:),'linewidth',2); 
     region_handles=[region_handles hp];
 end
 subplot(1,2,1)
@@ -83,7 +63,7 @@ hl = legend(region_handles,regions_lbl,'fontsize',10,'Location','northeast');
 hl.NumColumns=3;
 xlabel('Time'); ylabel('Salt content (g m^{-3})');
 set(gca,'fontsize',14)
-exportgraphics(gcf,[figs_path,'ensemble_series_totalspread_n',num2str(n_runs),'.png'],'Resolution',300)
+exportgraphics(gcf,[figs_path,'ensemble_series_bootstrapped_bs_n',num2str(n_runs),'.png'],'Resolution',300)
 
 
 %% Plotting surrogate vs numerical model
@@ -105,7 +85,7 @@ for i_reg=1:n_regions
     if i_reg > 3, xlabel('Numerical model'); end
     if ismember(i_reg,[1,5]), ylabel('Surrogate model'); end
 end
-hl = legend(hb,{'Training dataset','Validation dataset'},'fontsize',12);
+hl = legend('Training dataset','Validation dataset','fontsize',12);
 hl.Position(1)=hl.Position(1)+0.175;
 exportgraphics(gcf,[figs_path,'pce_fit_ohc_n',num2str(n_runs),'.png'],'Resolution',300)
 
