@@ -20,7 +20,7 @@ for i_reg=1:n_regions
         % if isnan(ohc_out(k_run,i_reg)) % saves time after a bug/crash fix, but requires reinitialising the variable
         try
             % [ohc_out(k_run,i_reg),osc_out(k_run,i_reg)] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
-            [ensemble(k_run,i_reg).time,ensemble(k_run,i_reg).ohc,ensemble(k_run,i_reg).osc,ensemble(k_run,i_reg).p] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
+            ensemble(k_run,i_reg) = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
             fprintf('run %d complete\n',k_run)
         catch ME
             ensemble(k_run,i_reg).ohc = NaN(size(ensemble(k_run,i_reg).time));
@@ -46,7 +46,7 @@ for i_reg=1:n_regions
         % if isnan(ohc_out(k_run,i_reg)) % saves time after a bug/crash fix, but requires reinitialising the variable
         try
             % [ohc_out(k_run,i_reg),osc_out(k_run,i_reg)] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
-            [ensemble_valid(k_run,i_reg).time,ensemble_valid(k_run,i_reg).ohc,ensemble_valid(k_run,i_reg).osc,ensemble_valid(k_run,i_reg).p] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
+            ensemble_valid(k_run,i_reg) = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
             fprintf('run %d complete\n',k_run)
         catch ME
             ensemble_valid(k_run,i_reg).ohc = NaN(size(ensemble_valid(k_run,i_reg).time));
