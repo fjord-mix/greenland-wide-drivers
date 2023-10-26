@@ -34,8 +34,10 @@ n_regions = length(regions);
 time_axis = datetime(2010,01,15):1:datetime(2018,12,15);
 
 % initialising traiing and validation dataset structures
-if exist('ensemble',"var"),       clear ensemble;       ensemble(n_runs,n_regions)        = struct("time",[],"ohc",[],"osc",[],"p",[]); end
-if exist('ensemble_valid',"var"), clear ensemble_valid; ensemble_valid(n_valid,n_regions) = struct("time",[],"ohc",[],"osc",[],"p",[]); end
+if exist('ensemble',"var"),       clear ensemble; end
+if exist('ensemble_valid',"var"), clear ensemble_valid; end
+ensemble(n_runs,n_regions)        = struct("time",[],"ohc",[],"osc",[],"p",[]);
+ensemble_valid(n_valid,n_regions) = struct("time",[],"ohc",[],"osc",[],"p",[]);
 
 Parameters = cell([1, n_regions]);
 X          = zeros([n_runs,n_regions,10]);
