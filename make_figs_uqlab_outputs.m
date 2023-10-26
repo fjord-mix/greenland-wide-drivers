@@ -30,14 +30,16 @@ for i_reg=1:n_regions
         if ~isempty(ensemble(k_run,i_reg).ohc)
             % compute quantities per unit volume
             fjord_run = ensemble(k_run,i_reg);
-            % ohc_reg(k_run,:) = sum(fjord_run.ohc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-            % osc_reg(k_run,:) = sum(fjord_run.osc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+            % ints = cumsum(fjord_run.H);
+            % kbottom = find(ints>=abs(p.zgl)-1e-6, 1 );
+            ohc_reg(k_run,:) = sum(fjord_run.ohc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+            osc_reg(k_run,:) = sum(fjord_run.osc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
             % above sill only
             % ohc_reg(k_run,:) = sum(fjord_run.ohc(1:fjord_run.p.N,:),1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
             % osc_reg(k_run,:) = sum(fjord_run.osc(1:fjord_run.p.N,:),1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
             % below sill only
-            ohc_reg(k_run,:) = fjord_run.ohc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-            osc_reg(k_run,:) = fjord_run.osc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+            % ohc_reg(k_run,:) = fjord_run.ohc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+            % osc_reg(k_run,:) = fjord_run.osc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
         else
             ohc_reg(k_run,:) = NaN;
             osc_reg(k_run,:) = NaN;
@@ -45,12 +47,27 @@ for i_reg=1:n_regions
     end
     subplot(1,2,1); hold on; box on;
     mean_ln = 1e-3.*mean(bootstrp(100,@(x)[mean(x,1,'omitnan')],ohc_reg)); % multiplying by 1e-3 to change units to kJ
+    std_ln  = 1e-3.*mean(bootstrp(100,@(x)[std(x,1,'omitnan')],ohc_reg)); % multiplying by 1e-3 to change units to kJ
+    upper_bnd = mean_ln+std_ln;
+    lower_bnd = mean_ln-std_ln;
+
+    x2 = [time_axis_plt, fliplr(time_axis_plt)];
+    inBetween = [lower_bnd, fliplr(upper_bnd)];
+    fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
     plot(time_axis_plt,mean_ln,'Color',region_line_color(i_reg,:),'linewidth',2); 
+    
 
     subplot(1,2,2); hold on; box on;
     mean_ln = mean(bootstrp(100,@(x)[mean(x,1,'omitnan')],osc_reg));
-    hp = plot(time_axis_plt,mean_ln,'Color',region_line_color(i_reg,:),'linewidth',2); 
+    std_ln  = mean(bootstrp(100,@(x)[std(x,1,'omitnan')],osc_reg)); % multiplying by 1e-3 to change units to kJ
+    upper_bnd = mean_ln+std_ln;
+    lower_bnd = mean_ln-std_ln;
 
+    x2 = [time_axis_plt, fliplr(time_axis_plt)];
+    inBetween = [lower_bnd, fliplr(upper_bnd)];
+    fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
+    hp = plot(time_axis_plt,mean_ln,'Color',region_line_color(i_reg,:),'linewidth',2); 
+    
     region_handles=[region_handles hp];
 end
 subplot(1,2,1)
@@ -63,7 +80,7 @@ hl = legend(region_handles,regions_lbl,'fontsize',10,'Location','northeast');
 hl.NumColumns=3;
 xlabel('Time'); ylabel('Salt content (g m^{-3})');
 set(gca,'fontsize',14)
-exportgraphics(gcf,[figs_path,'ensemble_series_bootstrapped_bs_n',num2str(n_runs),'.png'],'Resolution',300)
+exportgraphics(gcf,[figs_path,'ensemble_series_bootstrapped_n',num2str(n_runs),'.png'],'Resolution',300)
 
 
 %% Plotting surrogate vs numerical model
@@ -107,7 +124,7 @@ for i_reg=1:n_regions
     if i_reg > 3, xlabel('Numerical model'); end
     if ismember(i_reg,[1,5]), ylabel('Surrogate model'); end
 end
-hl = legend(hb,{'Training dataset','Validation dataset'},'fontsize',12);
+hl = legend('Training dataset','Validation dataset','fontsize',12);
 hl.Position(1)=hl.Position(1)+0.175;
 exportgraphics(gcf,[figs_path,'pce_fit_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
@@ -189,19 +206,27 @@ exportgraphics(gcf,[figs_path,'sobol_total_n',num2str(n_runs),'.png'],'Resolutio
 %% Convergence test to see if our choice of n_runs was enough
 
 figure('Name','Convergence test for n_runs','Position',[40 40 850 300]); hold on;
+region_handles = [];
 subplot(1,2,1), hold on; box on
-for i_reg=1:n_regions,plot(x_subsample,Yconv_ohc(:,i_reg),'linewidth',2); end
+for i_reg=1:n_regions
+    plot(x_subsample,Yconv_ohc(:,i_reg),'linewidth',2,'Color',region_line_color(i_reg,:));
+    xline(ok_runs(i_reg),'linewidth',1,'linestyle','--','Color',region_line_color(i_reg,:));
+end
 ylabel('Avg. heat content change (J m^{-3})',fontsize=14); xlabel('experimental design size (n)','fontsize',14);  
 text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
 % xlim([-200 100])
 subplot(1,2,2), hold on; box on
-for i_reg=1:n_regions,plot(x_subsample,Yconv_osc(:,i_reg),'linewidth',2); end
+for i_reg=1:n_regions
+    hp = plot(x_subsample,Yconv_osc(:,i_reg),'linewidth',2,'Color',region_line_color(i_reg,:)); 
+    xline(ok_runs(i_reg),'linewidth',1,'linestyle','--','Color',region_line_color(i_reg,:));
+    region_handles = [region_handles hp];
+end
 ylabel('Avg. salt content change (g m^{-3})','fontsize',14); xlabel('experimental design size (n)','fontsize',14);   
 text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
 % xlim([-7e-3 4e-3])
-hl = legend(regions,'fontsize',14,'Location','southeast');
+hl = legend(region_handles,regions,'fontsize',14,'Location','northeast');
 hl.NumColumns=2;
 exportgraphics(gcf,[figs_path,'nruns_convergence_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
