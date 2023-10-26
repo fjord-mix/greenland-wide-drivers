@@ -30,10 +30,27 @@ for i_reg=1:n_regions
         if ~isempty(ensemble(k_run,i_reg).ohc)
             % compute quantities per unit volume
             fjord_run = ensemble(k_run,i_reg);
-            % ints = cumsum(fjord_run.H);
-            % kbottom = find(ints>=abs(p.zgl)-1e-6, 1 );
-            ohc_reg(k_run,:) = sum(fjord_run.ohc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-            osc_reg(k_run,:) = sum(fjord_run.osc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+
+            % integration from grounding line/sill (whichever is deeper) to the surface
+            zbottom = max(abs(fjord_run.p.zgl),abs(fjord_run.p.silldepth)); % finds which one is deeper, sill or grounding line            
+            ints = cumsum(fjord_run.H,1);                   % gets depths of all layers for every time step            
+            kbottom = find(ints>=abs(zbottom)-1e-6,1);      % finds index of "bottom" layer for every time step
+            h_int=NaN([p.N+p.sill,length(time_axis_plt)]);  % will store the layer thicknesses we want to integrate over
+
+            for i_time=1:length(time_axis_plt)
+                for k=1:kbottom
+                    if k==kbottom(i_time)
+                        h_int(k,i_time) = abs(zbottom-ints(k,i_time));
+                    else
+                        h_int(k,i_time) = fjord_run.H(k,i_time);
+                    end
+                end
+            end
+            ohc_reg(k_run,i_time) = sum(fjord_run.ohc./(fjord_run.p.L.*fjord_run.p.W.*h_int),1);
+            osc_reg(k_run,i_time) = sum(fjord_run.osc./(fjord_run.p.L.*fjord_run.p.W.*h_int),1);
+
+            % ohc_reg(k_run,:) = sum(fjord_run.ohc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+            % osc_reg(k_run,:) = sum(fjord_run.osc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
             % above sill only
             % ohc_reg(k_run,:) = sum(fjord_run.ohc(1:fjord_run.p.N,:),1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
             % osc_reg(k_run,:) = sum(fjord_run.osc(1:fjord_run.p.N,:),1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
