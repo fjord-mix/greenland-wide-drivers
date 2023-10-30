@@ -14,15 +14,17 @@ p.P0=X(10);
 p.dt = Parameters.t(2)-Parameters.t(1);
 %% Getting the parameters to be explored into variables that we can more easily recall
 p.L         = X(1);
-p.W         = X(1)./X(2); % X(2);
-p.silldepth = X(3);
-p.zgl       = X(4);
+p.H         = X(2);
+% TODO: add H and bump up the indices of the rest
+p.W         = X(1) ./ X(3); % W  = L /(L/W)
+p.silldepth = -X(4) .* X(2); % Zs = (Zs/H) * H
+p.zgl       = -X(5) .* X(2); % Zg = (Zg/H) * H 
 
-dTanom = X(5);
-dSanom = X(6);
-Xfrq   = X(7);
-dQamp  = X(8);
-dDanom = X(9);
+dTanom = X(6);
+dSanom = X(7);
+Xfrq   = X(8);
+dQamp  = X(9);
+dDanom = 0;%X(10); % ignoring solid-ice discharge (for now?)
 
 %% Set up model forcings
 % Xamp=0.92;  % if using anomaly to profiles
@@ -41,8 +43,9 @@ f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* dTanom))'; % if using isopycnal s
 f.Ss  = (Parameters.Socn + (Parameters.Sdec .* dSanom))'; % if using isopycnal stretching
 f.zs  = -Parameters.zs;
 
-[f.Ts,f.Ss] = heave_profiles(f.Ts,f.Ss,f.zs,Xper); % if using isopycnal stretching
-
+if ismember(Parameters.regID,[2,4,6]) % only applies to eastern Greenland
+    [f.Ts,f.Ss] = heave_profiles(f.Ts,f.Ss,f.zs,Xper); % if using isopycnal stretching
+end
 
 zs = flip(f.zs);
 Ts = flip(f.Ts,1); 
@@ -86,22 +89,14 @@ fjord_run.a = a;
 if fjord_run.s.status
     disp('this is a crash example')
 end
-fjord_run.o = postprocess_boxmodel(fjord_run);
-
-% gets output quantities in "per unit volume"
+% fjord_run.o = postprocess_boxmodel(fjord_run);
 % heat_content = sum(fjord_run.o.hc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
 % salt_content = sum(fjord_run.o.sc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-fjord_out.ohc   = fjord_run.o.hc;
-fjord_out.osc   = fjord_run.o.sc;
+fjord_out = struct("time",[],"temp",[],"salt",[],"H",[],"p",[]);
+fjord_out.temp   = fjord_run.s.T;
+fjord_out.salt   = fjord_run.s.S;
 fjord_out.H     = fjord_run.s.H;
 fjord_out.time  = fjord_run.s.t;
 fjord_out.p     = fjord_run.p;
-
-% considering only the boxes above the sill
-% hc_as = sum(fjord_run.o.hc(1:p.N,:))./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-% sc_as = sum(fjord_run.o.sc(1:p.N,:))./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-% 
-% hc_bs = fjord_run.o.hc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-% sc_bs = fjord_run.o.sc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
 
 end

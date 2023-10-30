@@ -31,26 +31,27 @@ end
 fjord_stats = print_fjord_statistics(fjords_compilation,verbose);
 
 probs(1) = fjord_stats.L.pd;
-iOpts.Marginals(1) = uq_KernelMarginals(fjord_stats.L.total', [0 max(fjord_stats.L.total)]);
+iOpts.Marginals(1) = uq_KernelMarginals(fjord_stats.L.total', [min(fjord_stats.L.total) max(fjord_stats.L.total)]);
+
+probs(end+1) = fjord_stats.H.pd;
+iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.H.total',[min(fjord_stats.H.total), max(fjord_stats.H.total)]);
 
 % probs(end+1) = fjord_stats.W.pd;
 % iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.W.total',[0, max(fjord_stats.W.total)]);
 probs(end+1) = fjord_stats.a.pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.a.total',[1, max(fjord_stats.a.total)]);
 
-probs(end+1) = fjord_stats.Zs.pd;
-iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zs.total', [min(fjord_stats.Zs.total) -50]);
+% probs(end+1) = fjord_stats.Zs.pd;
+% iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zs.total', [min(fjord_stats.Zs.total) -50]);
+probs(end+1) = fjord_stats.Zsr.pd;
+% iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zsr.total', [min(abs(fjord_stats.Zs.total)/max(fjord_stats.H.total)) max(abs(fjord_stats.Zs.total)/max(fjord_stats.H.total))]);
+iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zsr.total', [0.05 0.95]);
 
-probs(end+1) = fjord_stats.Zg.pd;
-iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zg.total', [min(fjord_stats.Zg.total) -50]);
-
-% this is likely where/how we would tweak the distributions to ensure Zg and Zs shallower than fjord depth
-% Xgeom = [fjord_stats.H.total;-fjord_stats.Zg.total;-fjord_stats.Zs.total];
-% opts.Inference.Data = Xgeom';
-% opts.Copula.Inference.Data = Xgeom;
-% opts.Copula.Type='auto';
-% InputHat = uq_createInput(opts);
-
+% probs(end+1) = fjord_stats.Zg.pd;
+% iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zg.total', [min(fjord_stats.Zg.total) -50]);
+probs(end+1) = fjord_stats.Zgr.pd;
+% iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zgr.total', [min(abs(fjord_stats.Zg.total)/max(fjord_stats.H.total)) max(abs(fjord_stats.Zg.total)/max(fjord_stats.H.total))]);
+iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zgr.total', [0.05 0.95]);
 
 %% Gets the ocean forcing
 
@@ -111,12 +112,15 @@ probs(end+1)                    = q_pd;
 % Solid-ice discharge (same procedure as for T and S)
 % [d_forcing,d_anom,~,~] = get_var_clim_by_region(fjords_processed,'D');
 [d_forcing,d_anom,~,~] = get_var_forcing_by_region(fjords_processed,'D');
-d_pd                   = fitdist(d_anom{i_reg},'kernel');
+% d_pd                   = fitdist(d_anom{i_reg},'kernel');
 
-probs(end+1) = d_pd;
-iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom{i_reg},[min(d_anom{i_reg}), max(d_anom{i_reg})]);
+% Ignoring PD (for now?)
+% probs(end+1) = d_pd;
+% iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom{i_reg},[min(d_anom{i_reg}), max(d_anom{i_reg})]);
 
-p_pd              = makedist('Uniform','lower',5,'upper',30);
+% considering we use an entrainment coefficient of 0.1, P0=[5,30] is
+% equivalent to a plume width of 50-300 m
+p_pd              = makedist('Uniform','lower',5,'upper',30); 
 iOpts.Marginals(end+1).Type     = 'uniform';
 iOpts.Marginals(end).Parameters = [5 30];
 iOpts.Marginals(end).Bounds     = [5 30];
@@ -136,29 +140,31 @@ d_forcing    = interp1(fjords_processed(1).t,d_forcing,time_axis,'linear','extra
 
 %% Compiles the parameters into the structure to be used by the wrapper function
 
-params.H    = max(fjord_stats.H.total);
-params.zs   = -depths;
-params.Tocn = tocn_forcing(:,:,i_reg);
-params.Tdec = tocn_decay(:,:,i_reg);
-params.Socn = socn_forcing(:,:,i_reg);
-params.Sdec = socn_decay(:,:,i_reg);
-params.Qglc = q_forcing(:,i_reg);
-params.Dglc = d_forcing(:,i_reg);
-params.t    = time_axis;
-params.zi   = fjord_dummy.f.zi;
-params.xi   = fjord_dummy.f.xi;
-params.I0   = fjord_dummy.a.I0;
+params.regID = i_reg;
+params.H     = max(fjord_stats.H.total);
+params.zs    = -depths;
+params.Tocn  = tocn_forcing(:,:,i_reg);
+params.Tdec  = tocn_decay(:,:,i_reg);
+params.Socn  = socn_forcing(:,:,i_reg);
+params.Sdec  = socn_decay(:,:,i_reg);
+params.Qglc  = q_forcing(:,i_reg);
+params.Dglc  = d_forcing(:,i_reg) .*0; % setting to zero (for now?)
+params.t     = time_axis;
+params.zi    = fjord_dummy.f.zi;
+params.xi    = fjord_dummy.f.xi;
+params.I0    = fjord_dummy.a.I0;
 
 % Add the names to the input distributions we created
 iOpts.Marginals(1).Name = 'L';
-iOpts.Marginals(2).Name = 'alpha'; % iOpts.Marginals(2).Name = 'W';
-iOpts.Marginals(3).Name = 'Zs';
-iOpts.Marginals(4).Name = 'Zg';
-iOpts.Marginals(5).Name = 'Ta';
-iOpts.Marginals(6).Name = 'Sa';
-iOpts.Marginals(7).Name = 'omega';
-iOpts.Marginals(8).Name = 'Qa';
-iOpts.Marginals(9).Name = 'Da';
+iOpts.Marginals(2).Name = 'H';
+iOpts.Marginals(3).Name = 'L/W'; % iOpts.Marginals(2).Name = 'W';
+iOpts.Marginals(4).Name = 'Zs/H';
+iOpts.Marginals(5).Name = 'Zg/H';
+iOpts.Marginals(6).Name = 'Ta';
+iOpts.Marginals(7).Name = 'Sa';
+iOpts.Marginals(8).Name = 'omega';
+iOpts.Marginals(9).Name = 'Qa';
+% iOpts.Marginals(10).Name = 'Da';
 iOpts.Marginals(10).Name = 'P0';
 
 
