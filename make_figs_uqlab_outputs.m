@@ -14,8 +14,29 @@ for i_reg=1:n_regions
 end
 
 % get the range of results for computing the probability distributions
-ohc_x = linspace(0.99*min(ohc_out(:)),1.01*max(ohc_out(:)),1000);
-osc_x = linspace(0.99*min(osc_out(:)),1.01*max(osc_out(:)),1000);
+ohc_x = linspace(0.8*min(ohc_out(:)),1.2*max(ohc_out(:)),1000);
+osc_x = linspace(0.8*min(osc_out(:)),1.2*max(osc_out(:)),1000);
+
+% get the heat/salt content trends from the (undisturbed) shelf
+datasets.opts.time_start = time_axis(1);
+datasets.opts.time_end   = time_axis(end);
+datasets.opts.dt         = 30.;
+fjords_processed(size(fjords_compilation)) = struct("p",[],"a",[],"f",[],"t",[],"m",[]);
+for i=1:length(fjords_compilation),fjords_processed(i) = prepare_boxmodel_input(datasets,fjords_compilation(i));end
+[temp_forcing, ~, ~, depths] = get_var_forcing_by_region(fjords_processed,'Ts');
+[salt_forcing, ~, ~, ~] = get_var_forcing_by_region(fjords_processed,'Ss');
+fjord_rho = (fjords_processed(1).p.betaS*salt_forcing - fjords_processed(1).p.betaT*temp_forcing);
+sc_reg = squeeze(trapz(depths,salt_forcing.* fjord_rho,2)./max(abs(depths)));
+hc_reg = squeeze(trapz(depths,(temp_forcing+273.15).* fjord_rho,2)./max(abs(depths)).* fjords_processed(1).p.cw);
+taxis_shelf = 1:1:size(sc_reg,1);
+tr_ohc_shelf = NaN(size(regions));
+tr_osc_shelf = NaN(size(regions));
+for i_reg=1:length(regions)
+    p = polyfit(taxis_shelf,hc_reg(:,i_reg),1);
+    tr_ohc_shelf(i_reg) = p(1)*12;
+    p = polyfit(taxis_shelf,sc_reg(:,i_reg),1);
+    tr_osc_shelf(i_reg) = p(1)*12;
+end
 
 %% Plot the time series to see how they all behave
 region_line_color = lines(7);
@@ -27,36 +48,8 @@ for i_reg=1:n_regions
     ohc_reg=NaN([n_runs,length(time_axis_plt)]);
     osc_reg=NaN([n_runs,length(time_axis_plt)]);
     for k_run=1:n_runs
-        if ~isempty(ensemble(k_run,i_reg).ohc)
-            % compute quantities per unit volume
-            fjord_run = ensemble(k_run,i_reg);
-
-            % integration from grounding line/sill (whichever is deeper) to the surface
-            zbottom = max(abs(fjord_run.p.zgl),abs(fjord_run.p.silldepth)); % finds which one is deeper, sill or grounding line            
-            ints = cumsum(fjord_run.H,1);                   % gets depths of all layers for every time step            
-            kbottom = find(ints>=abs(zbottom)-1e-6,1);      % finds index of "bottom" layer for every time step
-            h_int=NaN([p.N+p.sill,length(time_axis_plt)]);  % will store the layer thicknesses we want to integrate over
-
-            for i_time=1:length(time_axis_plt)
-                for k=1:kbottom
-                    if k==kbottom(i_time)
-                        h_int(k,i_time) = abs(zbottom-ints(k,i_time));
-                    else
-                        h_int(k,i_time) = fjord_run.H(k,i_time);
-                    end
-                end
-            end
-            ohc_reg(k_run,i_time) = sum(fjord_run.ohc./(fjord_run.p.L.*fjord_run.p.W.*h_int),1);
-            osc_reg(k_run,i_time) = sum(fjord_run.osc./(fjord_run.p.L.*fjord_run.p.W.*h_int),1);
-
-            % ohc_reg(k_run,:) = sum(fjord_run.ohc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-            % osc_reg(k_run,:) = sum(fjord_run.osc,1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-            % above sill only
-            % ohc_reg(k_run,:) = sum(fjord_run.ohc(1:fjord_run.p.N,:),1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-            % osc_reg(k_run,:) = sum(fjord_run.osc(1:fjord_run.p.N,:),1)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-            % below sill only
-            % ohc_reg(k_run,:) = fjord_run.ohc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-            % osc_reg(k_run,:) = fjord_run.osc(end,:)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
+        if ~isempty(ensemble(k_run,i_reg).temp)
+            [ohc_reg(k_run,:),osc_reg(k_run,:)] = get_active_fjord_contents(ensemble(k_run,i_reg));
         else
             ohc_reg(k_run,:) = NaN;
             osc_reg(k_run,:) = NaN;
@@ -64,25 +57,25 @@ for i_reg=1:n_regions
     end
     subplot(1,2,1); hold on; box on;
     mean_ln = 1e-3.*mean(bootstrp(100,@(x)[mean(x,1,'omitnan')],ohc_reg)); % multiplying by 1e-3 to change units to kJ
-    std_ln  = 1e-3.*mean(bootstrp(100,@(x)[std(x,1,'omitnan')],ohc_reg)); % multiplying by 1e-3 to change units to kJ
+    std_ln  = 1e-3.*std(bootstrp(100,@(x)[mean(x,1,'omitnan')],ohc_reg)); % multiplying by 1e-3 to change units to kJ
     upper_bnd = mean_ln+std_ln;
     lower_bnd = mean_ln-std_ln;
 
     x2 = [time_axis_plt, fliplr(time_axis_plt)];
     inBetween = [lower_bnd, fliplr(upper_bnd)];
-    fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
+    % fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
     plot(time_axis_plt,mean_ln,'Color',region_line_color(i_reg,:),'linewidth',2); 
     
 
     subplot(1,2,2); hold on; box on;
     mean_ln = mean(bootstrp(100,@(x)[mean(x,1,'omitnan')],osc_reg));
-    std_ln  = mean(bootstrp(100,@(x)[std(x,1,'omitnan')],osc_reg)); % multiplying by 1e-3 to change units to kJ
+    std_ln  = std(bootstrp(100,@(x)[mean(x,1,'omitnan')],osc_reg));
     upper_bnd = mean_ln+std_ln;
     lower_bnd = mean_ln-std_ln;
 
     x2 = [time_axis_plt, fliplr(time_axis_plt)];
     inBetween = [lower_bnd, fliplr(upper_bnd)];
-    fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
+    % fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
     hp = plot(time_axis_plt,mean_ln,'Color',region_line_color(i_reg,:),'linewidth',2); 
     
     region_handles=[region_handles hp];
@@ -93,7 +86,7 @@ xlabel('Time'); ylabel('Heat content (kJ m^{-3})');
 set(gca,'fontsize',14)
 subplot(1,2,2)
 text(0.03,1.03,'(b)','fontsize',14,'units','normalized')
-hl = legend(region_handles,regions_lbl,'fontsize',10,'Location','northeast');
+hl = legend(region_handles,regions_lbl,'fontsize',10,'Location','southeast');
 hl.NumColumns=3;
 xlabel('Time'); ylabel('Salt content (g m^{-3})');
 set(gca,'fontsize',14)
@@ -149,14 +142,20 @@ exportgraphics(gcf,[figs_path,'pce_fit_osc_n',num2str(n_runs),'.png'],'Resolutio
 
 figure('Name','Surrogate model kernel density','Position',[40 40 850 300]); hold on;
 subplot(1,2,1), hold on; box on
-for i_reg=1:n_regions,plot(ohc_x,pdf(ohc_ks_eval{i_reg},ohc_x),'linewidth',2); end
-xlabel('Heat content change (J m^{-3})',fontsize=14); ylabel('Kernel density',fontsize=14);  
+for i_reg=1:n_regions
+    plot(ohc_x,pdf(ohc_ks_eval{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
+    xline(tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
+end
+xlabel('Heat content trend (J m^{-3}yr^{-1})',fontsize=14); ylabel('Probability',fontsize=14);  box on
 text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
 xlim([-200 100])
 subplot(1,2,2), hold on; box on
-for i_reg=1:n_regions,plot(osc_x,pdf(osc_ks_eval{i_reg},osc_x),'linewidth',2); end
-xlabel('Salt content change (g m^{-3})',fontsize=14); 
+for i_reg=1:n_regions
+    plot(osc_x,pdf(osc_ks_eval{i_reg},osc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
+    xline(tr_osc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
+end
+xlabel('Salt content trend (g m^{-3}yr^{-1})',fontsize=14);
 text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
 xlim([-7e-3 4e-3])
@@ -165,19 +164,27 @@ exportgraphics(gcf,[figs_path,'kssur_ohc_osc_n',num2str(n_runs),'.png'],'Resolut
 
 % construct the numerical model kernel density plot (just for comparison)
 figure('Name','Numerical model kernel density','Position',[40 40 850 300]); 
+handle_plots = [];
 subplot(1,2,1), hold on; 
-for i_reg=1:n_regions,plot(ohc_x,pdf(ohc_ks{i_reg},ohc_x),'linewidth',2); end
-xlabel('Heat content change (J m^{-3})',fontsize=14); ylabel('Probability',fontsize=14);  box on
+for i_reg=1:n_regions
+    hp = plot(ohc_x,pdf(ohc_ks{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
+    xline(tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
+end
+xlabel('Heat content trend (J m^{-3}yr^{-1})',fontsize=14); ylabel('Probability',fontsize=14);  box on
 text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
-xlim([-200 100])
+% xlim([-200 100])
 subplot(1,2,2), hold on; 
-for i_reg=1:n_regions,plot(osc_x,pdf(osc_ks{i_reg},osc_x),'linewidth',2); end
-xlabel('Salt content change (g m^{-3})',fontsize=14); box on
+for i_reg=1:n_regions
+    hp = plot(osc_x,pdf(osc_ks{i_reg},osc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
+    xline(tr_osc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
+    handle_plots = [handle_plots hp];
+end
+xlabel('Salt content trend (g m^{-3}yr^{-1})',fontsize=14); box on
 text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
-xlim([-7e-3 4e-3])
-hl = legend(regions_lbl,'fontsize',14,'Location','west');
+% xlim([-7e-3 4e-3])
+hl = legend(handle_plots,regions_lbl,'fontsize',14,'Location','northeast');
 % %exportgraphics(gcf,[figs_path,'ksnum_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
 
