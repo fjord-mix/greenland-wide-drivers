@@ -27,7 +27,10 @@ SobolSensOpts.SaveEvaluations = false; % to prevent excessive memory usage!
 % Initialise UQLab - commented out because we initialised it earlier
 % uqlab % uncomment if loading model results run in a previous Matlab session
 for i_reg=1:n_regions
-    [Params_reg,IOpts,~,~] = define_model_param_distrib(datasets,fjords_compilation,i_reg);
+    fprintf('Setting up inputs for surrogate model computation for %s...\n',regions{i_reg})
+    % [Params_reg,IOpts,~,~] = define_model_param_distrib(datasets,fjords_compilation,i_reg);
+    Params_reg = Parameters{i_reg};
+    IOpts_reg = IOpts{i_reg};
 
     % create numerical model object
     ModelOpts.mFile = 'wrapper_boxmodel';
@@ -36,7 +39,7 @@ for i_reg=1:n_regions
     num_model = uq_createModel(ModelOpts);
     
     % create inputs object for the surrogate model
-    input = uq_createInput(IOpts);
+    input = uq_createInput(IOpts_reg);
     Xeval = uq_getSample(input,1e6,'LHS');
 
     % create Meta (surrogate) Model: specification of 14th degree LARS−based PCE     
@@ -46,7 +49,7 @@ for i_reg=1:n_regions
     MetaOpts.Method = 'LARS';
     MetaOpts.Degree = 1:1:15;
     MetaOpts.TruncOptions.qNorm = 0.1:0.1:1;
-    MetaOpts.Bootstrap.Replications = 1e2; % for assessing the model accuracy
+    % MetaOpts.Bootstrap.Replications = 1e2; % for assessing the model accuracy
 
     % Specifying NSamples would get UQLab to perform the runs for us
     % we do not do that here because we need to exclude the unstable runs
@@ -69,23 +72,27 @@ for i_reg=1:n_regions
     MetaOpts.ExpDesign.X = Xreg(~isnan(ohc_reg),:);
     MetaOpts.ExpDesign.Y = ohc_reg(~isnan(ohc_reg));
 
-    
+    fprintf('Creating OHC surrogate model for %s...\n',regions{i_reg})
     sur_model_ohc{i_reg} = uq_createModel(MetaOpts);                 % Create the surrogate model
+    fprintf('Done. Evaluating model and storing results...\n')
     [Ysur_ohc{i_reg},~,Yboo_ohc{i_reg}]      = uq_evalModel(sur_model_ohc{i_reg},Xreg);  % run the surrogate model for the same inputs as the numerical model (incl. bootstraping results)
     Yvld_ohc{i_reg}      = uq_evalModel(sur_model_ohc{i_reg},Xind);  % run the surrogate model for an independent set of inputs (validation)
     Yeval_ohc{i_reg}     = uq_evalModel(sur_model_ohc{i_reg},Xeval); % run the surrogate model for a much larger N
     
-    
+    fprintf('Done. Computing OHC Sobol indices for %s...\n',regions{i_reg})
     sobolA_ohc{i_reg}  = uq_createAnalysis(SobolOpts);   % compute Sobol indices based on the last model run
     ohc_ks_eval{i_reg} = fitdist(Yeval_ohc{i_reg},'kernel'); % create a kernel density function from the surrogate model outputs
 
     % Same for salt content - but no need to change inputs because they are the same
+    fprintf('Creating OSC surrogate model for %s...\n',regions{i_reg})
     MetaOpts.ExpDesign.Y = osc_reg(~isnan(osc_reg)); 
     sur_model_osc{i_reg} = uq_createModel(MetaOpts);
+    fprintf('Done. Evaluating model and storing results...\n')
     Ysur_osc{i_reg}      = uq_evalModel(sur_model_osc{i_reg},Xreg); 
     Yvld_osc{i_reg}      = uq_evalModel(sur_model_osc{i_reg},Xind);
     Yeval_osc{i_reg}     = uq_evalModel(sur_model_osc{i_reg},Xeval);
     
+    fprintf('Done. Computing OSC Sobol indices for %s...\n',regions{i_reg})
     sobolA_osc{i_reg}  = uq_createAnalysis(SobolOpts);
     osc_ks_eval{i_reg} = fitdist(Yeval_osc{i_reg},'kernel');
 
