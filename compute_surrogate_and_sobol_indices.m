@@ -49,7 +49,7 @@ for i_reg=1:n_regions
     MetaOpts.Method = 'LARS';
     MetaOpts.Degree = 1:1:15;
     MetaOpts.TruncOptions.qNorm = 0.1:0.1:1;
-    % MetaOpts.Bootstrap.Replications = 1e2; % for assessing the model accuracy
+    MetaOpts.Bootstrap.Replications = 1e2; % for assessing the model accuracy
 
     % Specifying NSamples would get UQLab to perform the runs for us
     % we do not do that here because we need to exclude the unstable runs
