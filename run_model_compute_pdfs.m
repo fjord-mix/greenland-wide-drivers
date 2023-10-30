@@ -23,8 +23,9 @@ for i_reg=1:n_regions
             ensemble(k_run,i_reg) = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
             fprintf('run %d complete\n',k_run)
         catch ME
-            ensemble(k_run,i_reg).ohc = NaN(size(ensemble(k_run,i_reg).time));
-            ensemble(k_run,i_reg).osc = NaN(size(ensemble(k_run,i_reg).time));
+            ensemble(k_run,i_reg).temp = NaN(size(ensemble(k_run,i_reg).time));
+            ensemble(k_run,i_reg).salt = NaN(size(ensemble(k_run,i_reg).time));
+            ensemble(k_run,i_reg).H    = NaN(size(ensemble(k_run,i_reg).time));
             fprintf('run %d %s\n',k_run,ME.message)
         end
         % end
@@ -49,8 +50,9 @@ for i_reg=1:n_regions
             ensemble_valid(k_run,i_reg) = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
             fprintf('run %d complete\n',k_run)
         catch ME
-            ensemble_valid(k_run,i_reg).ohc = NaN(size(ensemble_valid(k_run,i_reg).time));
-            ensemble_valid(k_run,i_reg).osc = NaN(size(ensemble_valid(k_run,i_reg).time));
+            ensemble_valid(k_run,i_reg).temp = NaN(size(ensemble_valid(k_run,i_reg).time));
+            ensemble_valid(k_run,i_reg).salt = NaN(size(ensemble_valid(k_run,i_reg).time));
+            ensemble_valid(k_run,i_reg).H    = NaN(size(ensemble_valid(k_run,i_reg).time));
             fprintf('run %d %s\n',k_run,ME.message)
         end
         % end
@@ -83,6 +85,6 @@ end
 % ohc_out(36,1) = NaN;
 % osc_out(36,1) = NaN;
 
-% [ohc_out(k_run,i_reg),osc_out(k_run,i_reg)] = wrapper_boxmodel(X(50,7,:),Parameters{7});
-% [ensemble(1,1).time,ensemble(1,1).ohc,ensemble(1,1).osc] = wrapper_boxmodel(X(1,1,:),Parameters{1});
+% fjord_out = wrapper_boxmodel(X(2,1,:),Parameters{1});
+% ensemble(1,1) = wrapper_boxmodel(X(1,1,:),Parameters{1});
 % wrapper_boxmodel(X(7,5,:),Parameters{5});
