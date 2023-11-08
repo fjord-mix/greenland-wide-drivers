@@ -16,10 +16,12 @@ for i_time=1:length_run
         end
     end
 end
-fjord_dens = (fjord_run.p.betaS*fjord_run.salt - fjord_run.p.betaT*fjord_run.temp);
-sc = fjord_run.salt           .*                   fjord_dens  .* fjord_run.p.L.*fjord_run.p.W.*h_int;
-hc = ((fjord_run.temp+273.15) .* fjord_run.p.cw .* fjord_dens) .* fjord_run.p.L.*fjord_run.p.W.*h_int;
-% gets output quantities in "per unit volume"
-heat_content = sum(hc./(fjord_run.p.L.*fjord_run.p.W.*h_int),1,'omitnan');
-salt_content = sum(sc./(fjord_run.p.L.*fjord_run.p.W.*h_int),1,'omitnan');
+% fjord_dens = (fjord_run.p.betaS*fjord_run.salt - fjord_run.p.betaT*fjord_run.temp);
+% sc = fjord_run.salt           .*                   fjord_dens  .* fjord_run.p.L.*fjord_run.p.W.*h_int;
+% hc = ((fjord_run.temp+273.15) .* fjord_run.p.cw .* fjord_dens) .* fjord_run.p.L.*fjord_run.p.W.*h_int;
+% % gets output quantities in "per unit volume"
+% heat_content = sum(hc./(fjord_run.p.L.*fjord_run.p.W.*h_int),1,'omitnan');
+% salt_content = sum(sc./(fjord_run.p.L.*fjord_run.p.W.*h_int),1,'omitnan');
+heat_content = sum(fjord_run.salt.*h_int,'omitnan')./sum(h_int,'omitnan');
+salt_content = sum(fjord_run.temp.*h_int,'omitnan')./sum(h_int,'omitnan');
 end
