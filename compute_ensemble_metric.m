@@ -22,10 +22,10 @@ for i_reg=1:n_regions
             osc_trend = p(1);
         
             % get the difference to account for total warming/freshening
-            % ohc_out(k_run,i_reg) = ohc_end-ohc_start; 
-            % osc_out(k_run,i_reg) = osc_end-osc_start;
-            ohc_out(k_run,i_reg) = ohc_trend *365; % get output "per year"
-            osc_out(k_run,i_reg) = osc_trend *365;
+            ohc_out(k_run,i_reg) = ohc_end-ohc_start; 
+            osc_out(k_run,i_reg) = osc_end-osc_start;
+            % ohc_out(k_run,i_reg) = ohc_trend *365; % get output "per year"
+            % osc_out(k_run,i_reg) = osc_trend *365;
         else 
             % if the time series is too short, i.e., the model crashed
             ohc_out(k_run,i_reg) = NaN;
