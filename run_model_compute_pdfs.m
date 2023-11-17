@@ -63,7 +63,7 @@ end
 fprintf('Model validation runs complete. Starting computation of heat/salt contents...\n')
 
 [ohc_vld,osc_vld] = compute_ensemble_metric(ensemble_valid,length(time_axis));
-fprintf('Computation of heat/salt contents complete. Creating validation dataset...\n')
+fprintf('Computation of heat/salt contents complete for validation dataset complete.\n')
 
 %% Calculate the distributions based on the numerical outputs alone
 % this is just for comparison with the surrogate model outputs
