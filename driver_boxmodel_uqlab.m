@@ -27,8 +27,9 @@ regions = {'SW','SE','CW','CE','NW','NE','NO'};
 % exportgraphics(hf,[figs_path,'summary_input_probs2010-2018_ratios.png'],'Resolution',300)
 
 %% Initialise all needed variables
-n_runs    = 50; % runs for producing the surrogate model
-n_valid   = 10; % independent runs for surrogate model validation
+n_runs    = 700; % runs for producing the surrogate model
+n_valid   = 40; % independent runs for surrogate model validation
+n_surr    = 1e6; % sample size for the surrogate model itself
 time_step = 0.1; % in days
 n_regions = length(regions);
 time_axis = datetime(2010,01,15):1:datetime(2018,12,15);
@@ -43,18 +44,23 @@ Parameters = cell([1, n_regions]);
 IOpts      = cell([1, n_regions]);
 X          = zeros([n_runs,n_regions,10]);
 Xvalid     = zeros([n_valid,n_regions,10]);
+Xeval     = zeros([n_surr,n_regions,10]);
 
 uqlab % Initialise UQLab
 
 %% sample the distributions for inputs
 rng('default') % set the seed for reproducibility
 for i_reg=1:n_regions
+    tic
+    fprintf('Generating inputs for %s...\n',regions{i_reg})
     [Parameters{i_reg},IOpts{i_reg},~,~] = define_model_param_distrib(datasets,fjords_compilation,i_reg,time_axis,time_step); % available outputs: [Parameters,IOpts,probs,fjords_processed]
     input = uq_createInput(IOpts{i_reg}); % create probability functions
 
     % perform latin hypercube sampling of our parametre space
     X(:,i_reg,:)      = uq_getSample(input,n_runs,'LHS');  % training dataset
     Xvalid(:,i_reg,:) = uq_getSample(input,n_valid,'LHS'); % validation dataset
+    Xeval(:,i_reg,:)  = uq_getSample(input,1e6,'LHS'); % surrogate model
+    toc
 end
 
 %% Run the model for all iterations
@@ -62,18 +68,18 @@ end
 run run_model_compute_pdfs.m
 
 % save outputs so we dont have to re-run it
-save([outs_path,'ts_ensemble_n',num2str(n_runs)],'-v7.3','ensemble','ensemble_valid') % save ensemble structure so we do not need to rerun it all the time
-save([outs_path,'ohc_osc_trend_runs_probs_n',num2str(n_runs)],'ohc_out','osc_out','ohc_vld','osc_vld');%,'ohc_pd','osc_pd','ohc_ks','osc_ks')
+save([outs_path,'ts_ensemble_n',num2str(n_runs),''],'-v7.3','X','Xvalid','Xeval','ensemble','ensemble_valid') % save ensemble structure so we do not need to rerun it all the time
+save([outs_path,'ts_trends_n',num2str(n_runs)],'ohc_out','osc_out');%,'ohc_pd','osc_pd','ohc_ks','osc_ks')
 %% Setting up the PCE model per region using UQLab
 % if we have the results saved already
-% load([outs_path,'ts_ensemble_n',num2str(n_runs)]) 
-% load([outs_path,'ohc_osc_trend_runs_probs_n',num2str(n_runs)])
+% load([outs_path,'ts_ensemble_n',num2str(n_runs),'_absall']) 
+% load([outs_path,'tmp_sal_change_runs_probs_n',num2str(n_runs),'absall'])
 tic
 run compute_surrogate_and_sobol_indices.m
 toc
 % ideally we would save the PCE-related variables as well, but Matlab always returns an error
 % when trying to save them
-% save([outs_path,'ohc_osc_pce_n50_n1e6'],'sur_model_ohc','sur_model_osc','Ysur_ohc','Ysur_osc','Yeval_ohc','Yeval_osc','sobolA_ohc','sobolA_osc')
+% save([outs_path,'ohc_osc_pce_n50_n1e6'],'sur_model_ohc','sur_model_osc');%,'Ysur_ohc','Ysur_osc','Yeval_ohc','Yeval_osc','sobolA_ohc','sobolA_osc')
 
 %% Plotting the outputs
 
