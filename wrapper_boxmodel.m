@@ -2,7 +2,7 @@ function [fjord_out] = wrapper_boxmodel(X,Parameters,flag_debug)
 % function [ohc_mean,osc_mean] = wrapper_boxmodel(X,Parameters,flag_debug)
 % function [output_time,heat_content,salt_content,status,fjord_run] = wrapper_boxmodel(X,Parameters)
 % Wrapper function for running the boxmodel in UQLab
-% X contains all parameters we want to explore (M=8)
+% X contains all parameters we want to explore (10)
 % Parameters contain all parameters "in common" that we use for all model
 % runs
 [p,a] = get_model_default_parameters(); % default params, standard initialisation
@@ -14,17 +14,21 @@ p.P0=X(10);
 p.dt = Parameters.t(2)-Parameters.t(1);
 %% Getting the parameters to be explored into variables that we can more easily recall
 p.L         = X(1);
+% p.W         = X(2);
 p.H         = X(2);
 % TODO: add H and bump up the indices of the rest
 p.W         = X(1) ./ X(3); % W  = L /(L/W)
+% p.W         = X(1)./X(2); % W  = L /(L/W)
 p.silldepth = -X(4) .* X(2); % Zs = (Zs/H) * H
 p.zgl       = -X(5) .* X(2); % Zg = (Zg/H) * H 
+% p.silldepth = X(3); 
+% p.zgl       = X(4); 
 
 dTanom = X(6);
 dSanom = X(7);
 Xfrq   = X(8);
 dQamp  = X(9);
-dDanom = 0;%X(10); % ignoring solid-ice discharge (for now?)
+dDanom = 0;%X(11); % ignoring solid-ice discharge (for now?)
 
 %% Set up model forcings
 % Xamp=0.92;  % if using anomaly to profiles

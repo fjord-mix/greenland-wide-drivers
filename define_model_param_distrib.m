@@ -37,21 +37,21 @@ probs(end+1) = fjord_stats.H.pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.H.total',[min(fjord_stats.H.total), max(fjord_stats.H.total)]);
 
 % probs(end+1) = fjord_stats.W.pd;
-% iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.W.total',[0, max(fjord_stats.W.total)]);
+% iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.W.total',[min(fjord_stats.W.total), max(fjord_stats.W.total)]);
 probs(end+1) = fjord_stats.a.pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.a.total',[1, max(fjord_stats.a.total)]);
 
 % probs(end+1) = fjord_stats.Zs.pd;
 % iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zs.total', [min(fjord_stats.Zs.total) -50]);
 probs(end+1) = fjord_stats.Zsr.pd;
-% iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zsr.total', [min(abs(fjord_stats.Zs.total)/max(fjord_stats.H.total)) max(abs(fjord_stats.Zs.total)/max(fjord_stats.H.total))]);
-iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zsr.total', [0.05 0.95]);
+iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zsr.total', [min(abs(fjord_stats.Zs.total)/max(fjord_stats.H.total)) max(abs(fjord_stats.Zs.total)/max(fjord_stats.H.total))]);
+% iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zsr.total', [0.05 0.95]);
 
 % probs(end+1) = fjord_stats.Zg.pd;
 % iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zg.total', [min(fjord_stats.Zg.total) -50]);
 probs(end+1) = fjord_stats.Zgr.pd;
-% iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zgr.total', [min(abs(fjord_stats.Zg.total)/max(fjord_stats.H.total)) max(abs(fjord_stats.Zg.total)/max(fjord_stats.H.total))]);
-iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zgr.total', [0.05 0.95]);
+iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zgr.total', [min(abs(fjord_stats.Zg.total)/max(fjord_stats.H.total)) max(abs(fjord_stats.Zg.total)/max(fjord_stats.H.total))]);
+% iOpts.Marginals(end+1) = uq_KernelMarginals(fjord_stats.Zgr.total', [0.05 0.95]);
 
 %% Gets the ocean forcing
 
@@ -109,15 +109,6 @@ probs(end+1)                    = q_pd;
 %Plot to check parameter space
 % figure('Name','Qsg parameter space'); histogram(random(q_pd,1000));
 
-% Solid-ice discharge (same procedure as for T and S)
-% [d_forcing,d_anom,~,~] = get_var_clim_by_region(fjords_processed,'D');
-[d_forcing,d_anom,~,~] = get_var_forcing_by_region(fjords_processed,'D');
-% d_pd                   = fitdist(d_anom{i_reg},'kernel');
-
-% Ignoring PD (for now?)
-% probs(end+1) = d_pd;
-% iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom{i_reg},[min(d_anom{i_reg}), max(d_anom{i_reg})]);
-
 % considering we use an entrainment coefficient of 0.1, P0=[5,30] is
 % equivalent to a plume width of 50-300 m
 p_pd              = makedist('Uniform','lower',5,'upper',30); 
@@ -125,6 +116,15 @@ iOpts.Marginals(end+1).Type     = 'uniform';
 iOpts.Marginals(end).Parameters = [5 30];
 iOpts.Marginals(end).Bounds     = [5 30];
 probs(end+1)                    = p_pd;
+
+% Solid-ice discharge (same procedure as for T and S)
+% [d_forcing,d_anom,~,~] = get_var_clim_by_region(fjords_processed,'D');
+[d_forcing,d_anom,~,~] = get_var_forcing_by_region(fjords_processed,'D');
+% d_pd                   = fitdist(d_anom{i_reg},'kernel');
+% Ignoring D (for now?)
+% probs(end+1) = d_pd;
+% iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom{i_reg},[min(d_anom{i_reg}), max(d_anom{i_reg})]);
+
 
 %% interpolates time series variables to the actual time steps used by the model
 datasets.opts.dt            = experiments_time_dt; % time step in days
@@ -156,17 +156,19 @@ params.I0    = fjord_dummy.a.I0;
 
 % Add the names to the input distributions we created
 iOpts.Marginals(1).Name = 'L';
+% iOpts.Marginals(2).Name = 'W';
 iOpts.Marginals(2).Name = 'H';
 iOpts.Marginals(3).Name = 'L/W'; % iOpts.Marginals(2).Name = 'W';
 iOpts.Marginals(4).Name = 'Zs/H';
 iOpts.Marginals(5).Name = 'Zg/H';
+% iOpts.Marginals(3).Name = 'Zs';
+% iOpts.Marginals(4).Name = 'Zg';
 iOpts.Marginals(6).Name = 'Ta';
 iOpts.Marginals(7).Name = 'Sa';
 iOpts.Marginals(8).Name = 'omega';
 iOpts.Marginals(9).Name = 'Qa';
-% iOpts.Marginals(10).Name = 'Da';
 iOpts.Marginals(10).Name = 'P0';
-
+% iOpts.Marginals(11).Name = 'Da';
 
 end
 
