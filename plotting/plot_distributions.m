@@ -72,8 +72,8 @@ for i_reg=1:7
     x_q = linspace(0, 2,3000);
     x_p = linspace(0,40,3000);
     subplot(3,5,11); hold on; box on; plot(x_q,pdf(probs(9),x_q),'linewidth',1.5); 
-    subplot(3,5,12); hold on; box on; plot(x_d,pdf(probs(10),x_d),'linewidth',1.5);
-    subplot(3,5,13); hold on; box on; plot(x_p,pdf(probs(11),x_p),'linewidth',1.5,'color','k'); 
+    subplot(3,5,12); hold on; box on; plot(x_d,pdf(probs(11),x_d),'linewidth',1.5);
+    subplot(3,5,13); hold on; box on; plot(x_p,pdf(probs(10),x_p),'linewidth',1.5,'color','k'); 
 end
 
 subplot(3,5,9);
