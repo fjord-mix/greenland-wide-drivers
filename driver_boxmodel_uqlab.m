@@ -37,8 +37,8 @@ time_axis = datetime(2010,01,15):1:datetime(2018,12,15);
 % initialising traiing and validation dataset structures
 if exist('ensemble',"var"),       clear ensemble; end
 if exist('ensemble_valid',"var"), clear ensemble_valid; end
-ensemble(n_runs,n_regions)        = struct("time",[],"temp",[],"salt",[],"H",[],"p",[]);
-ensemble_valid(n_valid,n_regions) = struct("time",[],"temp",[],"salt",[],"H",[],"p",[]);
+ensemble(n_runs,n_regions)        = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[]);
+ensemble_valid(n_valid,n_regions) = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[]);
 
 Parameters = cell([1, n_regions]);
 IOpts      = cell([1, n_regions]);

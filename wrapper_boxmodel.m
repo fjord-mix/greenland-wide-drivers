@@ -96,11 +96,14 @@ end
 % fjord_run.o = postprocess_boxmodel(fjord_run);
 % heat_content = sum(fjord_run.o.hc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
 % salt_content = sum(fjord_run.o.sc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-fjord_out = struct("time",[],"temp",[],"salt",[],"H",[],"p",[]);
-fjord_out.temp   = fjord_run.s.T;
-fjord_out.salt   = fjord_run.s.S;
-fjord_out.H     = fjord_run.s.H;
+fjord_out = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[]);
 fjord_out.time  = fjord_run.s.t;
+fjord_out.temp  = fjord_run.s.T;
+fjord_out.salt  = fjord_run.s.S;
+fjord_out.H     = fjord_run.s.H;
+fjord_out.ts    = fjord_run.s.Ts;
+fjord_out.ss    = fjord_run.s.Ss;
+fjord_out.zs    = fjord_run.s.Ts;
 fjord_out.p     = fjord_run.p;
 
 end
