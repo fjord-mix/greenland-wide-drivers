@@ -28,7 +28,7 @@ regions = {'SW','SE','CW','CE','NW','NE','NO'};
 
 %% Initialise all needed variables
 n_runs    = 700; % runs for producing the surrogate model
-n_valid   = 40; % independent runs for surrogate model validation
+n_valid   = floor(n_runs/10); % independent runs for surrogate model validation
 n_surr    = 1e6; % sample size for the surrogate model itself
 time_step = 0.1; % in days
 n_regions = length(regions);
