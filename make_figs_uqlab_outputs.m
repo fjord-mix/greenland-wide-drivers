@@ -37,7 +37,7 @@ for i_reg=1:length(regions)
     p = polyfit(taxis_shelf,hc_reg(:,i_reg),1);
     tr_ohc_shelf(i_reg) = p(1)*12;
     % tr_ohc_shelf(i_reg) = mean(hc_reg(end-12:end,i_reg))-mean(hc_reg(1:12,i_reg));
-    % p = polyfit(taxis_shelf,sc_reg(:,i_reg),1);
+    p = polyfit(taxis_shelf,sc_reg(:,i_reg),1);
     tr_osc_shelf(i_reg) = p(1)*12;
     % tr_osc_shelf(i_reg) = mean(sc_reg(end-12:end,i_reg))-mean(sc_reg(1:12,i_reg));
 end
