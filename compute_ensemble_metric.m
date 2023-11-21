@@ -9,6 +9,18 @@ for i_reg=1:n_regions
         if length(ensemble(k_run,i_reg).temp) == min_length-1
 
             [heat_content,salt_content] = get_active_fjord_contents(ensemble(k_run,i_reg));
+            
+            sc_reg = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss)./max(abs(ensemble(k_run,i_reg).zs)));
+            hc_reg = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts)./max(abs(ensemble(k_run,i_reg).zs)));
+            taxis_shelf = 1:1:size(sc_reg,1);
+            for i_reg=1:length(regions)
+                p = polyfit(taxis_shelf,hc_reg(:,i_reg),1);
+                tr_ohc_shelf(i_reg) = p(1)*12;
+                % tr_ohc_shelf(i_reg) = mean(hc_reg(end-12:end,i_reg))-mean(hc_reg(1:12,i_reg));
+                p = polyfit(taxis_shelf,sc_reg(:,i_reg),1);
+                tr_osc_shelf(i_reg) = p(1)*12;
+                % tr_osc_shelf(i_reg) = mean(sc_reg(end-12:end,i_reg))-mean(sc_reg(1:12,i_reg));
+            end
 
             ohc_start = mean(heat_content(1:365)); % get the mean for the first year
             osc_start = mean(salt_content(1:365));
