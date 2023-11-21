@@ -106,8 +106,8 @@ for i_reg=1:n_regions
     hl = refline(1,0); hl.LineStyle='--'; hl.Color='r';
     box on; grid on;
 
-    rms = rmse(Yvld_ohc{i_reg},Yind_ohc{i_reg},'omitnan');
-    % mdl = fitlm(Ynum_ohc{i_reg},Ysur_ohc{i_reg});
+    % rms = rmse(Yvld_ohc{i_reg},Yind_ohc{i_reg},'omitnan');
+    mdl = fitlm(Yind_ohc{i_reg},Yvld_ohc{i_reg});
 
     text(0.05,0.95,sprintf('(%s) %s (n=%d)',letters{i_reg},regions{i_reg},ok_runs(i_reg)),'units','normalized','fontsize',14)
     % text(0.98,0.07,sprintf('$\\epsilon_{LOO}=%0.2f$',sur_model_ohc{i_reg}.Error.LOO),'interpreter','latex','units','normalized','horizontalAlignment','right','fontsize',14)
@@ -128,8 +128,8 @@ for i_reg=1:n_regions
     hl = refline(1,0); hl.LineStyle='--'; hl.Color='r';
     box on; grid on;
 
-    rms = rmse(Yvld_osc{i_reg},Yind_osc{i_reg},'omitnan');
-    % mdl = fitlm(Ynum_ohc{i_reg},Ysur_ohc{i_reg});
+    % rms = rmse(Yvld_osc{i_reg},Yind_osc{i_reg},'omitnan');
+    mdl = fitlm(Yind_ohc{i_reg},Yvld_ohc{i_reg});
 
     text(0.05,0.95,sprintf('(%s) %s (n=%d)',letters{i_reg},regions{i_reg},ok_runs(i_reg)),'units','normalized','fontsize',14)
     % text(0.98,0.07,sprintf('$\\epsilon_{LOO}=%0.2f$',sur_model_osc{i_reg}.Error.LOO),'interpreter','latex','units','normalized','horizontalAlignment','right','fontsize',14)
@@ -146,27 +146,27 @@ end
 figure('Name','Surrogate model kernel density','Position',[40 40 850 500]); hold on;
 subplot(2,2,1), hold on; box on; grid on
 for i_reg=1:n_regions
-    plot(1e-3.*ohc_x,pdf(ohc_ks_eval{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(1e-3.*tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    scatter(1e-3.*tr_ohc_shelf(i_reg),pdf(ohc_ks_eval{i_reg},tr_ohc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
+    plot(ohc_x,pdf(ohc_ks_eval{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
+    % xline(tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
+    scatter(tr_ohc_shelf(i_reg),pdf(ohc_ks_eval{i_reg},tr_ohc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
 end
 xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
 ylabel('Probability density');
 text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
-xlim([-1.5e-4 1.5e-4]);
+xlim([-0.15 0.15]);
 set(gca,'fontsize',14)
 subplot(2,2,3), hold on; box on; grid on
 for i_reg=1:n_regions
-    plot(1e-3.*ohc_x,cdf(ohc_ks_eval{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(1e-3.*tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    scatter(1e-3.*tr_ohc_shelf(i_reg),cdf(ohc_ks_eval{i_reg},tr_ohc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
+    plot(ohc_x,cdf(ohc_ks_eval{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
+    % xline(tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
+    scatter(tr_ohc_shelf(i_reg),cdf(ohc_ks_eval{i_reg},tr_ohc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
 end
 xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
 xlabel('Temperature trend (^oC m^{-3}yr^{-1})',fontsize=14);
 ylabel('Cumulative probability density');
 text(0.05,0.95,'(c)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
-xlim([-1.5e-4 1.5e-4]);
+xlim([-0.15 0.15]);
 % handle_plots = [];
 subplot(2,2,2), hold on; box on; grid on
 for i_reg=1:n_regions
@@ -198,29 +198,33 @@ hl = legend(handle_plots,regions,'fontsize',14,'Location','east');
 % exportgraphics(gcf,[figs_path,'kssur_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% construct the numerical model kernel density plot (just for comparison)
-% figure('Name','Numerical model kernel density','Position',[40 40 850 300]); 
-% handle_plots = [];
-% subplot(1,2,1), hold on; 
-% for i_reg=1:n_regions
-%     hp = plot(1e-3.*ohc_x,pdf(ohc_ks{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-%     xline(1e-3.*tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-% end
-% xlabel('Temperature trend (^oC m^{-3}yr^{-1})',fontsize=14); ylabel('Probability',fontsize=14);  box on
-% text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
-% set(gca,'fontsize',14)
-% xlim([-2 4])
-% subplot(1,2,2), hold on; 
-% for i_reg=1:n_regions
-%     hp = plot(osc_x,pdf(osc_ks{i_reg},osc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-%     xline(tr_osc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-%     handle_plots = [handle_plots hp];
-% end
-% xlabel('Salinity trend (m^{-3}yr^{-1})',fontsize=14); box on
-% text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
-% set(gca,'fontsize',14)
-% xlim([-0.1 0.2])
-% hl = legend(handle_plots,regions_lbl,'fontsize',14,'Location','northeast');
-%exportgraphics(gcf,[figs_path,'ksnum_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
+figure('Name','Numerical model kernel density','Position',[40 40 850 300]); 
+handle_plots = [];
+subplot(1,2,1), hold on; box on; grid on;
+for i_reg=1:n_regions
+    hp = plot(ohc_x,pdf(ohc_ks{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
+    % xline(1e-3.*tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
+    scatter(tr_ohc_shelf(i_reg),pdf(ohc_ks{i_reg},tr_ohc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
+end
+xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
+xlabel('Temperature trend (^oC m^{-3}yr^{-1})',fontsize=14); ylabel('Probability',fontsize=14);  box on
+text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
+set(gca,'fontsize',14)
+xlim([-0.15 0.15]);
+subplot(1,2,2), hold on; box on; grid on;
+for i_reg=1:n_regions
+    hp = plot(osc_x,pdf(osc_ks{i_reg},osc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
+    % xline(tr_osc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
+    scatter(tr_osc_shelf(i_reg),pdf(osc_ks{i_reg},tr_osc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
+    handle_plots = [handle_plots hp];
+end
+xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
+xlabel('Salinity trend (m^{-3}yr^{-1})',fontsize=14); box on
+text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
+set(gca,'fontsize',14)
+xlim([-0.1 0.1])
+hl = legend(handle_plots,regions_lbl,'fontsize',14,'Location','northeast');
+% exportgraphics(gcf,[figs_path,'ksnum_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %TODO: add histogram of differences?
 %% Plotting the Sobol indices
