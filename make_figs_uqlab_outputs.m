@@ -53,7 +53,12 @@ for i_reg=1:n_regions
     osc_reg=NaN([n_runs,length(time_axis_plt)]);
     for k_run=1:n_runs
         if ~isempty(ensemble(k_run,i_reg).temp)
-            [ohc_reg(k_run,:),osc_reg(k_run,:)] = get_active_fjord_contents(ensemble(k_run,i_reg));
+            [ohc_fjord,osc_fjord] = get_active_fjord_contents(ensemble(k_run,i_reg));
+            ohc_shelf = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts+273.15)./max(abs(ensemble(k_run,i_reg).zs)));
+            osc_shelf = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss)./max(abs(ensemble(k_run,i_reg).zs)));
+
+            ohc_reg(k_run,:) = ohc_fjord - ohc_shelf;
+            osc_reg(k_run,:) = osc_fjord - osc_shelf;
         else
             ohc_reg(k_run,:) = NaN;
             osc_reg(k_run,:) = NaN;
