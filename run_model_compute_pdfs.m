@@ -25,6 +25,8 @@ for i_reg=1:n_regions
         catch ME
             ensemble(k_run,i_reg).temp = NaN(size(ensemble(k_run,i_reg).time));
             ensemble(k_run,i_reg).salt = NaN(size(ensemble(k_run,i_reg).time));
+            ensemble(k_run,i_reg).ts   = NaN(size(ensemble(k_run,i_reg).time));
+            ensemble(k_run,i_reg).ss   = NaN(size(ensemble(k_run,i_reg).time));
             ensemble(k_run,i_reg).H    = NaN(size(ensemble(k_run,i_reg).time));
             fprintf('run %d %s\n',k_run,ME.message)
         end
@@ -52,6 +54,8 @@ for i_reg=1:n_regions
         catch ME
             ensemble_valid(k_run,i_reg).temp = NaN(size(ensemble_valid(k_run,i_reg).time));
             ensemble_valid(k_run,i_reg).salt = NaN(size(ensemble_valid(k_run,i_reg).time));
+            ensemble_valid(k_run,i_reg).ts   = NaN(size(ensemble_valid(k_run,i_reg).time));
+            ensemble_valid(k_run,i_reg).ss   = NaN(size(ensemble_valid(k_run,i_reg).time));
             ensemble_valid(k_run,i_reg).H    = NaN(size(ensemble_valid(k_run,i_reg).time));
             fprintf('run %d %s\n',k_run,ME.message)
         end
