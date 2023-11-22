@@ -68,8 +68,9 @@ end
 run run_model_compute_pdfs.m
 
 % save outputs so we dont have to re-run it
-save([outs_path,'ts_ensemble_n',num2str(n_runs),''],'-v7.3','X','Xvalid','Xeval','ensemble','ensemble_valid') % save ensemble structure so we do not need to rerun it all the time
+save([outs_path,'ts_ensembles_n',num2str(n_runs),''],'-v7.3','X','Xvalid','Xeval','ensemble','ensemble_valid') % save ensemble structure so we do not need to rerun it all the time
 save([outs_path,'ts_trends_n',num2str(n_runs)],'ohc_out','osc_out');%,'ohc_pd','osc_pd','ohc_ks','osc_ks')
+disp('Numerical model outputs saved.')
 %% Setting up the PCE model per region using UQLab
 % if we have the results saved already
 % load([outs_path,'ts_ensemble_n',num2str(n_runs),'_absall']) 
