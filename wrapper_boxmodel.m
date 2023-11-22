@@ -103,7 +103,7 @@ fjord_out.salt  = fjord_run.s.S;
 fjord_out.H     = fjord_run.s.H;
 fjord_out.ts    = fjord_run.s.Ts;
 fjord_out.ss    = fjord_run.s.Ss;
-fjord_out.zs    = fjord_run.s.Ts;
+fjord_out.zs    = fjord_run.f.zs;
 fjord_out.p     = fjord_run.p;
 
 end
