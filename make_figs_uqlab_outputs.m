@@ -54,7 +54,7 @@ for i_reg=1:n_regions
     for k_run=1:n_runs
         if ~isempty(ensemble(k_run,i_reg).temp)
             [ohc_fjord,osc_fjord] = get_active_fjord_contents(ensemble(k_run,i_reg));
-            ohc_shelf = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts+273.15)./max(abs(ensemble(k_run,i_reg).zs)));
+            ohc_shelf = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts)./max(abs(ensemble(k_run,i_reg).zs)));
             osc_shelf = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss)./max(abs(ensemble(k_run,i_reg).zs)));
 
             ohc_reg(k_run,:) = ohc_fjord - ohc_shelf;
@@ -65,8 +65,8 @@ for i_reg=1:n_regions
         end
     end
     subplot(1,2,1); hold on; box on;
-    mean_ln = mean(bootstrp(100,@(x)[mean(x,1,'omitnan')],ohc_reg-273.15));
-    std_ln  = std(bootstrp(100,@(x)[mean(x,1,'omitnan')],ohc_reg-273.15));
+    mean_ln = mean(bootstrp(100,@(x)[mean(x,1,'omitnan')],ohc_reg));
+    std_ln  = std(bootstrp(100,@(x)[mean(x,1,'omitnan')],ohc_reg));
     upper_bnd = mean_ln+std_ln;
     lower_bnd = mean_ln-std_ln;
 
@@ -209,25 +209,25 @@ subplot(1,2,1), hold on; box on; grid on;
 for i_reg=1:n_regions
     hp = plot(ohc_x,pdf(ohc_ks{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
     % xline(1e-3.*tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    scatter(tr_ohc_shelf(i_reg),pdf(ohc_ks{i_reg},tr_ohc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
+    % scatter(tr_ohc_shelf(i_reg),pdf(ohc_ks{i_reg},tr_ohc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
 end
 xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
-xlabel('Temperature trend (^oC m^{-3}yr^{-1})',fontsize=14); ylabel('Probability',fontsize=14);  box on
+xlabel('Temperature difference (^oC)',fontsize=14); ylabel('Probability',fontsize=14);  box on
 text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
-xlim([-0.15 0.15]);
+% xlim([-0.15 0.15]);
 subplot(1,2,2), hold on; box on; grid on;
 for i_reg=1:n_regions
     hp = plot(osc_x,pdf(osc_ks{i_reg},osc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
     % xline(tr_osc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    scatter(tr_osc_shelf(i_reg),pdf(osc_ks{i_reg},tr_osc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
+    % scatter(tr_osc_shelf(i_reg),pdf(osc_ks{i_reg},tr_osc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
     handle_plots = [handle_plots hp];
 end
 xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
-xlabel('Salinity trend (m^{-3}yr^{-1})',fontsize=14); box on
+xlabel('Salinity difference',fontsize=14); box on
 text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
-xlim([-0.1 0.1])
+% xlim([-0.1 0.1])
 hl = legend(handle_plots,regions_lbl,'fontsize',14,'Location','northeast');
 % exportgraphics(gcf,[figs_path,'ksnum_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 

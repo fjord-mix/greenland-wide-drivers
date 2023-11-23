@@ -23,6 +23,6 @@ end
 % heat_content = sum(hc./(fjord_run.p.L.*fjord_run.p.W.*h_int),1,'omitnan');
 % salt_content = sum(sc./(fjord_run.p.L.*fjord_run.p.W.*h_int),1,'omitnan');
 
-heat_content = sum((fjord_run.temp+273.15).*h_int,'omitnan')./sum(h_int,'omitnan');
+heat_content = sum((fjord_run.temp).*h_int,'omitnan')./sum(h_int,'omitnan');
 salt_content = sum(fjord_run.salt.*h_int,'omitnan')./sum(h_int,'omitnan');
 end

@@ -10,34 +10,36 @@ for i_reg=1:n_regions
 
             [heat_content,salt_content] = get_active_fjord_contents(ensemble(k_run,i_reg));
             
-            sc_reg = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss)./max(abs(ensemble(k_run,i_reg).zs)));
-            hc_reg = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts)./max(abs(ensemble(k_run,i_reg).zs)));
-            taxis_shelf = 1:1:size(sc_reg,1);
-            for i_reg=1:length(regions)
-                p = polyfit(taxis_shelf,hc_reg(:,i_reg),1);
-                tr_ohc_shelf(i_reg) = p(1)*12;
-                % tr_ohc_shelf(i_reg) = mean(hc_reg(end-12:end,i_reg))-mean(hc_reg(1:12,i_reg));
-                p = polyfit(taxis_shelf,sc_reg(:,i_reg),1);
-                tr_osc_shelf(i_reg) = p(1)*12;
-                % tr_osc_shelf(i_reg) = mean(sc_reg(end-12:end,i_reg))-mean(sc_reg(1:12,i_reg));
-            end
+            sc_shelf = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss)./max(abs(ensemble(k_run,i_reg).zs)));
+            hc_shelf = 273.15+squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts)./max(abs(ensemble(k_run,i_reg).zs)));
+            % taxis_shelf = 1:1:size(sc_reg,1);
+            % for i_reg=1:length(regions)
+            %     p = polyfit(taxis_shelf,hc_reg(:,i_reg),1);
+            %     tr_ohc_shelf(i_reg) = p(1)*12;
+            %     % tr_ohc_shelf(i_reg) = mean(hc_reg(end-12:end,i_reg))-mean(hc_reg(1:12,i_reg));
+            %     p = polyfit(taxis_shelf,sc_reg(:,i_reg),1);
+            %     tr_osc_shelf(i_reg) = p(1)*12;
+            %     % tr_osc_shelf(i_reg) = mean(sc_reg(end-12:end,i_reg))-mean(sc_reg(1:12,i_reg));
+            % end
 
-            ohc_start = mean(heat_content(1:365)); % get the mean for the first year
-            osc_start = mean(salt_content(1:365));
-        
-            ohc_end = mean(heat_content(end-365:end)); % get the mean for the last year
-            osc_end = mean(salt_content(end-365:end));
-
-            p = polyfit(ensemble(k_run,i_reg).time,heat_content,1);
-            ohc_trend = p(1);
-            p = polyfit(ensemble(k_run,i_reg).time,salt_content,1);
-            osc_trend = p(1);
+            % ohc_start = mean(heat_content(1:365)); % get the mean for the first year
+            % osc_start = mean(salt_content(1:365));
+            % 
+            % ohc_end = mean(heat_content(end-365:end)); % get the mean for the last year
+            % osc_end = mean(salt_content(end-365:end));
+            % 
+            % p = polyfit(ensemble(k_run,i_reg).time,heat_content,1);
+            % ohc_trend = p(1);
+            % p = polyfit(ensemble(k_run,i_reg).time,salt_content,1);
+            % osc_trend = p(1);
         
             % get the difference to account for total warming/freshening
             % ohc_out(k_run,i_reg) = ohc_end-ohc_start; 
             % osc_out(k_run,i_reg) = osc_end-osc_start;
-            ohc_out(k_run,i_reg) = ohc_trend *365; % get output "per year"
-            osc_out(k_run,i_reg) = osc_trend *365;
+            % ohc_out(k_run,i_reg) = ohc_trend *365; % get output "per year"
+            % osc_out(k_run,i_reg) = osc_trend *365;
+            ohc_out(k_run,i_reg) = mean(heat_content - hc_shelf);
+            osc_out(k_run,i_reg) = mean(salt_content - sc_shelf);
         else 
             % if the time series is too short, i.e., the model crashed
             ohc_out(k_run,i_reg) = NaN;
