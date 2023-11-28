@@ -11,7 +11,7 @@ for i_reg=1:n_regions
             [heat_content,salt_content] = get_active_fjord_contents(ensemble(k_run,i_reg));
             
             sc_shelf = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss)./max(abs(ensemble(k_run,i_reg).zs)));
-            hc_shelf = 273.15+squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts)./max(abs(ensemble(k_run,i_reg).zs)));
+            hc_shelf = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts)./max(abs(ensemble(k_run,i_reg).zs)));
             % taxis_shelf = 1:1:size(sc_reg,1);
             % for i_reg=1:length(regions)
             %     p = polyfit(taxis_shelf,hc_reg(:,i_reg),1);
