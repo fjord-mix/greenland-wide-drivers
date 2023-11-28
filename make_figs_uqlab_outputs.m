@@ -113,12 +113,12 @@ for i_reg=1:n_regions
     hl = refline(1,0); hl.LineStyle='--'; hl.Color='r';
     box on; grid on;
 
-    % rms = rmse(Yvld_ohc{i_reg},Yind_ohc{i_reg},'omitnan');
-    mdl = fitlm(Yind_ohc{i_reg},Yvld_ohc{i_reg});
+    rms = rmse(Yvld_ohc{i_reg},Yind_ohc{i_reg},'omitnan');
+    % mdl = fitlm(Yind_ohc{i_reg},Yvld_ohc{i_reg});
 
     text(0.05,0.95,sprintf('(%s) %s (n=%d)',letters{i_reg},regions{i_reg},ok_runs(i_reg)),'units','normalized','fontsize',14)
     % text(0.98,0.07,sprintf('$\\epsilon_{LOO}=%0.2f$',sur_model_ohc{i_reg}.Error.LOO),'interpreter','latex','units','normalized','horizontalAlignment','right','fontsize',14)
-    text(0.98,0.09,sprintf('R^2=%0.2f',mdl.Rsquared.Adjusted),'units','normalized','horizontalAlignment','right','fontsize',14)
+    text(0.98,0.09,sprintf('RMSE=%0.2f ^oC',rms),'units','normalized','horizontalAlignment','right','fontsize',14)
     % set(gca,'fontsize',14,'XTickLabel',[],'YTickLabel',[])
     if i_reg > 3, xlabel('Numerical model'); end
     if ismember(i_reg,[1,5]), ylabel('Surrogate model'); end
@@ -135,12 +135,12 @@ for i_reg=1:n_regions
     hl = refline(1,0); hl.LineStyle='--'; hl.Color='r';
     box on; grid on;
 
-    % rms = rmse(Yvld_osc{i_reg},Yind_osc{i_reg},'omitnan');
-    mdl = fitlm(Yind_ohc{i_reg},Yvld_ohc{i_reg});
+    rms = rmse(Yvld_osc{i_reg},Yind_osc{i_reg},'omitnan');
+    % mdl = fitlm(Yind_ohc{i_reg},Yvld_ohc{i_reg});
 
     text(0.05,0.95,sprintf('(%s) %s (n=%d)',letters{i_reg},regions{i_reg},ok_runs(i_reg)),'units','normalized','fontsize',14)
     % text(0.98,0.07,sprintf('$\\epsilon_{LOO}=%0.2f$',sur_model_osc{i_reg}.Error.LOO),'interpreter','latex','units','normalized','horizontalAlignment','right','fontsize',14)
-    text(0.98,0.09,sprintf('R^2=%0.2f',mdl.Rsquared.Adjusted),'units','normalized','horizontalAlignment','right','fontsize',14)
+    text(0.98,0.09,sprintf('RMSE=%0.2f',rms),'units','normalized','horizontalAlignment','right','fontsize',14)
     set(gca,'fontsize',14,'XTickLabel',[],'YTickLabel',[])
     if i_reg > 3, xlabel('Numerical model'); end
     if ismember(i_reg,[1,5]), ylabel('Surrogate model'); end
@@ -154,8 +154,6 @@ figure('Name','Surrogate model kernel density','Position',[40 40 850 500]); hold
 subplot(2,2,1), hold on; box on; grid on
 for i_reg=1:n_regions
     plot(ohc_x,pdf(ohc_ks_eval{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    % scatter(tr_ohc_shelf(i_reg),pdf(ohc_ks_eval{i_reg},tr_ohc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
 end
 xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
 ylabel('Probability density');
@@ -165,8 +163,6 @@ set(gca,'fontsize',14)
 subplot(2,2,3), hold on; box on; grid on
 for i_reg=1:n_regions
     plot(ohc_x,cdf(ohc_ks_eval{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    % scatter(tr_ohc_shelf(i_reg),cdf(ohc_ks_eval{i_reg},tr_ohc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
 end
 xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
 xlabel('Mean temperature difference (^oC)',fontsize=14);
@@ -174,13 +170,9 @@ ylabel('Cumulative probability density');
 text(0.05,0.95,'(c)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
 xlim([-2 1]);
-% handle_plots = [];
 subplot(2,2,2), hold on; box on; grid on
 for i_reg=1:n_regions
     hp = plot(osc_x,pdf(osc_ks_eval{i_reg},osc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(tr_osc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    % scatter(tr_osc_shelf(i_reg),pdf(osc_ks_eval{i_reg},tr_osc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
-    % handle_plots = [handle_plots hp];
 end
 xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
 xlim([-2.5 0.5])
@@ -191,8 +183,6 @@ subplot(2,2,4), hold on; box on; grid on
 handle_plots = [];
 for i_reg=1:n_regions
     hp = plot(osc_x,cdf(osc_ks_eval{i_reg},osc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(tr_osc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    % scatter(tr_osc_shelf(i_reg),cdf(osc_ks_eval{i_reg},tr_osc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
     handle_plots = [handle_plots hp];
 end
 xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
@@ -210,30 +200,23 @@ handle_plots = [];
 subplot(1,2,1), hold on; box on; grid on;
 for i_reg=1:n_regions
     hp = plot(ohc_x,pdf(ohc_ks{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(1e-3.*tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    % scatter(tr_ohc_shelf(i_reg),pdf(ohc_ks{i_reg},tr_ohc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
 end
 xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
 xlabel('Temperature difference (^oC)',fontsize=14); ylabel('Probability',fontsize=14);  box on
 text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
-% xlim([-0.15 0.15]);
 subplot(1,2,2), hold on; box on; grid on;
 for i_reg=1:n_regions
     hp = plot(osc_x,pdf(osc_ks{i_reg},osc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(tr_osc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    % scatter(tr_osc_shelf(i_reg),pdf(osc_ks{i_reg},tr_osc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
     handle_plots = [handle_plots hp];
 end
 xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
 xlabel('Salinity difference',fontsize=14); box on
 text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
-% xlim([-0.1 0.1])
 hl = legend(handle_plots,regions_lbl,'fontsize',14,'Location','northeast');
 % exportgraphics(gcf,[figs_path,'ksnum_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
-%TODO: add histogram of differences?
 %% Plotting the Sobol indices
 
 figure('Name','First-order Sobol Indices','position',[40 40 1000 400])
