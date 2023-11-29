@@ -40,7 +40,8 @@ osc_x = linspace(1.2*min(osc_out(:)),1.2*max(osc_out(:)),1000);
 
 %% Plot the ocean forcing (and its variability) for each region
 plot_reg_ocn_profiles(datasets,fjords_compilation)
-% exportgraphics(gcf,[figs_path,'profiles_ocn_forcing_reg,','.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'profiles_ocn_forcing_reg_temp','.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'profiles_ocn_forcing_reg_salt','.png'],'Resolution',300)
 
 %% Plot the time series to see how they all behave
 plot_ensemble_dt_ds(ensemble,time_axis_plt,regions_lbl);
@@ -52,20 +53,20 @@ plot_ensemble_ts_lags(ensemble,180);
 %% Plotting surrogate vs numerical model
 
 plot_model_fits(Ynum_ohc,Ysur_ohc,Yind_ohc,Yvld_ohc,ok_runs,ok_vruns,'temperature','^oC');
-% exportgraphics(gcf,[figs_path,'pce_fit_ohc_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'pce_fit_dt_n',num2str(n_runs),'.png'],'Resolution',300)
 
 plot_model_fits(Ynum_osc,Ysur_osc,Yind_osc,Yvld_osc,ok_runs,ok_vruns,'salinity','');
-% exportgraphics(gcf,[figs_path,'pce_fit_osc_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'pce_fit_ds_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Surrogate model kernel density
 
 [hf,hp,hl] = plot_surrogate_model_results(ohc_x,osc_x,ohc_ks_eval,osc_ks_eval);
-% exportgraphics(gcf,[figs_path,'kssur_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'ks_surrogate_dt_ds_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% construct the numerical model kernel density plot (just for comparison)
 
 [hf,hp,hl] = plot_numerical_model_distributions(ohc_x,osc_x,ohc_ks,osc_ks,regions_lbl);
-% exportgraphics(gcf,[figs_path,'ksnum_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'ks_boxmodel_dt_ds_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plotting the Borgonovo Indices (quantifying role of inputs in each region's fjord-shelf differences for each region)
 % Original publication: https://doi.org/10.1016/j.ress.2006.04.015
@@ -85,6 +86,8 @@ for i_reg=1:7
 end
 hl = legend(hb,{'Temperature','Salinity'},'fontsize',12);
 hl.Position(1)=hl.Position(1)+0.175;
+% exportgraphics(gcf,[figs_path,'borgonovo_delta_n',num2str(n_runs),'.png'],'Resolution',300)
+
 
 % for i_reg=1:7
 %     uq_display(BorgonovoA_ohc{1},1,'Joint PDF',3);
@@ -132,5 +135,5 @@ hl.Position(1)=hl.Position(1)+0.175;
 
 %% Convergence test to see if our choice of n_runs was enough
 
-hf = plot_convergence_test(x_subsample,Yconv_ohc,Yconv_osc,ok_runs);
-% exportgraphics(gcf,[figs_path,'nruns_convergence_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
+hf = plot_convergence_test(x_subsample,Yconv_ohc,Yconv_osc,ok_runs,n_runs);
+% exportgraphics(gcf,[figs_path,'nruns_convergence_dt_ds_n',num2str(n_runs),'.png'],'Resolution',300)

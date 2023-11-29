@@ -48,13 +48,13 @@ for i_reg=1:n_regions
 end
 subplot(1,2,1)
 text(0.03,1.03,'(a)','fontsize',14,'units','normalized')
-xlabel('Time'); ylabel('Temperature (^oC m^{-3})');
+xlabel('Time'); ylabel('Temperature difference (^oC)');
 set(gca,'fontsize',14)
 subplot(1,2,2)
 text(0.03,1.03,'(b)','fontsize',14,'units','normalized')
 hl = legend(region_handles,regions_lbl,'fontsize',10,'Location','southeast');
 hl.NumColumns=3;
-xlabel('Time'); ylabel('Salinity (m^{-3})');
+xlabel('Time'); ylabel('Salinity difference');
 set(gca,'fontsize',14)
 
 end

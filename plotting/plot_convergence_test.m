@@ -1,5 +1,6 @@
-function hf = plot_convergence_test(x_subsample,Yconv_ohc,Yconv_osc,ok_runs)
-n_regions = length(Yconv_ohc);
+function hf = plot_convergence_test(x_subsample,Yconv_ohc,Yconv_osc,ok_runs,n_runs)
+regions = {'SW','SE','CW','CE','NW','NE','NO'};
+n_regions = size(Yconv_ohc,2);
 region_line_color = lines(n_regions);
 
 hf = figure('Name','Convergence test for n_runs','Position',[40 40 850 300]); hold on;
@@ -27,7 +28,7 @@ ylabel('Avg. salinity difference','fontsize',14); xlabel('experimental design si
 text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
 set(gca,'fontsize',14)
 xlim([0 n_runs])
-hl = legend(region_handles,regions,'fontsize',14,'Location','southwest');
+hl = legend(region_handles,regions,'fontsize',14,'Location','southeast');
 hl.NumColumns=2;
 
 end
