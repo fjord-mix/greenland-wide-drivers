@@ -73,11 +73,12 @@ probs(end+1) = socn_pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(socn_anom{i_reg},[min(socn_anom{i_reg}), max(socn_anom{i_reg})]);
 
 % only applies omega to eastern Greenland
-if ismember(Parameters.regID,[2,4,6]) 
+if ismember(i_reg,[2,4,6]) 
     iOpts.Marginals(end+1).Type     = 'Gaussian';
     iOpts.Marginals(end).Parameters = [0.1429 0.1167]; % [1/7 days, 3.5/30 days] as per Harden et al. (2011; JClimate)
     iOpts.Marginals(end).Bounds     = [0 1];
 else
+    omeg_pd = makedist('Normal','mu',0.,'sigma',0.);
     iOpts.Marginals(end+1).Type = 'Constant' ;
     iOpts.Marginals(end).Parameters = 0;
 end
