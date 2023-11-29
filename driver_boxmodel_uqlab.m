@@ -14,17 +14,6 @@ figs_path = [project_path,'/figs/pce/'];                     % where the figures
 letters = {'a','b','c','d','e','f','g','h'};
 regions = {'SW','SE','CW','CE','NW','NE','NO'};
 
-%% Showing all input parameters first
-
-% close all
-% plot_reg_ocn_forcings(datasets,fjords_compilation)
-% figure(1); exportgraphics(gcf,[figs_path,'hovmoller_Ts.png'],'Resolution',300)
-% figure(2); exportgraphics(gcf,[figs_path,'hovmoller_Ss.png'],'Resolution',300)
-% figure(3); exportgraphics(gcf,[figs_path,'series_discharge_hc_sc.png'],'Resolution',300)
-
-% hs = plot_fjords_summary(datasets,fjords_map,fjords_compilation); %plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off'; 
-% hf = plot_distributions(datasets,fjords_compilation);
-% exportgraphics(hf,[figs_path,'summary_input_probs2010-2018_ratios.png'],'Resolution',300)
 
 %% Initialise all needed variables
 n_runs    = 700; % runs for producing the surrogate model
