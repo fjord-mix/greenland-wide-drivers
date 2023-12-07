@@ -43,15 +43,28 @@ for i_reg=1:length(regions_lbl)
     text(0.03,1.08,sprintf('(%s) %s',letters{i_reg},regions_lbl{i_reg}),'units','normalized','fontsize',14)
 end
 subplot(2,4,8); hold on; box on; grid on;
-xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
-plot(pdf(fjord_stats.Zg.pd,depths),depths,'linewidth',1.5,'color','k');
-plot(-pdf(fjord_stats.Zs.pd,depths),depths,'linewidth',1.5,'color','k');
-set(gca,'Xticklabel',[])
-xlabel('Probability function')
+hAx(1)=gca;
+hAx(2)=axes('Position',hAx(1).Position,'color','none','XAxisLocation','top','YAxisLocation','left');
+hold(hAx,'on');
+pdf_zg = pdf(fjord_stats.Zg.pd,depths); pdf_zg(pdf_zg==0) = NaN;
+pdf_zs = pdf(fjord_stats.Zs.pd,depths); pdf_zs(pdf_zs==0) = NaN;
+
+xline(hAx(1),0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
+plot(hAx(2),pdf_zg,depths,'linewidth',1.5,'color','k');
+plot(hAx(2),-pdf_zs,depths,'linewidth',1.5,'color','k');
+plot(hAx(1),cdf(fjord_stats.Zg.pd,depths,'upper'),depths,'linestyle','-','linewidth',0.5,'color',[0.7 0.7 0.7]);
+plot(hAx(1),-cdf(fjord_stats.Zs.pd,depths,'upper'),depths,'linestyle','-','linewidth',0.5,'color',[0.7 0.7 0.7]);
+set(hAx,'Xticklabel',[])
+set(hAx(2),'Yticklabel',[],'Xtick',[],'visible','off')
+xlabel(hAx(1),'Cumulative probability')
 text(0.02,0.2,'Z_{sill}','units','normalized','fontsize',14)
 text(0.98,0.2,'Z_{gl}','units','normalized','fontsize',14,'HorizontalAlignment','right')
 text(0.03,1.08,sprintf('(%s)',letters{8}),'units','normalized','fontsize',14)
-set(gca,'fontsize',14)
+set(hAx,'fontsize',14)
+hAx(2).Box='off';
+ylim(hAx,[min(depths) 0])
+xlim(hAx(2),[-max(max(pdf(fjord_stats.Zg.pd,depths)),max(pdf(fjord_stats.Zs.pd,depths))) max(max(pdf(fjord_stats.Zg.pd,depths)),max(pdf(fjord_stats.Zs.pd,depths)))])
+xlim(hAx(1),[-1 1])
 
 %% Plotting Salinity
 figure('Name','Salinity profiles','position',[40 40 1000 400])
@@ -79,14 +92,26 @@ for i_reg=1:length(regions_lbl)
     text(0.03,1.08,sprintf('(%s) %s',letters{i_reg},regions_lbl{i_reg}),'units','normalized','fontsize',14)
 end
 subplot(2,4,8); hold on; box on; grid on;
-xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
-plot(pdf(fjord_stats.Zg.pd,depths),depths,'linewidth',1.5,'color','k');
-plot(-pdf(fjord_stats.Zs.pd,depths),depths,'linewidth',1.5,'color','k');
-set(gca,'Xticklabel',[])
-xlabel('Probability function')
+hAx(1)=gca;
+hAx(2)=axes('Position',hAx(1).Position,'color','none','XAxisLocation','top','YAxisLocation','left');
+hold(hAx,'on');
+pdf_zg = pdf(fjord_stats.Zg.pd,depths); pdf_zg(pdf_zg==0) = NaN;
+pdf_zs = pdf(fjord_stats.Zs.pd,depths); pdf_zs(pdf_zs==0) = NaN;
+
+xline(hAx(1),0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
+plot(hAx(2),pdf_zg,depths,'linewidth',1.5,'color','k');
+plot(hAx(2),-pdf_zs,depths,'linewidth',1.5,'color','k');
+plot(hAx(1),cdf(fjord_stats.Zg.pd,depths,'upper'),depths,'linestyle','-','linewidth',0.5,'color',[0.7 0.7 0.7]);
+plot(hAx(1),-cdf(fjord_stats.Zs.pd,depths,'upper'),depths,'linestyle','-','linewidth',0.5,'color',[0.7 0.7 0.7]);
+set(hAx,'Xticklabel',[])
+set(hAx(2),'Yticklabel',[],'Xtick',[],'visible','off')
+xlabel(hAx(1),'Cumulative probability')
 text(0.02,0.2,'Z_{sill}','units','normalized','fontsize',14)
 text(0.98,0.2,'Z_{gl}','units','normalized','fontsize',14,'HorizontalAlignment','right')
 text(0.03,1.08,sprintf('(%s)',letters{8}),'units','normalized','fontsize',14)
-set(gca,'fontsize',14)
-
+set(hAx,'fontsize',14)
+hAx(2).Box='off';
+ylim(hAx,[min(depths) 0])
+xlim(hAx(2),[-max(max(pdf(fjord_stats.Zg.pd,depths)),max(pdf(fjord_stats.Zs.pd,depths))) max(max(pdf(fjord_stats.Zg.pd,depths)),max(pdf(fjord_stats.Zs.pd,depths)))])
+xlim(hAx(1),[-1 1])
 end
