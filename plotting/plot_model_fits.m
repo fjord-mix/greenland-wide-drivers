@@ -8,11 +8,11 @@ hf = figure('Name',['Model fit for ',var],'position',[40 40 1000 400]);
 for i_reg=1:n_regions
     subplot(2,4,i_reg); hold on    
     uq_plot(gca,Ynum{i_reg},Ysur{i_reg},'+')
-    uq_plot(gca,Yind{i_reg}+273.15,Yvld{i_reg},'o','color',[0.8500 0.3250 0.0980])
+    uq_plot(gca,Yind{i_reg},Yvld{i_reg},'o','color',[0.8500 0.3250 0.0980])
     hl = refline(1,0); hl.LineStyle='--'; hl.Color='r';
     box on; grid on;
 
-    rms = rmse(Yvld{i_reg},Yind{i_reg}+273.15,'omitnan');
+    rms = rmse(Yvld{i_reg},Yind{i_reg},'omitnan');
     % mdl = fitlm(Yind_ohc{i_reg},Yvld_ohc{i_reg});
 
     text(0.05,0.95,sprintf('(%s) %s (n=%d)',letters{i_reg},regions{i_reg},ok_runs(i_reg)),'units','normalized','fontsize',14)
