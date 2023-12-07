@@ -3,19 +3,31 @@ if nargin < 2, maxlag = 360; end
 region_line_color = lines(7);
 xcor_ohc=NaN(size(ensemble));
 lags_ohc=NaN(size(ensemble));
+xcor_osc=NaN(size(ensemble));
+lags_osc=NaN(size(ensemble));
 n_regions=size(ensemble,2);
 n_runs=size(ensemble,1);
 for i_reg=1:n_regions
     for k_run=1:n_runs
         if ~isempty(ensemble(k_run,i_reg).temp)
             [ohc_fjord,osc_fjord] = get_active_fjord_contents(ensemble(k_run,i_reg));
-            ohc_shelf = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts)./max(abs(ensemble(k_run,i_reg).zs)));
-            osc_shelf = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss)./max(abs(ensemble(k_run,i_reg).zs)));
-            [r_ohc,l_ohc] = xcorr(ohc_fjord,ohc_shelf,maxlag,'biased');
+            
+            zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.silldepth]));
+            i_sill = find(zs0 == ensemble(k_run,i_reg).p.silldepth);
+            zs0 = zs0(i_sill:end);
+
+            Ss0 = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss,zs0,'pchip','extrap');
+            Ts0 = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts,zs0,'pchip','extrap');
+
+            ohc_shelf = squeeze(trapz(zs0,Ts0)./abs(ensemble(k_run,i_reg).p.silldepth));
+            osc_shelf = squeeze(trapz(zs0,Ss0)./abs(ensemble(k_run,i_reg).p.silldepth));
+
+            %TODO: detrend and normalise by STD before computing
+            [r_ohc,l_ohc] = xcorr(ohc_fjord-mean(ohc_fjord),ohc_shelf-mean(ohc_shelf),maxlag,'coeff');
             [xcor_ohc(k_run,i_reg),i_maxr] = max(r_ohc);
             lags_ohc(k_run,i_reg)          = l_ohc(i_maxr);
             
-            [r_osc,l_osc] = xcorr(osc_fjord,osc_shelf,maxlag,'biased');
+            [r_osc,l_osc] = xcorr(osc_fjord-mean(osc_fjord),osc_shelf-mean(osc_shelf),maxlag,'coeff');
             [xcor_osc(k_run,i_reg),i_maxr] = max(r_osc);
             lags_osc(k_run,i_reg)          = l_osc(i_maxr);
         end
