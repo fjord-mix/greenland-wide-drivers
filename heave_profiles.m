@@ -17,14 +17,14 @@ temp_stretch=NaN(size(temp_reg));
 salt_stretch=NaN(size(salt_reg));
 for i=1:size(salt_reg,2)
     % we only apply the isopycnal heaving if the change is larger than 1m because of the profile vertical resolution
-    if depression(i) > 1        
+    if abs(depression(i)) > 1
         % find where the pycnocline is
         sigma_profile = gsw_sigma0(salt_reg(:,i),temp_reg(:,i)); % depth in m is roughly equivalent to pressure in dbar
         [~,i_z] = findpeaks(-diff(sigma_profile),'NPeaks',3);
         pyc=sigma_profile(i_z(end));
         oldstrat = findnearest(pyc,sigma_profile);
         oldstrat = oldstrat(1);
-        newstrat = oldstrat-abs(depression(i)); % determine where it should end up at
+        newstrat = abs(oldstrat+floor(depression(i))); % determine where it should end up at
         
         % stretch salinity
         var = salt_reg(:,i);
