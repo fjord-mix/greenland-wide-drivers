@@ -3,6 +3,7 @@ BorgonovoA_ohc = cell([1,n_regions]);
 BorgonovoA_osc = cell([1,n_regions]);
 BorgonovoOpts.Type = 'Sensitivity';
 BorgonovoOpts.Method = 'Borgonovo';
+BorgonovoOpts.Borgonovo.Method = 'CDFBased';
 
 for i_reg=1:n_regions
     BorgonovoOpts.Borgonovo.Sample.X = Xeval(:,i_reg,:);
