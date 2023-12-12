@@ -21,7 +21,7 @@ n_valid   = floor(n_runs/10); % independent runs for surrogate model validation
 n_surr    = 1e6; % sample size for the surrogate model itself
 time_step = 0.1; % in days
 n_regions = length(regions);
-time_axis = datetime(2010,01,15):1:datetime(2018,12,15);
+time_axis = datetime(2010,01,15):1:datetime(2017,12,15);
 
 % initialising traiing and validation dataset structures
 if exist('ensemble',"var"),       clear ensemble; end
@@ -57,8 +57,8 @@ end
 run run_model_compute_pdfs.m
 
 % save outputs so we dont have to re-run it
-save([outs_path,'ts_en4_ensembles_n',num2str(n_runs),''],'-v7.3','X','Xvalid','Xeval','ensemble','ensemble_valid') % save ensemble structure so we do not need to rerun it all the time
-save([outs_path,'ts_en4_diffs_n',num2str(n_runs)],'ohc_out','osc_out','ohc_vld','osc_vld'); %,'ohc_pd','osc_pd','ohc_ks','osc_ks')
+save([outs_path,'ts_ecco4_ensembles_n',num2str(n_runs),''],'-v7.3','X','Xvalid','Xeval','ensemble','ensemble_valid') % save ensemble structure so we do not need to rerun it all the time
+save([outs_path,'ts_ecco4_diffs_n',num2str(n_runs)],'ohc_out','osc_out','ohc_vld','osc_vld'); %,'ohc_pd','osc_pd','ohc_ks','osc_ks')
 disp('Numerical model outputs saved.')
 %% Setting up the PCE model per region using UQLab
 % if we have the results saved already
