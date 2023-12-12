@@ -17,19 +17,9 @@ for i_reg=1:n_regions
     Params_reg = Parameters{i_reg};
     tic
     for k_run=1:n_runs
-        % if isnan(ohc_out(k_run,i_reg)) % saves time after a bug/crash fix, but requires reinitialising the variable
-        try
-            % [ohc_out(k_run,i_reg),osc_out(k_run,i_reg)] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
-            ensemble(k_run,i_reg) = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
-            fprintf('run %d complete\n',k_run)
-        catch ME
-            ensemble(k_run,i_reg).temp = NaN(size(ensemble(k_run,i_reg).time));
-            ensemble(k_run,i_reg).salt = NaN(size(ensemble(k_run,i_reg).time));
-            ensemble(k_run,i_reg).ts   = NaN(size(ensemble(k_run,i_reg).time));
-            ensemble(k_run,i_reg).ss   = NaN(size(ensemble(k_run,i_reg).time));
-            ensemble(k_run,i_reg).H    = NaN(size(ensemble(k_run,i_reg).time));
-            fprintf('run %d %s\n',k_run,ME.message)
-        end
+        % if isnan(ohc_out(k_run,i_reg)) % saves time after a bug/crash fix, but requires reinitialising the variable        
+        ensemble(k_run,i_reg) = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
+        fprintf('run %d complete\n',k_run)
         % end
     end
     fprintf('region %d complete\n',i_reg)
@@ -47,18 +37,8 @@ for i_reg=1:n_regions
     tic
     for k_run=1:n_valid
         % if isnan(ohc_out(k_run,i_reg)) % saves time after a bug/crash fix, but requires reinitialising the variable
-        try
-            % [ohc_out(k_run,i_reg),osc_out(k_run,i_reg)] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
-            ensemble_valid(k_run,i_reg) = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
-            fprintf('run %d complete\n',k_run)
-        catch ME
-            ensemble_valid(k_run,i_reg).temp = NaN(size(ensemble_valid(k_run,i_reg).time));
-            ensemble_valid(k_run,i_reg).salt = NaN(size(ensemble_valid(k_run,i_reg).time));
-            ensemble_valid(k_run,i_reg).ts   = NaN(size(ensemble_valid(k_run,i_reg).time));
-            ensemble_valid(k_run,i_reg).ss   = NaN(size(ensemble_valid(k_run,i_reg).time));
-            ensemble_valid(k_run,i_reg).H    = NaN(size(ensemble_valid(k_run,i_reg).time));
-            fprintf('run %d %s\n',k_run,ME.message)
-        end
+        ensemble_valid(k_run,i_reg) = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
+        fprintf('run %d complete\n',k_run)
         % end
     end
     fprintf('region %d complete\n',i_reg)
