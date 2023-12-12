@@ -49,10 +49,11 @@ plot_reg_ocn_forcings(datasets,fjords_compilation)
 
 %% Plot the time series to see how they all behave
 plot_ensemble_dt_ds(ensemble,time_axis_plt,regions_lbl);
-% exportgraphics(gcf,[figs_path,'ensemble_series_bootstrapped_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'ensemble_series_ecco4_bootstrapped_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plots the lag between fjord and shelf
 plot_ensemble_ts_lags(ensemble,360);
+% exportgraphics(gcf,[figs_path,'lags_ts_ecco4_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plotting surrogate vs numerical model
 
@@ -145,10 +146,10 @@ hf = plot_convergence_test(x_subsample,Yconv_ohc,Yconv_osc,ok_runs,n_runs);
 %% Model accuracy from the bootstraped model runs
 
 for i_reg=1:1
-    mean_ohc = mean(mean(Yboo_ohc{i_reg},2));
-    std_ohc  = std(mean(Yboo_ohc{i_reg},2));
-    mean_osc = mean(mean(Yboo_osc{i_reg},2));
-    std_osc  = std(mean(Yboo_osc{i_reg},2));
+    mean_ohc = mean(mean(Yboo_ohc{i_reg},2),'omitnan');
+    std_ohc  = std(mean(Yboo_ohc{i_reg},2),'omitnan');
+    mean_osc = mean(mean(Yboo_osc{i_reg},2),'omitnan');
+    std_osc  = std(mean(Yboo_osc{i_reg},2),'omitnan');
     fprintf('Model results for %s:\n',regions{i_reg})
     fprintf('Mean dT: %.2f +- %.2f\n',mean_ohc,std_ohc)
     fprintf('Mean dS: %.2f +- %.2f\n',mean_osc,std_osc)
