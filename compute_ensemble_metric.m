@@ -6,8 +6,7 @@ ohc_out = NaN([n_runs, n_regions]);
 osc_out = NaN([n_runs, n_regions]);
 for i_reg=1:n_regions
     for k_run=1:n_runs
-        if length(ensemble(k_run,i_reg).temp) == min_length-1
-
+        if (length(ensemble(k_run,i_reg).temp) == min_length-1) && all(~isnan(ensemble(k_run,i_reg).temp(:)))
             [heat_content,salt_content] = get_active_fjord_contents(ensemble(k_run,i_reg));
             
             zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.silldepth]));
