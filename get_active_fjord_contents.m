@@ -25,4 +25,5 @@ end
 
 heat_content = sum((fjord_run.temp).*h_int,'omitnan')./sum(h_int,'omitnan');
 salt_content = sum(fjord_run.salt.*h_int,'omitnan')./sum(h_int,'omitnan');
+
 end
