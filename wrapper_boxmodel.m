@@ -47,8 +47,8 @@ f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* dTanom))'; % if using isopycnal s
 f.Ss  = (Parameters.Socn + (Parameters.Sdec .* dSanom))'; % if using isopycnal stretching
 f.zs  = -Parameters.zs;
 
-if ismember(Parameters.regID,[2,4,6]) % only applies to eastern Greenland
-    [f.Ts,f.Ss] = heave_profiles(f.Ts,f.Ss,f.zs,Xper); % if using isopycnal stretching
+if ismember(Parameters.regID,[2,4,6]) % isopycnal stretching due to storms only applies to eastern Greenland    
+    [f.Ts,f.Ss] = heave_profiles(f.Ts,f.Ss,f.zs,Xper,p.sigma_bnds(2)); % using Cowton et al. value for the pycnocline
 end
 
 zs = flip(f.zs);
