@@ -57,11 +57,12 @@ plot_ensemble_ts_lags(ensemble,360);
 
 %% Plotting surrogate vs numerical model
 
-plot_model_fits(Ynum_ohc,Ysur_ohc,Yind_ohc,Yvld_ohc,ok_runs,ok_vruns,'temperature','^oC');
-% plot_model_fits(Ynum_ohc,Ysur_ohc,[],[],ok_runs,ok_vruns,'temperature','^oC');
+% plot_model_fits(sur_model_ohc,Ynum_ohc,Ysur_ohc,Yind_ohc,Yvld_ohc,ok_runs,'temperature','^oC');
+plot_model_fits(sur_model_ohc,Ynum_ohc,Ysur_ohc,[],[],ok_runs,'temperature','^oC');
 % exportgraphics(gcf,[figs_path,'pce_fit_dt_n',num2str(n_runs),'.png'],'Resolution',300)
 
-plot_model_fits(Ynum_osc,Ysur_osc,Yind_osc,Yvld_osc,ok_runs,ok_vruns,'salinity','');
+% plot_model_fits(sur_model_osc,Ynum_osc,Ysur_osc,Yind_osc,Yvld_osc,ok_runs,'salinity','');
+plot_model_fits(sur_model_osc,Ynum_osc,Ysur_osc,[],[],ok_runs,'salinity','');
 % exportgraphics(gcf,[figs_path,'pce_fit_ds_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Surrogate model kernel density
@@ -83,7 +84,7 @@ for i_reg=1:7
     borgIndices = [borgResults_ohc.Delta borgResults_osc.Delta];
 
     subplot(2,4,i_reg); hold on; box on; grid on
-    hb=uq_bar(gca,1:length(IOpts{i_reg}.Marginals), borgIndices, 1.,'grouped');
+    hb=uq_bar(gca,1:length(IOpts{i_reg}.Marginals), borgIndices, 1.,'edgecolor','black');%,'grouped');
     text(0.01,1.075,sprintf('(%s) %s',letters{i_reg},regions{i_reg}),'units','normalized','fontsize',12)
     set(gca,'XTick', 1:length(IOpts{i_reg}.Marginals),'XTickLabel', borgResults_ohc.VariableNames)
     if i_reg < 4, xlabel(''); end
@@ -144,15 +145,63 @@ hl.Position(1)=hl.Position(1)+0.175;
 hf = plot_convergence_test(x_subsample,Yconv_ohc,Yconv_osc,ok_runs,n_runs);
 % exportgraphics(gcf,[figs_path,'nruns_convergence_dt_ds_n',num2str(n_runs),'.png'],'Resolution',300)
 
-%% Model accuracy from the bootstraped model runs
+%% Surrogate model boxplot
+Yeval_mat_ohc = NaN([n_regions,n_runs]);
+Yeval_mat_osc = NaN([n_regions,n_runs]);
+for i_reg=1:n_regions
+    Yeval_mat_ohc(i_reg,:) = mean(Yboo_ohc{i_reg},2,'omitnan');
+    Yeval_mat_osc(i_reg,:) = mean(Yboo_osc{i_reg},2,'omitnan');
+end
+figure; 
+subplot(2,1,1); hold on; box on; grid on;
+boxplot(Yeval_mat_ohc','boxstyle','filled','symbol','.','labels',regions,'colors',lines(n_regions))
+xline(0,'--k');
+ylabel('Temperature difference (^oC)'); text(0.02,0.95,'(a)','Units','normalized','fontsize',14)
+set(gca,'fontsize',14)
+subplot(2,1,2); hold on; box on; grid on;
+boxplot(Yeval_mat_osc','boxstyle','filled','symbol','.','labels',regions,'colors',lines(n_regions))
+xline(0,'--k')
+ylabel('Salinity difference'); text(0.02,0.95,'(b)','Units','normalized','fontsize',14)
+set(gca,'fontsize',14)
+%% Surrogate model moments
 
 for i_reg=1:7
-    mean_ohc = mean(mean(Yboo_ohc{i_reg},2),'omitnan');
-    std_ohc  = std(mean(Yboo_ohc{i_reg},2),'omitnan');
-    mean_osc = mean(mean(Yboo_osc{i_reg},2),'omitnan');
-    std_osc  = std(mean(Yboo_osc{i_reg},2),'omitnan');
-    fprintf('Model results for %s:\n',regions{i_reg})
-    fprintf('Mean dT: %.2f +- %.2f\n',mean_ohc,std_ohc)
-    fprintf('Mean dS: %.2f +- %.2f\n',mean_osc,std_osc)
+    fprintf('Surrogate model results for %s:\n',regions{i_reg})
+    fprintf('Mean dT: %.2f +- %.2f\n',sur_model_ohc{i_reg}.PCE.Moments.Mean,sqrt(sur_model_ohc{i_reg}.PCE.Moments.Var))
+    fprintf('Mean dS: %.2f +- %.2f\n',sur_model_osc{i_reg}.PCE.Moments.Mean,sqrt(sur_model_osc{i_reg}.PCE.Moments.Var))
     disp('===========================================')
 end
+
+
+%% Median and prctiles of surrogate and numerical models
+for i_reg=1:7
+    pct_num_ohc = prctile(Ynum_ohc{i_reg},[50, 5, 95]);
+    pct_num_osc = prctile(Ynum_osc{i_reg},[50, 5, 95]);
+    pct_sur_ohc = prctile(Yeval_ohc{i_reg},[50, 5, 95]);
+    pct_sur_osc = prctile(Yeval_osc{i_reg},[50, 5, 95]);
+    fprintf('Results for %s:\n',regions{i_reg})
+    fprintf('Emulator dT: %.2f [%.2f - %.2f]\n',pct_sur_ohc)
+    fprintf('Simulator dT: %.2f [%.2f - %.2f]\n',pct_num_ohc)
+    disp(' ')
+    fprintf('Emulator dS: %.2f [%.2f - %.2f]\n',pct_sur_osc)
+    fprintf('Simulator dS: %.2f [%.2f - %.2f]\n',pct_num_osc)
+    disp('===========================================')
+end
+
+
+%% Model accuracy from the bootstraped model runs
+
+% for i_reg=1:7
+%     mean_ohc = mean(mean(Yboo_ohc{i_reg},2),'omitnan');
+%     std_ohc  = prctile(mean(Yboo_ohc{i_reg},2,'omitnan'),[5 95]);
+%     mean_osc = mean(mean(Yboo_osc{i_reg},2),'omitnan');
+%     std_osc  = prctile(mean(Yboo_osc{i_reg},2,'omitnan'),[5 95]);
+%     fprintf('Botstrapped model results for %s:\n',regions{i_reg})
+%     fprintf('Mean dT: %.2f (%.2f - %.2f)\n',mean_ohc,std_ohc(1),std_ohc(2))
+%     fprintf('Mean dS: %.2f (%.2f - %.2f)\n',mean_osc,std_osc(1),std_osc(2))
+%     disp('')
+%     fprintf('Surrogate model results for %s:\n',regions{i_reg})
+%     fprintf('Mean dT: %.2f +- %.2f\n',sur_model_ohc{i_reg}.PCE.Moments.Mean,sqrt(sur_model_ohc{i_reg}.PCE.Moments.Var))
+%     fprintf('Mean dS: %.2f +- %.2f\n',sur_model_osc{i_reg}.PCE.Moments.Mean,sqrt(sur_model_osc{i_reg}.PCE.Moments.Var))
+%     disp('===========================================')
+% end
