@@ -1,13 +1,15 @@
-function [ohc_out,osc_out] = compute_ensemble_metric(ensemble,min_length)
+function [ohc_out,osc_out,avg_silldepth,avg_activedepth] = compute_ensemble_metric(ensemble,min_length)
 n_runs=size(ensemble,1);
 n_regions=size(ensemble,2);
+avg_silldepth   = zeros(size(ensemble,2));
+avg_activedepth = zeros(size(ensemble,2));
 
 ohc_out = NaN([n_runs, n_regions]);
 osc_out = NaN([n_runs, n_regions]);
 for i_reg=1:n_regions
     for k_run=1:n_runs
         if (length(ensemble(k_run,i_reg).temp) == min_length-1) && all(~isnan(ensemble(k_run,i_reg).temp(:)))
-            [heat_content,salt_content] = get_active_fjord_contents(ensemble(k_run,i_reg));
+            [heat_content,salt_content,activedepth] = get_active_fjord_contents(ensemble(k_run,i_reg));
             
             zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.silldepth]));
             i_sill = find(zs0 == ensemble(k_run,i_reg).p.silldepth);
@@ -18,6 +20,8 @@ for i_reg=1:n_regions
 
             hc_shelf = squeeze(trapz(zs0,Ts0)./abs(ensemble(k_run,i_reg).p.silldepth));
             sc_shelf = squeeze(trapz(zs0,Ss0)./abs(ensemble(k_run,i_reg).p.silldepth));
+            avg_silldepth(i_reg)   = avg_silldepth(i_reg)   +abs(ensemble(k_run,i_reg).p.silldepth)./length(ensemble(:,i_reg));
+            avg_activedepth(i_reg) = avg_activedepth(i_reg) +activedepth./length(ensemble(:,i_reg));
             % taxis_shelf = 1:1:size(sc_reg,1);
             % for i_reg=1:length(regions)
             %     p = polyfit(taxis_shelf,hc_reg(:,i_reg),1);
