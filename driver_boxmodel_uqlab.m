@@ -62,8 +62,8 @@ save([outs_path,'ts_mp_diffs_n',num2str(n_runs)],'ohc_out','osc_out','ohc_vld','
 disp('Numerical model outputs saved.')
 %% Setting up the PCE model per region using UQLab
 % if we have the results saved already
-% load([outs_path,'ts_ensembles_n',num2str(n_runs),'']) 
-% load([outs_path,'ts_diffs_n',num2str(n_runs),''])
+% load([outs_path,'ts_mp_ensembles_n',num2str(n_runs),'']) 
+% load([outs_path,'ts_mp_diffs_n',num2str(n_runs),''])
 tic
 run compute_surrogate_and_sobol_indices.m
 toc
