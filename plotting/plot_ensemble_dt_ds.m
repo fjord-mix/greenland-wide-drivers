@@ -5,6 +5,9 @@ n_runs=size(ensemble,1);
 region_handles = [];
 region_line_color = lines(n_regions);
 
+avg_silldepth   = NaN([1,size(ensemble,2)]);
+avg_activedepth = NaN([1,size(ensemble,2)]);
+
 hf = figure('Name','time series model outputs','Position',[20 20 1200 800]);
 hold on; box on
 for i_reg=1:n_regions
@@ -14,9 +17,12 @@ for i_reg=1:n_regions
     osc_shf=NaN([n_runs,length(time_axis_plt)]);
     ohc_fjd=NaN([n_runs,length(time_axis_plt)]);
     osc_fjd=NaN([n_runs,length(time_axis_plt)]);
+    hact_fjd=NaN(size(time_axis_plt));
+    zsill_fjd=NaN([1,n_runs]);
+
     for k_run=1:n_runs
         if ~isempty(ensemble(k_run,i_reg).temp)
-            [ohc_fjd(k_run,:),osc_fjd(k_run,:)] = get_active_fjord_contents(ensemble(k_run,i_reg));
+            [ohc_fjd(k_run,:),osc_fjd(k_run,:),hact_fjd(k_run)] = get_active_fjord_contents(ensemble(k_run,i_reg));
 
             zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.silldepth]));
             i_sill = find(zs0 == ensemble(k_run,i_reg).p.silldepth);
@@ -30,10 +36,14 @@ for i_reg=1:n_regions
 
             ohc_reg(k_run,:) = ohc_fjd(k_run,:) - ohc_shf(k_run,:);
             osc_reg(k_run,:) = osc_fjd(k_run,:) - osc_shf(k_run,:);
+
+            zsill_fjd(k_run) = abs(ensemble(k_run,i_reg).p.silldepth);
         else
             ohc_reg(k_run,:) = NaN;
             osc_reg(k_run,:) = NaN;
         end
+        avg_activedepth(i_reg) = mean(hact_fjd,'omitnan');
+        avg_silldepth(i_reg)   = mean(zsill_fjd,'omitnan');
     end
     subplot(2,2,1); hold on; box on;
     mean_ln = mean(bootstrp(1e3,@(x)[mean(x,1,'omitnan')],ohc_reg));
