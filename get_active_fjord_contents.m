@@ -1,4 +1,4 @@
-function [heat_content,salt_content] = get_active_fjord_contents(fjord_run)
+function [heat_content,salt_content,active_depth] = get_active_fjord_contents(fjord_run)
 
 % integration from grounding line/sill (whichever is deeper) to the surface
 length_run = size(fjord_run.H,2);
@@ -25,5 +25,5 @@ end
 
 heat_content = sum((fjord_run.temp).*h_int,'omitnan')./sum(h_int,'omitnan');
 salt_content = sum(fjord_run.salt.*h_int,'omitnan')./sum(h_int,'omitnan');
-
+active_depth = mean(sum(h_int,'omitnan'),'omitnan');
 end
