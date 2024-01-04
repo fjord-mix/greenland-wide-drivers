@@ -42,14 +42,16 @@ for i_reg=1:n_regions
     MetaOpts.MetaType = 'PCE';    
     MetaOpts.DegreeEarlyStop = false;
     MetaOpts.FullModel = num_model;
-    MetaOpts.Method = 'OMP'; % 'LARS','OMP', or 'SP'
-    MetaOpts.Degree = 40:1:80;
+    MetaOpts.Method = 'LARS'; % 'LARS','OMP', or 'SP'
+    MetaOpts.Degree = 1:1:30; % 01-30 RMSEs: {0.11,0.11,0.09,0.14,0.13,0.10,0.16} deg. C (0.84)
+                              % 10-30 RMSEs: {0.11,0.11,0.09,0.14,0.13,0.10,0.15} deg. C (0.83)
+                              % 30-60 RMSEs: {0.13,0.11,0.07,0.12,0.12,0.12,0.10} deg. C (0.77)*
+                              % 40-80 RMSEs: {0.14,0.10,0.09,0.14,0.15,0.08,0.14} deg. C (0.84)
     MetaOpts.TruncOptions.qNorm = 0.1:0.1:1;
     MetaOpts.TruncOptions.MaxInteraction = 2;
-    % MetaOpts.Bootstrap.Replications = 1e2; % for assessing the model accuracy
-    % MetaOpts.LARS.LarsEarlyStop = false;
-    MetaOpts.OMP.OmpEarlyStop = false;
-    MetaOpts.OMP.ModifiedLoo=0;
+    MetaOpts.Bootstrap.Replications = 1e3; % for assessing the model accuracy
+    MetaOpts.LARS.LarsEarlyStop = false;
+    % MetaOpts.OMP.ModifiedLoo=0;
 
     % Specifying NSamples would get UQLab to perform the runs for us
     % we do not do that here because we need to exclude the unstable runs
@@ -72,16 +74,16 @@ for i_reg=1:n_regions
 
     MetaOpts.ExpDesign.X = single(Xreg(~isnan(ohc_reg),:));
     MetaOpts.ExpDesign.Y = single(ohc_reg(~isnan(ohc_reg)));
-    MetaOpts.ValidationSet.X = Xind(~isnan(ohc_ind),:);
-    MetaOpts.ValidationSet.Y = ohc_ind(~isnan(ohc_ind));
+    % MetaOpts.ValidationSet.X = Xind(~isnan(ohc_ind),:);
+    % MetaOpts.ValidationSet.Y = ohc_ind(~isnan(ohc_ind));
 
 
     fprintf('Creating OHC surrogate model for %s...\n',regions{i_reg})
     sur_model_ohc{i_reg} = uq_createModel(MetaOpts);                 % Create the surrogate model
     fprintf('Done. Evaluating model and storing results...\n')
-    % [Ysur_ohc{i_reg},~,Yboo_ohc{i_reg}]      = uq_evalModel(sur_model_ohc{i_reg},Xreg);  % run the surrogate model for the same inputs as the numerical model (incl. bootstraping results)
+    [Ysur_ohc{i_reg},~,Yboo_ohc{i_reg}]      = uq_evalModel(sur_model_ohc{i_reg},Xreg);  % run the surrogate model for the same inputs as the numerical model (incl. bootstraping results)
+    % Ysur_ohc{i_reg}  = uq_evalModel(sur_model_ohc{i_reg},Xreg); % run the surrogate model for the same inputs as the numerical model
     Yvld_ohc{i_reg}  = uq_evalModel(sur_model_ohc{i_reg},Xind);  % run the surrogate model for an independent set of inputs (validation)
-    Ysur_ohc{i_reg}  = uq_evalModel(sur_model_ohc{i_reg},Xreg); % run the surrogate model for the same inputs as the numerical model
     Yeval_ohc{i_reg} = uq_evalModel(sur_model_ohc{i_reg},Xsur); % run the surrogate model for a much larger N
     
     fprintf('Done. Computing OHC Sobol indices for %s...\n',regions{i_reg})
@@ -90,12 +92,13 @@ for i_reg=1:n_regions
 
     % Same for salt content - but no need to change inputs because they are the same
     fprintf('Creating OSC surrogate model for %s...\n',regions{i_reg})
-    MetaOpts.Degree = 10:1:20;
+    % MetaOpts.Degree = 1:1:30;
     MetaOpts.ExpDesign.Y = osc_reg(~isnan(osc_reg)); 
-    MetaOpts.ValidationSet.Y = osc_ind(~isnan(osc_ind));
+    % MetaOpts.ValidationSet.Y = osc_ind(~isnan(osc_ind));
     sur_model_osc{i_reg} = uq_createModel(MetaOpts);
     fprintf('Done. Evaluating model and storing results...\n')
-    Ysur_osc{i_reg}  = uq_evalModel(sur_model_osc{i_reg},Xreg); 
+    [Ysur_osc{i_reg},~,Yboo_osc{i_reg}]      = uq_evalModel(sur_model_osc{i_reg},Xreg);
+    % Ysur_osc{i_reg}  = uq_evalModel(sur_model_osc{i_reg},Xreg); 
     Yvld_osc{i_reg}  = uq_evalModel(sur_model_osc{i_reg},Xind);
     Yeval_osc{i_reg} = uq_evalModel(sur_model_osc{i_reg},Xsur);
     
