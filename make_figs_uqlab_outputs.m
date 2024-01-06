@@ -42,10 +42,14 @@ osc_x = linspace(1.2*min(osc_out(:)),1.2*max(osc_out(:)),1000);
 plot_reg_ocn_profiles(datasets,fjords_compilation)
 % exportgraphics(gcf,[figs_path,'profiles_ocn_forcing_reg_temp','.png'],'Resolution',300)
 % exportgraphics(gcf,[figs_path,'profiles_ocn_forcing_reg_salt','.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'profiles_ocn_forcing_reg_dens','.eps'],'Resolution',300)
 
 plot_reg_ocn_forcings(datasets,fjords_compilation)
 % exportgraphics(gcf,[figs_path,'sections_ocn_forcing_reg_temp','.png'],'Resolution',300)
 % exportgraphics(gcf,[figs_path,'sections_ocn_forcing_reg_salt','.png'],'Resolution',300)
+
+plot_reg_ts(datasets,fjords_compilation)
+% exportgraphics(gcf,[figs_path,'ts_diag_ocn_forcing_reg','.png'],'Resolution',300)
 
 %% Plot the time series to see how they all behave
 plot_ensemble_dt_ds(ensemble,time_axis_plt,regions_lbl);
@@ -68,12 +72,12 @@ plot_model_fits(sur_model_osc,Ynum_osc,Ysur_osc,[],[],ok_runs,'salinity','');
 %% Surrogate model kernel density
 
 [hf,hp,hl] = plot_surrogate_model_results(ohc_x,osc_x,ohc_ks_eval,osc_ks_eval);
-% exportgraphics(gcf,[figs_path,'ks_surrogate_dt_ds_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'prob_dist_sur_dt_ds','.png'],'Resolution',300)
 
 %% construct the numerical model kernel density plot (just for comparison)
 
 [hf,hp,hl] = plot_numerical_model_distributions(ohc_x,osc_x,ohc_ks,osc_ks,regions_lbl);
-% exportgraphics(gcf,[figs_path,'ks_boxmodel_dt_ds_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'prob_dist_boxmodel_dt_ds_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plotting the Borgonovo Indices (quantifying role of inputs in each region's fjord-shelf differences for each region)
 % Original publication: https://doi.org/10.1016/j.ress.2006.04.015
@@ -155,11 +159,13 @@ end
 figure; 
 subplot(2,1,1); hold on; box on; grid on;
 boxplot(Yeval_mat_ohc','boxstyle','filled','symbol','.','labels',regions,'colors',lines(n_regions))
+ylim([-1 1])
 xline(0,'--k');
 ylabel('Temperature difference (^oC)'); text(0.02,0.95,'(a)','Units','normalized','fontsize',14)
 set(gca,'fontsize',14)
 subplot(2,1,2); hold on; box on; grid on;
 boxplot(Yeval_mat_osc','boxstyle','filled','symbol','.','labels',regions,'colors',lines(n_regions))
+ylim([-1 1])
 xline(0,'--k')
 ylabel('Salinity difference'); text(0.02,0.95,'(b)','Units','normalized','fontsize',14)
 set(gca,'fontsize',14)
@@ -196,7 +202,7 @@ end
 %     std_ohc  = prctile(mean(Yboo_ohc{i_reg},2,'omitnan'),[5 95]);
 %     mean_osc = mean(mean(Yboo_osc{i_reg},2),'omitnan');
 %     std_osc  = prctile(mean(Yboo_osc{i_reg},2,'omitnan'),[5 95]);
-%     fprintf('Botstrapped model results for %s:\n',regions{i_reg})
+%     fprintf('Bootstrapped model results for %s:\n',regions{i_reg})
 %     fprintf('Mean dT: %.2f (%.2f - %.2f)\n',mean_ohc,std_ohc(1),std_ohc(2))
 %     fprintf('Mean dS: %.2f (%.2f - %.2f)\n',mean_osc,std_osc(1),std_osc(2))
 %     disp('')
