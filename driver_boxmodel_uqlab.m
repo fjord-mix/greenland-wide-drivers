@@ -57,7 +57,7 @@ end
 run run_model_compute_pdfs.m
 
 % save outputs so we dont have to re-run it
-save([outs_path,'ts_mp_ensembles_n',num2str(n_runs),''],'-v7.3','X','Xvalid','Xeval','ensemble','ensemble_valid') % save ensemble structure so we do not need to rerun it all the time
+save([outs_path,'ts_mp_ensembles_n',num2str(n_runs),''],'-v7.3','X','Xvalid','Xeval','Parameters','ensemble','ensemble_valid') % save ensemble structure so we do not need to rerun it all the time
 save([outs_path,'ts_mp_diffs_n',num2str(n_runs)],'ohc_out','osc_out','ohc_vld','osc_vld'); %,'ohc_pd','osc_pd','ohc_ks','osc_ks')
 disp('Numerical model outputs saved.')
 %% Setting up the PCE model per region using UQLab
@@ -67,9 +67,8 @@ disp('Numerical model outputs saved.')
 tic
 run compute_surrogate_and_sobol_indices.m
 toc
-% ideally we would save the PCE-related variables as well, but Matlab always returns an error
-% when trying to save them
-% save([outs_path,'ohc_osc_pce_n50_n1e6'],'sur_model_ohc','sur_model_osc');%,'Ysur_ohc','Ysur_osc','Yeval_ohc','Yeval_osc','sobolA_ohc','sobolA_osc')
+% ideally we would save the PCE-related variables as well, but the file would be too large
+% save([outs_path,'pce_dt_ds_n',n_runs],'-v7.3','sur_model_ohc','sur_model_osc'),'Ysur_ohc','Ysur_osc','Yeval_ohc','Yeval_osc','sobolA_ohc','sobolA_osc','BorgonovoA_ohc','BorgonovoA_osc')
 
 %% Plotting the outputs
 
