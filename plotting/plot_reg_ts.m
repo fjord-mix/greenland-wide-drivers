@@ -36,9 +36,9 @@ for i_reg=1:length(regions_lbl)
     % [c,h]=contour(si,thetai,dens,25:0.2:28,'k');
     [c,h]=contour(si,thetai,dens,'k');
     
-    hb = scatter(salt_forcing(:,i_reg),temp_forcing(:,i_reg),40,depths,'filled','o','MarkerEdgeColor','k');
-    ha = scatter(salt_forcing(i_active,i_reg),temp_forcing(i_active,i_reg),60,depths(i_active),'filled','^','MarkerEdgeColor','k');
+    hb = scatter(salt_forcing(:,i_reg),temp_forcing(:,i_reg),40,depths,'filled','^','MarkerEdgeColor','k');
     hp = scatter(salt_forcing(i_present,i_reg),temp_forcing(i_present,i_reg),60,depths(i_present),'filled','s','MarkerEdgeColor','k');
+    ha = scatter(salt_forcing(i_active,i_reg),temp_forcing(i_active,i_reg),60,depths(i_active),'filled','o','MarkerEdgeColor','k');
     
     clabel(c,h,'LabelSpacing',100);
     if i_reg > 3
@@ -51,7 +51,7 @@ for i_reg=1:length(regions_lbl)
     set(gca,'fontsize',12)
     text(0.05,1.07,sprintf('(%s) %s',letters{i_reg},regions_lbl{i_reg}),'units','normalized','fontsize',14)
 end
-hl = legend([hb,ha,hp],{'Below sill','Active','Present'});
+hl = legend([hb,hp,ha],{'Below sill','Present','Active'});
 colormap(flip(cmocean('deep')))
 hc = colorbar('fontsize',14);
 ylabel(hc,'Depth (m)');
