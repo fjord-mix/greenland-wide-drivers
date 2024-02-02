@@ -6,6 +6,9 @@
 % figure(2); exportgraphics(gcf,[figs_path,'hovmoller_Ss.png'],'Resolution',300)
 % figure(3); exportgraphics(gcf,[figs_path,'series_discharge_hc_sc.png'],'Resolution',300)
 
+% hs = plot_fjords_sectors(datasets,fjords_map,fjords);
+% exportgraphics(hf,[figs_path,'grl_fjords_compiation.png'],'Resolution',300)
+
 % hs = plot_fjords_summary(datasets,fjords_map,fjords_compilation); %plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off'; 
 % hf = plot_distributions(datasets,fjords_compilation);
 % exportgraphics(hf,[figs_path,'summary_input_probs2010-2018_ratios.png'],'Resolution',300)
@@ -15,7 +18,7 @@
 
 % we want to know how many runs were successful
 ok_runs  = zeros([1, n_regions]);
-ok_vruns = zeros([1, n_regions]);
+% ok_vruns = zeros([1, n_regions]);
 regions_lbl = regions;
 for i_reg=1:n_regions
     total_runs = ohc_out(:,i_reg);
@@ -27,7 +30,7 @@ for i_reg=1:n_regions
 end
 
 % time axis for plotting the results, excluding t0
-time_axis_plt = time_axis(2:end); % datetime(2010,01,15)+1:1:datetime(2018,12,15); 
+time_axis_plt = time_axis(2:end)'; % datetime(2010,01,15)+1:1:datetime(2018,12,15); 
 
 % get the range of results for showing the probability distributions
 ohc_x = linspace(1.2*min(ohc_out(:)),1.2*max(ohc_out(:)),1000);
@@ -52,8 +55,15 @@ plot_reg_ts(datasets,fjords_compilation)
 % exportgraphics(gcf,[figs_path,'ts_diag_ocn_forcing_reg','.png'],'Resolution',300)
 
 %% Plot the time series to see how they all behave
-plot_ensemble_dt_ds(ensemble,time_axis_plt,regions_lbl);
+% will also receive a formatted timetable for easier operations with dT and dS
+% although not a good practice to mix processing and figure plotting, this minimises redundant code/computations
+[~,tt_ensemble] = plot_ensemble_dt_ds(ensemble,time_axis_plt,regions_lbl);
 % exportgraphics(gcf,[figs_path,'ensemble_series_mp_bootstrapped_n',num2str(n_runs),'.png'],'Resolution',300)
+
+%% Show how different dT and dS are for summer and non-summer months
+
+[~] = plot_seasonal_cycle(tt_ensemble,regions);
+% exportgraphics(gcf,[figs_path,'seasonal_cycles_ensemble_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plots the lag between fjord and shelf
 plot_ensemble_ts_lags(ensemble,360);
@@ -150,25 +160,25 @@ hf = plot_convergence_test(x_subsample,Yconv_ohc,Yconv_osc,ok_runs,n_runs);
 % exportgraphics(gcf,[figs_path,'nruns_convergence_dt_ds_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Surrogate model boxplot
-Yeval_mat_ohc = NaN([n_regions,n_runs]);
-Yeval_mat_osc = NaN([n_regions,n_runs]);
-for i_reg=1:n_regions
-    Yeval_mat_ohc(i_reg,:) = mean(Yboo_ohc{i_reg},2,'omitnan');
-    Yeval_mat_osc(i_reg,:) = mean(Yboo_osc{i_reg},2,'omitnan');
-end
-figure; 
-subplot(2,1,1); hold on; box on; grid on;
-boxplot(Yeval_mat_ohc','boxstyle','filled','symbol','.','labels',regions,'colors',lines(n_regions))
-ylim([-1 1])
-xline(0,'--k');
-ylabel('Temperature difference (^oC)'); text(0.02,0.95,'(a)','Units','normalized','fontsize',14)
-set(gca,'fontsize',14)
-subplot(2,1,2); hold on; box on; grid on;
-boxplot(Yeval_mat_osc','boxstyle','filled','symbol','.','labels',regions,'colors',lines(n_regions))
-ylim([-1 1])
-xline(0,'--k')
-ylabel('Salinity difference'); text(0.02,0.95,'(b)','Units','normalized','fontsize',14)
-set(gca,'fontsize',14)
+% Yeval_mat_ohc = NaN([n_regions,n_runs]);
+% Yeval_mat_osc = NaN([n_regions,n_runs]);
+% for i_reg=1:n_regions
+%     Yeval_mat_ohc(i_reg,:) = mean(Yboo_ohc{i_reg},2,'omitnan');
+%     Yeval_mat_osc(i_reg,:) = mean(Yboo_osc{i_reg},2,'omitnan');
+% end
+% figure; 
+% subplot(2,1,1); hold on; box on; grid on;
+% boxplot(Yeval_mat_ohc','boxstyle','filled','symbol','.','labels',regions,'colors',lines(n_regions))
+% ylim([-1 1])
+% xline(0,'--k');
+% ylabel('Temperature difference (^oC)'); text(0.02,0.95,'(a)','Units','normalized','fontsize',14)
+% set(gca,'fontsize',14)
+% subplot(2,1,2); hold on; box on; grid on;
+% boxplot(Yeval_mat_osc','boxstyle','filled','symbol','.','labels',regions,'colors',lines(n_regions))
+% ylim([-1 1])
+% xline(0,'--k')
+% ylabel('Salinity difference'); text(0.02,0.95,'(b)','Units','normalized','fontsize',14)
+% set(gca,'fontsize',14)
 %% Surrogate model moments
 
 for i_reg=1:7
