@@ -17,7 +17,7 @@ regions = {'SW','SE','CW','CE','NW','NE','NO'};
 
 %% Initialise all needed variables
 n_runs    = 700; % runs for producing the surrogate model
-n_valid   = floor(n_runs/10); % independent runs for surrogate model validation
+% n_valid   = floor(n_runs/10); % independent runs for surrogate model validation
 n_surr    = 1e6; % sample size for the surrogate model itself
 time_step = 0.1; % in days
 n_regions = length(regions);
@@ -27,12 +27,12 @@ time_axis = datetime(2010,01,15):1:datetime(2018,12,15);
 if exist('ensemble',"var"),       clear ensemble; end
 if exist('ensemble_valid',"var"), clear ensemble_valid; end
 ensemble(n_runs,n_regions)        = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[],"phi",[],"qvs",[]);
-ensemble_valid(n_valid,n_regions) = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[],"phi",[],"qvs",[]);
+% ensemble_valid(n_valid,n_regions) = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[],"phi",[],"qvs",[]);
 
 Parameters = cell([1, n_regions]);
 IOpts      = cell([1, n_regions]);
 X          = zeros([n_runs,n_regions,10]);
-Xvalid     = zeros([n_valid,n_regions,10]);
+% Xvalid     = zeros([n_valid,n_regions,10]);
 Xeval     = zeros([n_surr,n_regions,10]);
 
 uqlab % Initialise UQLab
@@ -47,18 +47,19 @@ for i_reg=1:n_regions
 
     % perform latin hypercube sampling of our parametre space
     X(:,i_reg,:)      = uq_getSample(input,n_runs,'LHS');  % training dataset
-    Xvalid(:,i_reg,:) = uq_getSample(input,n_valid,'LHS'); % validation dataset
+    % Xvalid(:,i_reg,:) = uq_getSample(input,n_valid,'LHS'); % validation dataset
     Xeval(:,i_reg,:)  = uq_getSample(input,1e6,'LHS'); % surrogate model
     toc
 end
+clear input
 
 %% Run the model for all iterations
 
 run run_model_compute_pdfs.m
 
 % save outputs so we dont have to re-run it
-save([outs_path,'ts_mp_ensembles_n',num2str(n_runs),''],'-v7.3','X','Xvalid','Xeval','Parameters','ensemble','ensemble_valid') % save ensemble structure so we do not need to rerun it all the time
-save([outs_path,'ts_mp_diffs_n',num2str(n_runs)],'ohc_out','osc_out','ohc_vld','osc_vld'); %,'ohc_pd','osc_pd','ohc_ks','osc_ks')
+save([outs_path,'ts_mp_ensembles_n',num2str(n_runs),''],'-v7.3','X','Xeval','Parameters','ensemble') % save ensemble structure so we do not need to rerun it all the time
+save([outs_path,'ts_mp_diffs_n',num2str(n_runs)],'ohc_out','osc_out'); %,'ohc_pd','osc_pd','ohc_ks','osc_ks')
 disp('Numerical model outputs saved.')
 %% Setting up the PCE model per region using UQLab
 % if we have the results saved already

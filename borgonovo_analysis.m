@@ -12,5 +12,5 @@ for i_reg=1:n_regions
     BorgonovoOpts.Borgonovo.Sample.Y = Yeval_osc{i_reg};
     BorgonovoA_osc{i_reg} = uq_createAnalysis(BorgonovoOpts);
 end
-
+clear BorgonovoOpts
 
