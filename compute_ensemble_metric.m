@@ -18,8 +18,10 @@ for i_reg=1:n_regions
             Ss0 = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss,zs0,'pchip','extrap');
             Ts0 = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts,zs0,'pchip','extrap');
 
-            hc_shelf = squeeze(trapz(zs0,Ts0)./abs(ensemble(k_run,i_reg).p.silldepth));
-            sc_shelf = squeeze(trapz(zs0,Ss0)./abs(ensemble(k_run,i_reg).p.silldepth));
+            % hc_shelf = squeeze(trapz(zs0,Ts0)./abs(ensemble(k_run,i_reg).p.silldepth));
+            % sc_shelf = squeeze(trapz(zs0,Ss0)./abs(ensemble(k_run,i_reg).p.silldepth));
+            hc_shelf = squeeze(trapz(zs0,Ts0)./abs(activedepth));
+            sc_shelf = squeeze(trapz(zs0,Ss0)./abs(activedepth));
             avg_silldepth(i_reg)   = avg_silldepth(i_reg)   +abs(ensemble(k_run,i_reg).p.silldepth)./length(ensemble(:,i_reg));
             avg_activedepth(i_reg) = avg_activedepth(i_reg) +activedepth./length(ensemble(:,i_reg));
             % taxis_shelf = 1:1:size(sc_reg,1);
