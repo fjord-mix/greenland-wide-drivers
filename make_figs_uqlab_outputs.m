@@ -6,8 +6,8 @@
 % figure(2); exportgraphics(gcf,[figs_path,'hovmoller_Ss.png'],'Resolution',300)
 % figure(3); exportgraphics(gcf,[figs_path,'series_discharge_hc_sc.png'],'Resolution',300)
 
-% hs = plot_fjords_sectors(datasets,fjords_map,fjords);
-% exportgraphics(hf,[figs_path,'grl_fjords_compiation.png'],'Resolution',300)
+% hs = plot_fjords_sectors(datasets,fjords_map,fjords_compilation);
+% exportgraphics(hs.hf,[figs_path,'grl_fjords_compiation.png'],'Resolution',300)
 
 % hs = plot_fjords_summary(datasets,fjords_map,fjords_compilation); %plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off'; 
 % hf = plot_distributions(datasets,fjords_compilation);
@@ -58,11 +58,11 @@ plot_reg_ts(datasets,fjords_compilation)
 % will also receive a formatted timetable for easier operations with dT and dS
 % although not a good practice to mix processing and figure plotting, this minimises redundant code/computations
 [~,tt_ensemble] = plot_ensemble_dt_ds(ensemble,time_axis_plt,regions_lbl);
-% exportgraphics(gcf,[figs_path,'ensemble_series_mp_bootstrapped_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'ensemble_series_mp_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Show how different dT and dS are for summer and non-summer months
 
-[~] = plot_seasonal_cycle(tt_ensemble,regions);
+[~] = plot_seasonal_cycle(datasets,fjords_compilation,tt_ensemble,regions,1); % requires running "plot_ensemble_dt_ds" first, for 'tt_ensemble'
 % exportgraphics(gcf,[figs_path,'seasonal_cycles_ensemble_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plots the lag between fjord and shelf
