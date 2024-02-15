@@ -10,17 +10,21 @@ n_runs=size(ensemble,1);
 for i_reg=1:n_regions
     for k_run=1:n_runs
         if ~isempty(ensemble(k_run,i_reg).temp)
-            [ohc_fjord,osc_fjord] = get_active_fjord_contents(ensemble(k_run,i_reg));
+            [ohc_fjord,osc_fjord,active_depth] = get_active_fjord_contents(ensemble(k_run,i_reg));
             
-            zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.silldepth]));
-            i_sill = find(zs0 == ensemble(k_run,i_reg).p.silldepth);
-            zs0 = zs0(i_sill:end);
+            zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.zgl,ensemble(k_run,i_reg).p.silldepth]));
+            % z_bottom = max(abs(ensemble(k_run,i_reg).p.silldepth,ensemble(k_run,i_reg).p.zgl));
+            z_bottom = abs(ensemble(k_run,i_reg).p.zgl);
+            i_bottom = find(abs(zs0) == abs(z_bottom));
+            zs0 = zs0(i_bottom:end);
 
             Ss0 = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss,zs0,'pchip','extrap');
             Ts0 = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts,zs0,'pchip','extrap');
 
-            ohc_shelf = squeeze(trapz(zs0,Ts0)./abs(ensemble(k_run,i_reg).p.silldepth));
-            osc_shelf = squeeze(trapz(zs0,Ss0)./abs(ensemble(k_run,i_reg).p.silldepth));
+            % ohc_shelf = squeeze(trapz(zs0,Ts0)./abs(ensemble(k_run,i_reg).p.silldepth));
+            % osc_shelf = squeeze(trapz(zs0,Ss0)./abs(ensemble(k_run,i_reg).p.silldepth));
+            ohc_shelf = squeeze(trapz(zs0,Ts0)./abs(active_depth));
+            osc_shelf = squeeze(trapz(zs0,Ss0)./abs(active_depth));
 
             %TODO: detrend and normalise by STD before computing
             [r_ohc,l_ohc] = xcorr(ohc_fjord-mean(ohc_fjord),ohc_shelf-mean(ohc_shelf),maxlag,'coeff');
