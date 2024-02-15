@@ -27,9 +27,11 @@ for i_reg=1:n_regions
         if ~isempty(ensemble(k_run,i_reg).temp)
             [ohc_fjd(k_run,:),osc_fjd(k_run,:),hact_fjd(k_run)] = get_active_fjord_contents(ensemble(k_run,i_reg));
 
-            zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.silldepth]));
-            i_sill = find(zs0 == ensemble(k_run,i_reg).p.silldepth);
-            zs0 = zs0(i_sill:end);
+            zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.zgl,ensemble(k_run,i_reg).p.silldepth]));
+            % z_bottom = max(abs(ensemble(k_run,i_reg).p.silldepth,ensemble(k_run,i_reg).p.zgl));
+            z_bottom = abs(ensemble(k_run,i_reg).p.zgl);
+            i_bottom = find(abs(zs0) == abs(z_bottom));
+            zs0 = zs0(i_bottom:end);
 
             Ss0 = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss,zs0,'pchip','extrap');
             Ts0 = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts,zs0,'pchip','extrap');
@@ -53,33 +55,40 @@ for i_reg=1:n_regions
     end
 
     %% Testing for significance of trends in d(T,S), (T,S)f, and (T,S)s
-    mean_ln_temp = mean(bootstrp(1e3,@(x)[mean(x,1,'omitnan')],ohc_reg));
+    mean_ln_temp = mean(bootstrp(1e3,@(x)[median(x,1,'omitnan')],ohc_reg));
+    % mean_ln_temp = median(ohc_reg,1,'omitnan');
     lm = fitlm(datenum(time_axis_plt),mean_ln_temp);
     fprintf("Trend in %s dT: %.4f/yr (p=%.2f)\n",regions_lbl{i_reg}(1:2),lm.Coefficients.Estimate(2)*365,lm.ModelFitVsNullModel.Pvalue);
 
-    mean_ln_tf = mean(bootstrp(1e3,@(x)[mean(x,1,'omitnan')],ohc_fjd));
+    mean_ln_tf = mean(bootstrp(1e3,@(x)[median(x,1,'omitnan')],ohc_fjd));
+    % mean_ln_tf = median(ohc_fjd,1,'omitnan');
     lm = fitlm(datenum(time_axis_plt),mean_ln_tf);
     fprintf("Trend in %s Tf: %.4f/yr (p=%.2f)\n",regions_lbl{i_reg}(1:2),lm.Coefficients.Estimate(2)*365,lm.ModelFitVsNullModel.Pvalue);
 
-    mean_ln_ts = mean(bootstrp(1e3,@(x)[mean(x,1,'omitnan')],ohc_shf));
+    mean_ln_ts = mean(bootstrp(1e3,@(x)[median(x,1,'omitnan')],ohc_shf));
+    % mean_ln_ts = median(ohc_shf,1,'omitnan');
     lm = fitlm(datenum(time_axis_plt),mean_ln_ts);
     fprintf("Trend in %s Ts: %.4f/yr (p=%.2f)\n",regions_lbl{i_reg}(1:2),lm.Coefficients.Estimate(2)*365,lm.ModelFitVsNullModel.Pvalue);
 
-    mean_ln_salt = mean(bootstrp(1e3,@(x)[mean(x,1,'omitnan')],osc_reg));
+    mean_ln_salt = mean(bootstrp(1e3,@(x)[median(x,1,'omitnan')],osc_reg));
+    % mean_ln_salt = median(osc_reg,1,'omitnan');
     lm = fitlm(datenum(time_axis_plt),mean_ln_salt);
     fprintf("Trend in %s dS: %.4f/yr (p=%.2f)\n",regions_lbl{i_reg}(1:2),lm.Coefficients.Estimate(2)*365,lm.ModelFitVsNullModel.Pvalue);
 
-    mean_ln_sf = mean(bootstrp(1e3,@(x)[mean(x,1,'omitnan')],osc_fjd));
+    mean_ln_sf = mean(bootstrp(1e3,@(x)[median(x,1,'omitnan')],osc_fjd));
+    % mean_ln_sf = median(osc_fjd,1,'omitnan');
     lm = fitlm(datenum(time_axis_plt),mean_ln_sf);
     fprintf("Trend in %s Sf: %.4f/yr (p=%.2f)\n",regions_lbl{i_reg}(1:2),lm.Coefficients.Estimate(2)*365,lm.ModelFitVsNullModel.Pvalue);
 
-    mean_ln_ss = mean(bootstrp(1e3,@(x)[mean(x,1,'omitnan')],osc_shf));
+    mean_ln_ss = mean(bootstrp(1e3,@(x)[median(x,1,'omitnan')],osc_shf));
+    % mean_ln_ss = median(osc_shf,1,'omitnan');
     lm = fitlm(datenum(time_axis_plt),mean_ln_ss);
     fprintf("Trend in %s Ss: %.4f/yr (p=%.2f)\n",regions_lbl{i_reg}(1:2),lm.Coefficients.Estimate(2)*365,lm.ModelFitVsNullModel.Pvalue);
 
     %% Plotting results
     subplot(2,2,1); hold on; box on;    
-    std_ln  = bootci(1e3,@(x)[mean(x,1,'omitnan')],ohc_reg);
+    % std_ln  = bootci(1e3,@(x)[mean(x,1,'omitnan')],ohc_reg);
+    std_ln  = prctile(ohc_reg,[25 75],1);
     upper_bnd = std_ln(2,:);
     lower_bnd = std_ln(1,:);
     x2 = [time_axis_plt, fliplr(time_axis_plt)];
@@ -88,7 +97,8 @@ for i_reg=1:n_regions
     plot(time_axis_plt,mean_ln_temp,'Color',region_line_color(i_reg,:),'linewidth',1.5); 
     
     subplot(2,2,2); hold on; box on;
-    std_ln  = bootci(1e3,@(x)[mean(x,1,'omitnan')],osc_reg);
+    % std_ln  = bootci(1e3,@(x)[mean(x,1,'omitnan')],osc_reg);
+    std_ln  = prctile(osc_reg,[25 75],1);
     upper_bnd = std_ln(2,:);
     lower_bnd = std_ln(1,:);
     x2 = [time_axis_plt, fliplr(time_axis_plt)];
@@ -98,11 +108,11 @@ for i_reg=1:n_regions
     region_handles=[region_handles hp];
 
     subplot(2,2,3); hold on; box on;
-    std_ln  = bootci(1e3,@(x)[mean(x,1,'omitnan')],ohc_fjd);
-    upper_bnd = std_ln(2,:);
-    lower_bnd = std_ln(1,:);
-    x2 = [time_axis_plt, fliplr(time_axis_plt)];
-    inBetween = [lower_bnd, fliplr(upper_bnd)];
+    % std_ln  = bootci(1e3,@(x)[mean(x,1,'omitnan')],ohc_fjd);
+    % upper_bnd = std_ln(2,:);
+    % lower_bnd = std_ln(1,:);
+    % x2 = [time_axis_plt, fliplr(time_axis_plt)];
+    % inBetween = [lower_bnd, fliplr(upper_bnd)];
     % fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.3);
     hp_fjd = plot(time_axis_plt,mean_ln_tf,'Color','k','linewidth',1.); 
     plot(time_axis_plt,mean_ln_tf,'Color',region_line_color(i_reg,:),'linewidth',1.); 
@@ -110,11 +120,11 @@ for i_reg=1:n_regions
     plot(time_axis_plt,mean_ln_ts,'Color',region_line_color(i_reg,:),'linewidth',1,'linestyle','--'); 
     
     subplot(2,2,4); hold on; box on;
-    std_ln  = bootci(1e3,@(x)[mean(x,1,'omitnan')],osc_fjd);
-    upper_bnd = std_ln(2,:);
-    lower_bnd = std_ln(1,:);
-    x2 = [time_axis_plt, fliplr(time_axis_plt)];
-    inBetween = [lower_bnd, fliplr(upper_bnd)];
+    % std_ln  = bootci(1e3,@(x)[mean(x,1,'omitnan')],osc_fjd);
+    % upper_bnd = std_ln(2,:);
+    % lower_bnd = std_ln(1,:);
+    % x2 = [time_axis_plt, fliplr(time_axis_plt)];
+    % inBetween = [lower_bnd, fliplr(upper_bnd)];
     % fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.3);
     hp = plot(time_axis_plt,mean_ln_sf,'Color',region_line_color(i_reg,:),'linewidth',1); 
     plot(time_axis_plt,mean_ln_ss,'Color',region_line_color(i_reg,:),'linewidth',1,'linestyle','--'); 

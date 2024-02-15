@@ -11,9 +11,11 @@ for i_reg=1:n_regions
         if (length(ensemble(k_run,i_reg).temp) == min_length-1) && all(~isnan(ensemble(k_run,i_reg).temp(:)))
             [heat_content,salt_content,activedepth] = get_active_fjord_contents(ensemble(k_run,i_reg));
             
-            zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.silldepth]));
-            i_sill = find(zs0 == ensemble(k_run,i_reg).p.silldepth);
-            zs0 = zs0(i_sill:end);
+            zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.zgl,ensemble(k_run,i_reg).p.silldepth]));
+            % z_bottom = max(abs(ensemble(k_run,i_reg).p.silldepth,ensemble(k_run,i_reg).p.zgl));
+            z_bottom = abs(ensemble(k_run,i_reg).p.zgl);
+            i_bottom = find(abs(zs0) == abs(z_bottom));
+            zs0 = zs0(i_bottom:end);
 
             Ss0 = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss,zs0,'pchip','extrap');
             Ts0 = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts,zs0,'pchip','extrap');
