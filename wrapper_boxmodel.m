@@ -97,6 +97,7 @@ try
     fjord_out.salt  = fjord_run.s.S;
     fjord_out.H     = fjord_run.s.H;
     fjord_out.qvs   = fjord_run.s.QVs;
+    fjord_out.qsg   = fjord_run.s.QSg;
     fjord_out.phi   = fjord_run.s.phi;
     fjord_out.ts    = fjord_run.s.Ts;
     fjord_out.ss    = fjord_run.s.Ss;
@@ -105,6 +106,7 @@ catch ME
     fjord_run.s.S  = NaN;
     fjord_run.s.H  = NaN;
     fjord_out.qvs  = NaN;
+    fjord_out.qsg  = NaN;
     fjord_out.phi  = NaN;
     fjord_run.s.Ts = NaN;
     fjord_run.s.Ss = NaN;

@@ -26,7 +26,7 @@ time_axis = datetime(2010,01,15):1:datetime(2018,12,15);
 % initialising traiing and validation dataset structures
 if exist('ensemble',"var"),       clear ensemble; end
 if exist('ensemble_valid',"var"), clear ensemble_valid; end
-ensemble(n_runs,n_regions)        = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[],"phi",[],"qvs",[]);
+ensemble(n_runs,n_regions)        = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[],"phi",[],"qvs",[],"qsg",[]);
 % ensemble_valid(n_valid,n_regions) = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[],"phi",[],"qvs",[]);
 
 Parameters = cell([1, n_regions]);
@@ -51,7 +51,7 @@ for i_reg=1:n_regions
     Xeval(:,i_reg,:)  = uq_getSample(input,1e6,'LHS'); % surrogate model
     toc
 end
-clear input
+% clear input
 
 %% Run the model for all iterations
 
