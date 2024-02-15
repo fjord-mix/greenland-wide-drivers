@@ -29,6 +29,10 @@ for i_reg=1:length(regions_lbl)
     i_active = i_above_sill & i_above_plume;
     i_present = i_above_sill & ~i_above_plume;
 
+    depths_subsurf = depths < -25;
+    [~,imax_temp] = max(temp_forcing(depths_subsurf,i_reg));
+    z_aw_core = abs(depths(imax_temp));
+
     xlim([min(salt_forcing(:,i_reg))-0.1 max(salt_forcing(:,i_reg))+0.1])
     ylim([min(temp_forcing(:,i_reg))-0.1 max(temp_forcing(:,i_reg))+0.1])
 
@@ -49,7 +53,7 @@ for i_reg=1:length(regions_lbl)
     end
     clim([-1e3 0]);
     set(gca,'fontsize',12)
-    text(0.05,1.07,sprintf('(%s) %s',letters{i_reg},regions_lbl{i_reg}),'units','normalized','fontsize',14)
+    text(0.05,1.07,sprintf('(%s) %s [%d m]',letters{i_reg},regions_lbl{i_reg},round(z_aw_core)),'units','normalized','fontsize',14)
 end
 hl = legend([hb,hp,ha],{'Below sill','Present','Active'});
 colormap(flip(cmocean('deep')))
