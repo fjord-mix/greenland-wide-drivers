@@ -29,7 +29,8 @@ SobolOpts.SaveEvaluations = false; % to prevent excessive memory usage!
 for i_reg=1:n_regions
     % [Params_reg,IOpts,~,~] = define_model_param_distrib(datasets,fjords_compilation,i_reg);
     Params_reg = Parameters{i_reg};
-    IOpts_reg = IOpts{i_reg};
+    % IOpts_reg = IOpts{i_reg};
+    input = uq_createInput(IOpts{i_reg}); % create probability functions
 
     % create numerical model object
     ModelOpts.mFile = 'wrapper_boxmodel';
@@ -42,7 +43,7 @@ for i_reg=1:n_regions
     MetaOpts.MetaType = 'PCE';    
     MetaOpts.DegreeEarlyStop = false;
     MetaOpts.FullModel = num_model;
-    MetaOpts.Method = 'OMP'; % 'LARS','OMP', or 'SP'
+    MetaOpts.Method = 'LARS'; % 'LARS','OMP', or 'SP'
     MetaOpts.Degree = 1:1:30; % 01-30 RMSEs: {0.11,0.11,0.09,0.14,0.13,0.10,0.16} deg. C (0.84)
                               % 10-30 RMSEs: {0.11,0.11,0.09,0.14,0.13,0.10,0.15} deg. C (0.83)
                               % 30-60 RMSEs: {0.13,0.11,0.07,0.12,0.12,0.12,0.10} deg. C (0.77)*
