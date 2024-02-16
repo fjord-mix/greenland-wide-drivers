@@ -63,41 +63,44 @@ for i_reg=1:7
     x_w = linspace(0, 0.6,1000);
 
     subplot(3,5,9);  hold on; box on; plot(x_w,pdf(probs(8),x_w),'linewidth',1.5,'color','k');
-    subplot(3,5,14);  hold on; box on; plot(x_t,pdf(probs(6),x_t),'linewidth',1.5);
-    subplot(3,5,15); hold on; box on; plot(x_s,pdf(probs(7),x_s),'linewidth',1.5);
+    subplot(3,5,11);  hold on; box on; plot(x_t,pdf(probs(6),x_t),'linewidth',1.5);
+    subplot(3,5,12); hold on; box on; plot(x_s,pdf(probs(7),x_s),'linewidth',1.5);
     
 
     %% Glacier parameter distributions    
     x_d = linspace(-500,500,3000);
     x_q = linspace(0, 2,3000);
     x_p = linspace(0,40,3000);
-    subplot(3,5,11); hold on; box on; plot(x_q,pdf(probs(9),x_q),'linewidth',1.5); 
-    subplot(3,5,12); hold on; box on; plot(x_d,pdf(probs(11),x_d),'linewidth',1.5);
-    subplot(3,5,13); hold on; box on; plot(x_p,pdf(probs(10),x_p),'linewidth',1.5,'color','k'); 
+    subplot(3,5,13); hold on; box on; plot(x_q,pdf(probs(9),x_q),'linewidth',1.5);     
+    subplot(3,5,14); hold on; box on; plot(x_p,pdf(probs(10),x_p),'linewidth',1.5,'color','k'); 
+    % subplot(3,5,15); hold on; box on; plot(x_d,pdf(probs(11),x_d),'linewidth',1.5);
 end
 
 subplot(3,5,9);
 xlabel('\omega (day^{-1})','fontsize',14); text(0.95,0.95,'(i)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+
 subplot(3,5,11);
-xlabel('Q_a','fontsize',14); text(0.95,0.95,'(j)','Units','normalized','fontsize',14,'HorizontalAlignment','right'); 
-ylabel('Probability function','fontsize',14); 
-subplot(3,5,12);
-xlabel('D_a (m^3s^{-1})','fontsize',14); text(0.95,0.95,'(k)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
-ylim([0 0.02]); xlim([-300 500]);
-subplot(3,5,13);
-xlabel('PW (m)','fontsize',14); text(0.95,0.95,'(l)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
-% TODO: multiply labels by 10
-lbls_p0 = get(gca,'xticklabels');
-for i=1:length(lbls_p0),lbls_p0{i} = sprintf('%d',10*str2num(lbls_p0{i})); end
-set(gca,'xticklabels',lbls_p0);
-subplot(3,5,14);
 xlabel('T_a (^oC)','fontsize',14); text(0.95,0.95,'(m)','Units','normalized','fontsize',14,'HorizontalAlignment','right');
 ylim([0 3]); xlim([-2 3]);
 hl = legend('SW','SE','CW','CE','NW','NE','NO','fontsize',14); hl.Position=[0.8,0.42,0.06,0.19];
-subplot(3,5,15);
+
+subplot(3,5,12);
 xlabel('S_a (-)','fontsize',14); text(0.95,0.95,'(i)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
 ylim([0 6]); xlim([-1.2 1]);
 
+subplot(3,5,13);
+xlabel('Q_a','fontsize',14); text(0.95,0.95,'(j)','Units','normalized','fontsize',14,'HorizontalAlignment','right'); 
+ylabel('Probability function','fontsize',14); 
+
+subplot(3,5,14);
+xlabel('PW (m)','fontsize',14); text(0.95,0.95,'(l)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+lbls_p0 = get(gca,'xticklabels');
+for i=1:length(lbls_p0),lbls_p0{i} = sprintf('%d',10*str2num(lbls_p0{i})); end
+set(gca,'xticklabels',lbls_p0);
+
+% subplot(3,5,15);
+% xlabel('D_a (m^3s^{-1})','fontsize',14); text(0.95,0.95,'(k)','Units','normalized','fontsize',14,'HorizontalAlignment','right')
+% ylim([0 0.02]); xlim([-300 500]);
 
 hf = gcf;
 end

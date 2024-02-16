@@ -17,19 +17,9 @@ for i_reg=1:n_regions
     Params_reg = Parameters{i_reg};
     tic
     for k_run=1:n_runs
-        % if isnan(ohc_out(k_run,i_reg)) % saves time after a bug/crash fix, but requires reinitialising the variable
-        try
-            % [ohc_out(k_run,i_reg),osc_out(k_run,i_reg)] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
-            ensemble(k_run,i_reg) = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
-            fprintf('run %d complete\n',k_run)
-        catch ME
-            ensemble(k_run,i_reg).temp = NaN(size(ensemble(k_run,i_reg).time));
-            ensemble(k_run,i_reg).salt = NaN(size(ensemble(k_run,i_reg).time));
-            ensemble(k_run,i_reg).ts   = NaN(size(ensemble(k_run,i_reg).time));
-            ensemble(k_run,i_reg).ss   = NaN(size(ensemble(k_run,i_reg).time));
-            ensemble(k_run,i_reg).H    = NaN(size(ensemble(k_run,i_reg).time));
-            fprintf('run %d %s\n',k_run,ME.message)
-        end
+        % if isnan(ohc_out(k_run,i_reg)) % saves time after a bug/crash fix, but requires reinitialising the variable        
+        ensemble(k_run,i_reg) = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
+        fprintf('run %d complete\n',k_run)
         % end
     end
     fprintf('region %d complete\n',i_reg)
@@ -38,36 +28,25 @@ end
 fprintf('Model training runs complete. Starting computation of heat/salt contents...\n')
 
 [ohc_out,osc_out] = compute_ensemble_metric(ensemble,length(time_axis));
-fprintf('Computation of heat/salt contents complete. Creating validation dataset...\n')
+fprintf('Computation of heat/salt contents complete. Starting computation of heat/salt contents...\n')
 
 %% Validation dataset
-for i_reg=1:n_regions
-    Xreg = squeeze(Xvalid(:,i_reg,:));
-    Params_reg = Parameters{i_reg};
-    tic
-    for k_run=1:n_valid
-        % if isnan(ohc_out(k_run,i_reg)) % saves time after a bug/crash fix, but requires reinitialising the variable
-        try
-            % [ohc_out(k_run,i_reg),osc_out(k_run,i_reg)] = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
-            ensemble_valid(k_run,i_reg) = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
-            fprintf('run %d complete\n',k_run)
-        catch ME
-            ensemble_valid(k_run,i_reg).temp = NaN(size(ensemble_valid(k_run,i_reg).time));
-            ensemble_valid(k_run,i_reg).salt = NaN(size(ensemble_valid(k_run,i_reg).time));
-            ensemble_valid(k_run,i_reg).ts   = NaN(size(ensemble_valid(k_run,i_reg).time));
-            ensemble_valid(k_run,i_reg).ss   = NaN(size(ensemble_valid(k_run,i_reg).time));
-            ensemble_valid(k_run,i_reg).H    = NaN(size(ensemble_valid(k_run,i_reg).time));
-            fprintf('run %d %s\n',k_run,ME.message)
-        end
-        % end
-    end
-    fprintf('region %d complete\n',i_reg)
-    toc    
-end
-fprintf('Model validation runs complete. Starting computation of heat/salt contents...\n')
-
-[ohc_vld,osc_vld] = compute_ensemble_metric(ensemble_valid,length(time_axis));
-fprintf('Computation of heat/salt contents complete for validation dataset complete.\n')
+% for i_reg=1:n_regions
+%     Xreg = squeeze(Xvalid(:,i_reg,:));
+%     Params_reg = Parameters{i_reg};
+%     tic
+%     for k_run=1:n_valid
+%         % if isnan(ohc_out(k_run,i_reg)) % saves time after a bug/crash fix, but requires reinitialising the variable
+%         ensemble_valid(k_run,i_reg) = wrapper_boxmodel(Xreg(k_run,:),Params_reg);
+%         fprintf('run %d complete\n',k_run)
+%         % end
+%     end
+%     fprintf('region %d complete\n',i_reg)
+%     toc    
+% end
+% fprintf('Model validation runs complete. Starting computation of heat/salt contents...\n')
+% [ohc_vld,osc_vld] = compute_ensemble_metric(ensemble_valid,length(time_axis));
+% fprintf('Computation of heat/salt contents for validation dataset complete.\n')
 
 %% Calculate the distributions based on the numerical outputs alone
 % this is just for comparison with the surrogate model outputs

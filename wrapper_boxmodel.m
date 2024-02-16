@@ -47,8 +47,8 @@ f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* dTanom))'; % if using isopycnal s
 f.Ss  = (Parameters.Socn + (Parameters.Sdec .* dSanom))'; % if using isopycnal stretching
 f.zs  = -Parameters.zs;
 
-if ismember(Parameters.regID,[2,4,6]) % only applies to eastern Greenland
-    [f.Ts,f.Ss] = heave_profiles(f.Ts,f.Ss,f.zs,Xper); % if using isopycnal stretching
+if ismember(Parameters.regID,[2,4,6]) % isopycnal stretching due to storms only applies to eastern Greenland    
+    [f.Ts,f.Ss] = heave_profiles(f.Ts,f.Ss,f.zs,Xper,p.sigma_bnds(2)); % using Cowton et al. value for the pycnocline
 end
 
 zs = flip(f.zs);
@@ -89,20 +89,35 @@ fjord_run.a = a;
 
 %% Run the model itself, postprocess, and return the desired metrics for evaluation
 
-[fjord_run.s,fjord_run.f] = boxmodel(fjord_run.p, fjord_run.t, fjord_run.f, fjord_run.a);
-if fjord_run.s.status
-    disp('this is a crash example')
+fjord_out = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[],"phi",[],"qvs",[]);
+try
+    [fjord_run.s,fjord_run.f] = boxmodel(fjord_run.p, fjord_run.t, fjord_run.f, fjord_run.a);
+
+    fjord_out.temp  = fjord_run.s.T;
+    fjord_out.salt  = fjord_run.s.S;
+    fjord_out.H     = fjord_run.s.H;
+    fjord_out.qvs   = fjord_run.s.QVs;
+    fjord_out.qsg   = fjord_run.s.QSg;
+    fjord_out.phi   = fjord_run.s.phi;
+    fjord_out.ts    = fjord_run.s.Ts;
+    fjord_out.ss    = fjord_run.s.Ss;
+catch ME
+    fjord_run.s.T  = NaN;
+    fjord_run.s.S  = NaN;
+    fjord_run.s.H  = NaN;
+    fjord_out.qvs  = NaN;
+    fjord_out.qsg  = NaN;
+    fjord_out.phi  = NaN;
+    fjord_run.s.Ts = NaN;
+    fjord_run.s.Ss = NaN;
+    
+    fprintf('run failed: %s\n',ME.message)
 end
+
 % fjord_run.o = postprocess_boxmodel(fjord_run);
 % heat_content = sum(fjord_run.o.hc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
 % salt_content = sum(fjord_run.o.sc)./(fjord_run.p.L.*fjord_run.p.W.*fjord_run.p.H);
-fjord_out = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[]);
-fjord_out.time  = fjord_run.s.t;
-fjord_out.temp  = fjord_run.s.T;
-fjord_out.salt  = fjord_run.s.S;
-fjord_out.H     = fjord_run.s.H;
-fjord_out.ts    = fjord_run.s.Ts;
-fjord_out.ss    = fjord_run.s.Ss;
+fjord_out.time  = fjord_run.t;
 fjord_out.zs    = fjord_run.f.zs;
 fjord_out.p     = fjord_run.p;
 

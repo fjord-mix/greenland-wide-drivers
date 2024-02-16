@@ -1,7 +1,8 @@
-function [temp_out,salt_out] = heave_profiles(Tz,Sz,z_in,depression)
+function [temp_out,salt_out] = heave_profiles(Tz,Sz,z_in,depression,pyc_sigma)
 warning('off','all')
 try
 % default is to heave the isopycnal by 20 m ("depression" amplitude of 40)
+if nargin < 5, pyc_sigma = 27.3; end
 if nargin < 4, depression = ones(size(Sz,2))*40; end
 
 % Make the vertical profiles at regular depth intervals (1m)
@@ -17,20 +18,40 @@ temp_stretch=NaN(size(temp_reg));
 salt_stretch=NaN(size(salt_reg));
 for i=1:size(salt_reg,2)
     % we only apply the isopycnal heaving if the change is larger than 1m because of the profile vertical resolution
-    if depression(i) > 1        
+    if abs(depression(i)) > 1
         % find where the pycnocline is
         sigma_profile = gsw_sigma0(salt_reg(:,i),temp_reg(:,i)); % depth in m is roughly equivalent to pressure in dbar
-        [~,i_z] = findpeaks(-diff(sigma_profile),'NPeaks',3);
-        pyc=sigma_profile(i_z(end));
-        oldstrat = findnearest(pyc,sigma_profile);
-        oldstrat = oldstrat(1);
-        newstrat = oldstrat-abs(depression(i)); % determine where it should end up at
+
+        if pyc_sigma < max(sigma_profile) && pyc_sigma > min(sigma_profile)
+            [~,indx] = min(abs(sigma_profile-pyc_sigma));
+            oldstrat = indx(end);
+        else
+            % will try to find the pycnocline according to the sigma
+            % depth gradient in case the chosen value is "out of bounds"
+            [~,i_z] = findpeaks(-diff(sigma_profile),'NPeaks',5); 
+            % pyc=sigma_profile(i_z(1));
+            % % oldstrat = findnearest(pyc,sigma_profile);
+            % % oldstrat = oldstrat(1);
+            oldstrat = i_z(end); 
+        end
+        newstrat = abs(oldstrat+floor(depression(i))); % determine where it should end up at
         
         % stretch salinity
         var = salt_reg(:,i);
         varnew = NaN([np,1]);
-        varnew(1:newstrat) = interp1(1:oldstrat,var(1:oldstrat),oldstrat/newstrat:oldstrat/newstrat:oldstrat,'linear',var(oldstrat));
-        varnew(newstrat+1:np) = interp1(oldstrat+1:np,var(oldstrat+1:np),oldstrat+1:((np-oldstrat-1)/(np-newstrat-1)):np,'linear',var(end));
+        if newstrat < np
+            varnew(1:newstrat) = interp1(1:oldstrat,var(1:oldstrat),oldstrat/newstrat:oldstrat/newstrat:oldstrat,'linear',var(oldstrat));
+            % if there is only one value between the selected (old) pycnocline
+            % and the surface once the pycnocline, we repeat it for the "depressed" part, 
+            % i.e., we assume it is a well-mixed layer at the surface
+            if oldstrat+1 >= np 
+                varnew(newstrat+1:np) = var(oldstrat);
+            else
+                varnew(newstrat+1:np) = interp1(oldstrat+1:np,var(oldstrat+1:np),oldstrat+1:((np-oldstrat-1)/(np-newstrat-1)):np,'linear',var(end));
+            end
+        else % the isopycnal is reaching the surface
+            varnew(1:np) = interp1(1:oldstrat,var(1:oldstrat),1:np,'linear',var(oldstrat));
+        end
         X = ~isnan(varnew); % get rid of potential gaps
         Y = cumsum(X-diff([1;X])/2);
         varnew = interp1(1:nnz(X),varnew(X),Y,'linear',varnew(end));
@@ -39,8 +60,19 @@ for i=1:size(salt_reg,2)
         % stretch temperature
         var = temp_reg(:,i);
         varnew = NaN([np,1]);
-        varnew(1:newstrat) = interp1(1:oldstrat,var(1:oldstrat),oldstrat/newstrat:oldstrat/newstrat:oldstrat,'linear',var(oldstrat));
-        varnew(newstrat+1:np) = interp1(oldstrat+1:np,var(oldstrat+1:np),oldstrat+1:((np-oldstrat-1)/(np-newstrat-1)):np,'linear',var(end));
+       if newstrat < np
+            varnew(1:newstrat) = interp1(1:oldstrat,var(1:oldstrat),oldstrat/newstrat:oldstrat/newstrat:oldstrat,'linear',var(oldstrat));
+            % if there is only one value between the selected (old) pycnocline
+            % and the surface once the pycnocline, we repeat it for the "depressed" part, 
+            % i.e., we assume it is a well-mixed layer at the surface
+            if oldstrat+1 >= np 
+                varnew(newstrat+1:np) = var(oldstrat);
+            else
+                varnew(newstrat+1:np) = interp1(oldstrat+1:np,var(oldstrat+1:np),oldstrat+1:((np-oldstrat-1)/(np-newstrat-1)):np,'linear',var(end));
+            end
+        else % the isopycnal is reaching the surface
+            varnew(1:np) = interp1(1:oldstrat,var(1:oldstrat),1:np,'linear',var(oldstrat));
+        end
         X = ~isnan(varnew);
         Y = cumsum(X-diff([1;X])/2);
         varnew = interp1(1:nnz(X),varnew(X),Y,'linear',varnew(end));

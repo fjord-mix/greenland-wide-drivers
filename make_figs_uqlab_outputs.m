@@ -1,4 +1,20 @@
-%% Plotting the results of the numerical model alone
+%% Showing all input parameters first
+
+% close all
+% plot_reg_ocn_forcings(datasets,fjords_compilation)
+% figure(1); exportgraphics(gcf,[figs_path,'hovmoller_Ts.png'],'Resolution',300)
+% figure(2); exportgraphics(gcf,[figs_path,'hovmoller_Ss.png'],'Resolution',300)
+% figure(3); exportgraphics(gcf,[figs_path,'series_discharge_hc_sc.png'],'Resolution',300)
+
+% hs = plot_fjords_sectors(datasets,fjords_map,fjords_compilation);
+% exportgraphics(hs.hf,[figs_path,'grl_fjords_compiation.png'],'Resolution',300)
+
+% hs = plot_fjords_summary(datasets,fjords_map,fjords_compilation); %plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off'; 
+% hf = plot_distributions(datasets,fjords_compilation);
+% exportgraphics(hf,[figs_path,'summary_input_probs2010-2018_ratios.png'],'Resolution',300)
+
+
+%% Plotting the results of our analyses
 
 % we want to know how many runs were successful
 ok_runs  = zeros([1, n_regions]);
@@ -13,228 +29,92 @@ for i_reg=1:n_regions
     % ok_vruns(i_reg) = sum(~isnan(total_runs));
 end
 
-% get the range of results for computing the probability distributions
+% time axis for plotting the results, excluding t0
+time_axis_plt = time_axis(2:end)'; % datetime(2010,01,15)+1:1:datetime(2018,12,15); 
+
+% get the range of results for showing the probability distributions
 ohc_x = linspace(1.2*min(ohc_out(:)),1.2*max(ohc_out(:)),1000);
 osc_x = linspace(1.2*min(osc_out(:)),1.2*max(osc_out(:)),1000);
 
 % get the heat/salt content trends from the (undisturbed) shelf
-datasets.opts.time_start = time_axis(1);
-datasets.opts.time_end   = time_axis(end);
-datasets.opts.dt         = 30.;
-fjords_processed(size(fjords_compilation)) = struct("p",[],"a",[],"f",[],"t",[],"m",[]);
-for i=1:length(fjords_compilation),fjords_processed(i) = prepare_boxmodel_input(datasets,fjords_compilation(i));end
-[temp_forcing, ~, ~, depths] = get_var_forcing_by_region(fjords_processed,'Ts');
-[salt_forcing, ~, ~, ~] = get_var_forcing_by_region(fjords_processed,'Ss');
-% fjord_rho = (fjords_processed(1).p.betaS*salt_forcing - fjords_processed(1).p.betaT*temp_forcing);
-% sc_reg = squeeze(trapz(depths,salt_forcing.* fjord_rho,2)./max(abs(depths)));
-% hc_reg = squeeze(trapz(depths,(temp_forcing+273.15).* fjord_rho,2)./max(abs(depths)).* fjords_processed(1).p.cw);
-sc_reg = squeeze(trapz(depths,salt_forcing,2)./max(abs(depths)));
-hc_reg = squeeze(trapz(depths,(temp_forcing),2)./max(abs(depths)));
-taxis_shelf = 1:1:size(sc_reg,1);
-tr_ohc_shelf = NaN(size(regions));
-tr_osc_shelf = NaN(size(regions));
-for i_reg=1:length(regions)
-    p = polyfit(taxis_shelf,hc_reg(:,i_reg),1);
-    tr_ohc_shelf(i_reg) = p(1)*12;
-    % tr_ohc_shelf(i_reg) = mean(hc_reg(end-12:end,i_reg))-mean(hc_reg(1:12,i_reg));
-    p = polyfit(taxis_shelf,sc_reg(:,i_reg),1);
-    tr_osc_shelf(i_reg) = p(1)*12;
-    % tr_osc_shelf(i_reg) = mean(sc_reg(end-12:end,i_reg))-mean(sc_reg(1:12,i_reg));
-end
-region_line_color = lines(7);
-time_axis_plt = datetime(2010,01,15)+1:1:datetime(2018,12,15);
+% datasets.opts.time_start = time_axis(1);
+% datasets.opts.time_end   = time_axis(end);
+% datasets.opts.dt         = 30.;
+
+%% Plot the ocean forcing (and its variability) for each region
+plot_reg_ocn_profiles(datasets,fjords_compilation)
+% exportgraphics(gcf,[figs_path,'profiles_ocn_forcing_reg_temp','.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'profiles_ocn_forcing_reg_salt','.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'profiles_ocn_forcing_reg_dens','.eps'],'Resolution',300)
+
+plot_reg_ocn_forcings(datasets,fjords_compilation)
+% exportgraphics(gcf,[figs_path,'sections_ocn_forcing_reg_temp','.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'sections_ocn_forcing_reg_salt','.png'],'Resolution',300)
+
+plot_reg_ts(datasets,fjords_compilation)
+% exportgraphics(gcf,[figs_path,'ts_diag_ocn_forcing_reg','.png'],'Resolution',300)
 
 %% Plot the time series to see how they all behave
-figure('Name','time series model outputs','Position',[20 20 1000 500])
-region_handles = [];
-hold on; box on
-for i_reg=1:n_regions
-    ohc_reg=NaN([n_runs,length(time_axis_plt)]);
-    osc_reg=NaN([n_runs,length(time_axis_plt)]);
-    for k_run=1:n_runs
-        if ~isempty(ensemble(k_run,i_reg).temp)
-            [ohc_fjord,osc_fjord] = get_active_fjord_contents(ensemble(k_run,i_reg));
-            ohc_shelf = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts)./max(abs(ensemble(k_run,i_reg).zs)));
-            osc_shelf = squeeze(trapz(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss)./max(abs(ensemble(k_run,i_reg).zs)));
+% will also receive a formatted timetable for easier operations with dT and dS
+% although not a good practice to mix processing and figure plotting, this minimises redundant code/computations
+[~,tt_ensemble] = plot_ensemble_dt_ds(ensemble,time_axis_plt,regions_lbl);
+% exportgraphics(gcf,[figs_path,'ensemble_series_mp_n',num2str(n_runs),'.png'],'Resolution',300)
 
-            ohc_reg(k_run,:) = ohc_fjord - ohc_shelf;
-            osc_reg(k_run,:) = osc_fjord - osc_shelf;
-        else
-            ohc_reg(k_run,:) = NaN;
-            osc_reg(k_run,:) = NaN;
-        end
-    end
-    subplot(1,2,1); hold on; box on;
-    mean_ln = mean(bootstrp(100,@(x)[mean(x,1,'omitnan')],ohc_reg));
-    std_ln  = std(bootstrp(100,@(x)[mean(x,1,'omitnan')],ohc_reg));
-    upper_bnd = mean_ln+std_ln;
-    lower_bnd = mean_ln-std_ln;
+%% Show how different dT and dS are for summer and non-summer months
 
-    x2 = [time_axis_plt, fliplr(time_axis_plt)];
-    inBetween = [lower_bnd, fliplr(upper_bnd)];
-    fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
-    plot(time_axis_plt,mean_ln,'Color',region_line_color(i_reg,:),'linewidth',2); 
-    
-
-    subplot(1,2,2); hold on; box on;
-    mean_ln = mean(bootstrp(100,@(x)[mean(x,1,'omitnan')],osc_reg));
-    std_ln  = std(bootstrp(100,@(x)[mean(x,1,'omitnan')],osc_reg));
-    upper_bnd = mean_ln+std_ln;
-    lower_bnd = mean_ln-std_ln;
-
-    x2 = [time_axis_plt, fliplr(time_axis_plt)];
-    inBetween = [lower_bnd, fliplr(upper_bnd)];
-    fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
-    hp = plot(time_axis_plt,mean_ln,'Color',region_line_color(i_reg,:),'linewidth',2); 
-    
-    region_handles=[region_handles hp];
-end
-subplot(1,2,1)
-text(0.03,1.03,'(a)','fontsize',14,'units','normalized')
-xlabel('Time'); ylabel('Temperature (^oC m^{-3})');
-set(gca,'fontsize',14)
-subplot(1,2,2)
-text(0.03,1.03,'(b)','fontsize',14,'units','normalized')
-hl = legend(region_handles,regions_lbl,'fontsize',10,'Location','southeast');
-hl.NumColumns=3;
-xlabel('Time'); ylabel('Salinity (m^{-3})');
-set(gca,'fontsize',14)
-% exportgraphics(gcf,[figs_path,'ensemble_series_bootstrapped_n',num2str(n_runs),'.png'],'Resolution',300)
+[~] = plot_seasonal_cycle(datasets,fjords_compilation,tt_ensemble,regions,1); % requires running "plot_ensemble_dt_ds" first, for 'tt_ensemble'
+% exportgraphics(gcf,[figs_path,'seasonal_cycles_ensemble_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plots the lag between fjord and shelf
-hf = plot_ensemble_ts_lags(ensemble,180);
+plot_ensemble_ts_lags(ensemble,360);
+% exportgraphics(gcf,[figs_path,'lags_ts_mp_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plotting surrogate vs numerical model
-figure('Name','Model fit for HC','position',[40 40 1000 400])
-for i_reg=1:n_regions
-    subplot(2,4,i_reg); hold on    
-    uq_plot(gca,Ynum_ohc{i_reg},Ysur_ohc{i_reg},'+')
-    uq_plot(gca,Yind_ohc{i_reg}+273.15,Yvld_ohc{i_reg},'o','color',[0.8500 0.3250 0.0980])
-    hl = refline(1,0); hl.LineStyle='--'; hl.Color='r';
-    box on; grid on;
 
-    % rms = rmse(Yvld_ohc{i_reg},Yind_ohc{i_reg},'omitnan');
-    mdl = fitlm(Yind_ohc{i_reg},Yvld_ohc{i_reg});
+% plot_model_fits(sur_model_ohc,Ynum_ohc,Ysur_ohc,Yind_ohc,Yvld_ohc,ok_runs,'temperature','^oC');
+plot_model_fits(sur_model_ohc,Ynum_ohc,Ysur_ohc,[],[],ok_runs,'temperature','^oC');
+% exportgraphics(gcf,[figs_path,'pce_fit_dt_n',num2str(n_runs),'.png'],'Resolution',300)
 
-    text(0.05,0.95,sprintf('(%s) %s (n=%d)',letters{i_reg},regions{i_reg},ok_runs(i_reg)),'units','normalized','fontsize',14)
-    % text(0.98,0.07,sprintf('$\\epsilon_{LOO}=%0.2f$',sur_model_ohc{i_reg}.Error.LOO),'interpreter','latex','units','normalized','horizontalAlignment','right','fontsize',14)
-    text(0.98,0.09,sprintf('R^2=%0.2f',mdl.Rsquared.Adjusted),'units','normalized','horizontalAlignment','right','fontsize',14)
-    % set(gca,'fontsize',14,'XTickLabel',[],'YTickLabel',[])
-    if i_reg > 3, xlabel('Numerical model'); end
-    if ismember(i_reg,[1,5]), ylabel('Surrogate model'); end
-end
-% hl = legend('Training dataset','Validation dataset','fontsize',12);
-% hl.Position(1)=hl.Position(1)+0.175;
-% exportgraphics(gcf,[figs_path,'pce_fit_ohc_n',num2str(n_runs),'.png'],'Resolution',300)
-
-figure('Name','Model fit for SC','position',[40 40 1000 400])
-for i_reg=1:n_regions
-    subplot(2,4,i_reg); hold on;
-    uq_plot(gca,Ynum_osc{i_reg},Ysur_osc{i_reg},'+')    
-    uq_plot(gca,Yind_osc{i_reg},Yvld_osc{i_reg},'o','color',[0.8500 0.3250 0.0980])
-    hl = refline(1,0); hl.LineStyle='--'; hl.Color='r';
-    box on; grid on;
-
-    % rms = rmse(Yvld_osc{i_reg},Yind_osc{i_reg},'omitnan');
-    mdl = fitlm(Yind_ohc{i_reg},Yvld_ohc{i_reg});
-
-    text(0.05,0.95,sprintf('(%s) %s (n=%d)',letters{i_reg},regions{i_reg},ok_runs(i_reg)),'units','normalized','fontsize',14)
-    % text(0.98,0.07,sprintf('$\\epsilon_{LOO}=%0.2f$',sur_model_osc{i_reg}.Error.LOO),'interpreter','latex','units','normalized','horizontalAlignment','right','fontsize',14)
-    text(0.98,0.09,sprintf('R^2=%0.2f',mdl.Rsquared.Adjusted),'units','normalized','horizontalAlignment','right','fontsize',14)
-    set(gca,'fontsize',14,'XTickLabel',[],'YTickLabel',[])
-    if i_reg > 3, xlabel('Numerical model'); end
-    if ismember(i_reg,[1,5]), ylabel('Surrogate model'); end
-end
-% hl = legend('Training dataset','Validation dataset','fontsize',12);
-% hl.Position(1)=hl.Position(1)+0.175;
-% exportgraphics(gcf,[figs_path,'pce_fit_osc_n',num2str(n_runs),'.png'],'Resolution',300)
+% plot_model_fits(sur_model_osc,Ynum_osc,Ysur_osc,Yind_osc,Yvld_osc,ok_runs,'salinity','');
+plot_model_fits(sur_model_osc,Ynum_osc,Ysur_osc,[],[],ok_runs,'salinity','');
+% exportgraphics(gcf,[figs_path,'pce_fit_ds_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Surrogate model kernel density
-figure('Name','Surrogate model kernel density','Position',[40 40 850 500]); hold on;
-subplot(2,2,1), hold on; box on; grid on
-for i_reg=1:n_regions
-    plot(ohc_x,pdf(ohc_ks_eval{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    % scatter(tr_ohc_shelf(i_reg),pdf(ohc_ks_eval{i_reg},tr_ohc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
-end
-xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
-ylabel('Probability density');
-text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
-xlim([-2 1]);
-set(gca,'fontsize',14)
-subplot(2,2,3), hold on; box on; grid on
-for i_reg=1:n_regions
-    plot(ohc_x,cdf(ohc_ks_eval{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    % scatter(tr_ohc_shelf(i_reg),cdf(ohc_ks_eval{i_reg},tr_ohc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
-end
-xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
-xlabel('Mean temperature difference (^oC)',fontsize=14);
-ylabel('Cumulative probability density');
-text(0.05,0.95,'(c)','fontsize',14,'units','normalized')
-set(gca,'fontsize',14)
-xlim([-2 1]);
-% handle_plots = [];
-subplot(2,2,2), hold on; box on; grid on
-for i_reg=1:n_regions
-    hp = plot(osc_x,pdf(osc_ks_eval{i_reg},osc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(tr_osc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    % scatter(tr_osc_shelf(i_reg),pdf(osc_ks_eval{i_reg},tr_osc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
-    % handle_plots = [handle_plots hp];
-end
-xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
-xlim([-2.5 0.5])
-text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
-ylabel('Probability density');
-set(gca,'fontsize',14)
-subplot(2,2,4), hold on; box on; grid on
-handle_plots = [];
-for i_reg=1:n_regions
-    hp = plot(osc_x,cdf(osc_ks_eval{i_reg},osc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(tr_osc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    % scatter(tr_osc_shelf(i_reg),cdf(osc_ks_eval{i_reg},tr_osc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
-    handle_plots = [handle_plots hp];
-end
-xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
-xlabel('Mean salinity difference',fontsize=14);
-ylabel('Cumulative probability density');
-text(0.05,0.95,'(d)','fontsize',14,'units','normalized')
-set(gca,'fontsize',14)
-xlim([-2.5 0.5])
-hl = legend(handle_plots,regions,'fontsize',14,'Location','west');
-% exportgraphics(gcf,[figs_path,'kssur_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
+
+[hf,hp,hl] = plot_surrogate_model_results(ohc_x,osc_x,ohc_ks_eval,osc_ks_eval);
+% exportgraphics(gcf,[figs_path,'prob_dist_sur_dt_ds','.png'],'Resolution',300)
 
 %% construct the numerical model kernel density plot (just for comparison)
-figure('Name','Numerical model kernel density','Position',[40 40 850 300]); 
-handle_plots = [];
-subplot(1,2,1), hold on; box on; grid on;
-for i_reg=1:n_regions
-    hp = plot(ohc_x,pdf(ohc_ks{i_reg},ohc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(1e-3.*tr_ohc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    % scatter(tr_ohc_shelf(i_reg),pdf(ohc_ks{i_reg},tr_ohc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
-end
-xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
-xlabel('Temperature difference (^oC)',fontsize=14); ylabel('Probability',fontsize=14);  box on
-text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
-set(gca,'fontsize',14)
-% xlim([-0.15 0.15]);
-subplot(1,2,2), hold on; box on; grid on;
-for i_reg=1:n_regions
-    hp = plot(osc_x,pdf(osc_ks{i_reg},osc_x),'linewidth',2,'color',region_line_color(i_reg,:)); 
-    % xline(tr_osc_shelf(i_reg),'linewidth',1,'linestyle','--','color',region_line_color(i_reg,:)); 
-    % scatter(tr_osc_shelf(i_reg),pdf(osc_ks{i_reg},tr_osc_shelf(i_reg)),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
-    handle_plots = [handle_plots hp];
-end
-xline(0.0,'linewidth',1.5,'linestyle','--','color',[0.5 0.5 0.5]); 
-xlabel('Salinity difference',fontsize=14); box on
-text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
-set(gca,'fontsize',14)
-% xlim([-0.1 0.1])
-hl = legend(handle_plots,regions_lbl,'fontsize',14,'Location','northeast');
-% exportgraphics(gcf,[figs_path,'ksnum_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
 
-%TODO: add histogram of differences?
-%% Plotting the Sobol indices
+[hf,hp,hl] = plot_numerical_model_distributions(ohc_x,osc_x,ohc_ks,osc_ks,regions_lbl);
+% exportgraphics(gcf,[figs_path,'prob_dist_boxmodel_dt_ds_n',num2str(n_runs),'.png'],'Resolution',300)
+
+%% Plotting the Borgonovo Indices (quantifying role of inputs in each region's fjord-shelf differences for each region)
+% Original publication: https://doi.org/10.1016/j.ress.2006.04.015
+figure('Name','Borgonovo Indices','position',[40 40 1000 400])
+for i_reg=1:7
+    borgResults_ohc  = BorgonovoA_ohc{i_reg}.Results;
+    borgResults_osc  = BorgonovoA_osc{i_reg}.Results;
+    borgIndices = [borgResults_ohc.Delta borgResults_osc.Delta];
+
+    subplot(2,4,i_reg); hold on; box on; grid on
+    hb=uq_bar(gca,1:length(IOpts{i_reg}.Marginals), borgIndices, 1.,'edgecolor','black');%,'grouped');
+    text(0.01,1.075,sprintf('(%s) %s',letters{i_reg},regions{i_reg}),'units','normalized','fontsize',12)
+    set(gca,'XTick', 1:length(IOpts{i_reg}.Marginals),'XTickLabel', borgResults_ohc.VariableNames)
+    if i_reg < 4, xlabel(''); end
+    if i_reg==1 || i_reg==5, ylabel('Borgonovo indices'); end
+    ylim([0 0.5])
+end
+hl = legend(hb,{'Temperature','Salinity'},'fontsize',12);
+hl.Position(1)=hl.Position(1)+0.175;
+% exportgraphics(gcf,[figs_path,'borgonovo_delta_n',num2str(n_runs),'.png'],'Resolution',300)
+
+
+% for i_reg=1:7
+%     uq_display(BorgonovoA_ohc{1},1,'Joint PDF',3);
+% end
+
+%% Plotting the Sobol indices (quantifying role of inputs in the variability between fjords in the same region)
 
 figure('Name','First-order Sobol Indices','position',[40 40 1000 400])
 for i_reg=1:7
@@ -273,64 +153,71 @@ hl = legend(hb,{'Temperature','Salinity'},'fontsize',12);
 hl.Position(1)=hl.Position(1)+0.175;
 % exportgraphics(gcf,[figs_path,'sobol_total_n',num2str(n_runs),'.png'],'Resolution',300)
 
-%% Plotting the Borgonovo Indices
-figure('Name','Borgonovo Indices','position',[40 40 1000 400])
-for i_reg=1:7
-    borgResults_ohc  = BorgonovoA_ohc{i_reg}.Results;
-    borgResults_osc  = BorgonovoA_osc{i_reg}.Results;
-    borgIndices = [borgResults_ohc.Delta borgResults_osc.Delta];
-
-    subplot(2,4,i_reg); hold on; box on; grid on
-    hb=uq_bar(gca,1:length(IOpts{i_reg}.Marginals), borgIndices, 1.,'grouped');
-    text(0.01,1.075,sprintf('(%s) %s',letters{i_reg},regions{i_reg}),'units','normalized','fontsize',12)
-    set(gca,'XTick', 1:length(IOpts{i_reg}.Marginals),'XTickLabel', borgResults_ohc.VariableNames)
-    if i_reg < 4, xlabel(''); end
-    if i_reg==1 || i_reg==5, ylabel('Borgonovo indices'); end
-    ylim([0 0.5])
-end
-hl = legend(hb,{'Temperature','Salinity'},'fontsize',12);
-hl.Position(1)=hl.Position(1)+0.175;
 
 %% Convergence test to see if our choice of n_runs was enough
 
-figure('Name','Convergence test for n_runs','Position',[40 40 850 300]); hold on;
-region_handles = [];
-subplot(1,2,1), hold on; box on; grid on
-for i_reg=1:n_regions
-    plot(x_subsample,Yconv_ohc(:,i_reg),'linewidth',2,'Color',region_line_color(i_reg,:));
-    % xline(ok_runs(i_reg),'linewidth',1,'linestyle','--','Color',region_line_color(i_reg,:));
-    [d,i_conv] = min(abs(double(ok_runs(i_reg))-double(x_subsample)));
-    scatter(ok_runs(i_reg),Yconv_ohc(i_conv,i_reg),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
-end
-ylabel('Avg. temperature difference (^oC)',fontsize=14); xlabel('experimental design size (n)','fontsize',14);  
-text(0.05,0.95,'(a)','fontsize',14,'units','normalized')
-set(gca,'fontsize',14)
-xlim([0 n_runs])
-subplot(1,2,2), hold on; box on; grid on
-for i_reg=1:n_regions
-    hp = plot(x_subsample,Yconv_osc(:,i_reg),'linewidth',2,'Color',region_line_color(i_reg,:)); 
-    % xline(ok_runs(i_reg),'linewidth',1,'linestyle','--','Color',region_line_color(i_reg,:));
-    [d,i_conv] = min(abs(double(ok_runs(i_reg))-double(x_subsample)));
-    scatter(ok_runs(i_reg),Yconv_osc(i_conv,i_reg),40,'filled','o','MarkerFaceColor',region_line_color(i_reg,:));
-    region_handles = [region_handles hp];
-end
-ylabel('Avg. salinity difference','fontsize',14); xlabel('experimental design size (n)','fontsize',14);   
-text(0.05,0.95,'(b)','fontsize',14,'units','normalized')
-set(gca,'fontsize',14)
-xlim([0 n_runs])
-hl = legend(region_handles,regions,'fontsize',14,'Location','southwest');
-hl.NumColumns=2;
-% exportgraphics(gcf,[figs_path,'nruns_convergence_ohc_osc_n',num2str(n_runs),'.png'],'Resolution',300)
+hf = plot_convergence_test(x_subsample,Yconv_ohc,Yconv_osc,ok_runs,n_runs);
+% exportgraphics(gcf,[figs_path,'nruns_convergence_dt_ds_n',num2str(n_runs),'.png'],'Resolution',300)
 
-%% Box plots showing results of bootstrapping
-
-% figure('Name','PCE accuracy test','Position',[40 40 850 300]); hold on;
+%% Surrogate model boxplot
+% Yeval_mat_ohc = NaN([n_regions,n_runs]);
+% Yeval_mat_osc = NaN([n_regions,n_runs]);
 % for i_reg=1:n_regions
-%     ohc_boostrap = Yboo_ohc{i_reg};
-%     osc_boostrap = Yboo_osc{i_reg};
-%     subplot(1,2,1), hold on; box on
-%     boxplot(i_reg,ohc_boostrap(:)')
-% 
-%     subplot(1,2,2), hold on; box on
-%     boxplot(i_reg,osc_boostrap(:)')
+%     Yeval_mat_ohc(i_reg,:) = mean(Yboo_ohc{i_reg},2,'omitnan');
+%     Yeval_mat_osc(i_reg,:) = mean(Yboo_osc{i_reg},2,'omitnan');
+% end
+% figure; 
+% subplot(2,1,1); hold on; box on; grid on;
+% boxplot(Yeval_mat_ohc','boxstyle','filled','symbol','.','labels',regions,'colors',lines(n_regions))
+% ylim([-1 1])
+% xline(0,'--k');
+% ylabel('Temperature difference (^oC)'); text(0.02,0.95,'(a)','Units','normalized','fontsize',14)
+% set(gca,'fontsize',14)
+% subplot(2,1,2); hold on; box on; grid on;
+% boxplot(Yeval_mat_osc','boxstyle','filled','symbol','.','labels',regions,'colors',lines(n_regions))
+% ylim([-1 1])
+% xline(0,'--k')
+% ylabel('Salinity difference'); text(0.02,0.95,'(b)','Units','normalized','fontsize',14)
+% set(gca,'fontsize',14)
+%% Surrogate model moments
+
+for i_reg=1:7
+    fprintf('Surrogate model results for %s:\n',regions{i_reg})
+    fprintf('Mean dT: %.2f +- %.2f\n',sur_model_ohc{i_reg}.PCE.Moments.Mean,sqrt(sur_model_ohc{i_reg}.PCE.Moments.Var))
+    fprintf('Mean dS: %.2f +- %.2f\n',sur_model_osc{i_reg}.PCE.Moments.Mean,sqrt(sur_model_osc{i_reg}.PCE.Moments.Var))
+    disp('===========================================')
+end
+
+
+%% Median and prctiles of surrogate and numerical models
+for i_reg=1:7
+    pct_num_ohc = prctile(Ynum_ohc{i_reg},[50, 5, 95]);
+    pct_num_osc = prctile(Ynum_osc{i_reg},[50, 5, 95]);
+    pct_sur_ohc = prctile(Yeval_ohc{i_reg},[50, 5, 95]);
+    pct_sur_osc = prctile(Yeval_osc{i_reg},[50, 5, 95]);
+    fprintf('Results for %s:\n',regions{i_reg})
+    fprintf('Emulator dT: %.2f [%.2f - %.2f]\n',pct_sur_ohc)
+    fprintf('Simulator dT: %.2f [%.2f - %.2f]\n',pct_num_ohc)
+    disp(' ')
+    fprintf('Emulator dS: %.2f [%.2f - %.2f]\n',pct_sur_osc)
+    fprintf('Simulator dS: %.2f [%.2f - %.2f]\n',pct_num_osc)
+    disp('===========================================')
+end
+
+
+%% Model accuracy from the bootstraped model runs
+
+% for i_reg=1:7
+%     mean_ohc = mean(mean(Yboo_ohc{i_reg},2),'omitnan');
+%     std_ohc  = prctile(mean(Yboo_ohc{i_reg},2,'omitnan'),[5 95]);
+%     mean_osc = mean(mean(Yboo_osc{i_reg},2),'omitnan');
+%     std_osc  = prctile(mean(Yboo_osc{i_reg},2,'omitnan'),[5 95]);
+%     fprintf('Bootstrapped model results for %s:\n',regions{i_reg})
+%     fprintf('Mean dT: %.2f (%.2f - %.2f)\n',mean_ohc,std_ohc(1),std_ohc(2))
+%     fprintf('Mean dS: %.2f (%.2f - %.2f)\n',mean_osc,std_osc(1),std_osc(2))
+%     disp('')
+%     fprintf('Surrogate model results for %s:\n',regions{i_reg})
+%     fprintf('Mean dT: %.2f +- %.2f\n',sur_model_ohc{i_reg}.PCE.Moments.Mean,sqrt(sur_model_ohc{i_reg}.PCE.Moments.Var))
+%     fprintf('Mean dS: %.2f +- %.2f\n',sur_model_osc{i_reg}.PCE.Moments.Mean,sqrt(sur_model_osc{i_reg}.PCE.Moments.Var))
+%     disp('===========================================')
 % end
