@@ -1,4 +1,9 @@
-function [hf,hp,hl] = plot_surrogate_model_results(ohc_x,osc_x,ohc_ks_eval,osc_ks_eval)
+function [hf,hp,hl] = plot_surrogate_model_results(ohc_out,osc_out,ohc_ks_eval,osc_ks_eval)
+
+% get the range of results for showing the probability distributions
+ohc_x = linspace(1.2*min(ohc_out(:)),1.2*max(ohc_out(:)),1000);
+osc_x = linspace(1.2*min(osc_out(:)),1.2*max(osc_out(:)),1000);
+
 
 regions = {'SW','SE','CW','CE','NW','NE','NO'};
 n_regions=length(regions);

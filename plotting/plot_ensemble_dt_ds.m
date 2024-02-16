@@ -1,6 +1,8 @@
-function [hf,tt_ensemble] = plot_ensemble_dt_ds(ensemble,time_axis_plt,regions_lbl)
+function [hf,tt_ensemble] = plot_ensemble_dt_ds(ensemble,time_axis,regions_lbl)
 
-time_axis_plt = time_axis_plt';
+% time axis for plotting the results, excluding t0
+time_axis_plt = time_axis(2:end); % datetime(2010,01,15)+1:1:datetime(2018,12,15); 
+% time_axis_plt = time_axis_plt';
 n_regions=size(ensemble,2);
 n_runs=size(ensemble,1);
 region_handles = [];

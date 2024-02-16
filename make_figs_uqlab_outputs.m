@@ -29,18 +29,6 @@ for i_reg=1:n_regions
     % ok_vruns(i_reg) = sum(~isnan(total_runs));
 end
 
-% time axis for plotting the results, excluding t0
-time_axis_plt = time_axis(2:end)'; % datetime(2010,01,15)+1:1:datetime(2018,12,15); 
-
-% get the range of results for showing the probability distributions
-ohc_x = linspace(1.2*min(ohc_out(:)),1.2*max(ohc_out(:)),1000);
-osc_x = linspace(1.2*min(osc_out(:)),1.2*max(osc_out(:)),1000);
-
-% get the heat/salt content trends from the (undisturbed) shelf
-% datasets.opts.time_start = time_axis(1);
-% datasets.opts.time_end   = time_axis(end);
-% datasets.opts.dt         = 30.;
-
 %% Plot the ocean forcing (and its variability) for each region
 plot_reg_ocn_profiles(datasets,fjords_compilation)
 % exportgraphics(gcf,[figs_path,'profiles_ocn_forcing_reg_temp','.png'],'Resolution',300)
@@ -57,7 +45,7 @@ plot_reg_ts(datasets,fjords_compilation)
 %% Plot the time series to see how they all behave
 % will also receive a formatted timetable for easier operations with dT and dS
 % although not a good practice to mix processing and figure plotting, this minimises redundant code/computations
-[~,tt_ensemble] = plot_ensemble_dt_ds(ensemble,time_axis_plt,regions_lbl);
+[~,tt_ensemble] = plot_ensemble_dt_ds(ensemble,time_axis,regions_lbl);
 % exportgraphics(gcf,[figs_path,'ensemble_series_mp_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Show how different dT and dS are for summer and non-summer months
@@ -81,12 +69,12 @@ plot_model_fits(sur_model_osc,Ynum_osc,Ysur_osc,[],[],ok_runs,'salinity','');
 
 %% Surrogate model kernel density
 
-[hf,hp,hl] = plot_surrogate_model_results(ohc_x,osc_x,ohc_ks_eval,osc_ks_eval);
+[hf,hp,hl] = plot_surrogate_model_results(ohc_out,osc_out,ohc_ks_eval,osc_ks_eval);
 % exportgraphics(gcf,[figs_path,'prob_dist_sur_dt_ds','.png'],'Resolution',300)
 
 %% construct the numerical model kernel density plot (just for comparison)
 
-[hf,hp,hl] = plot_numerical_model_distributions(ohc_x,osc_x,ohc_ks,osc_ks,regions_lbl);
+[hf,hp,hl] = plot_numerical_model_distributions(ohc_out,osc_out,regions_lbl);
 % exportgraphics(gcf,[figs_path,'prob_dist_boxmodel_dt_ds_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plotting the Borgonovo Indices (quantifying role of inputs in each region's fjord-shelf differences for each region)
