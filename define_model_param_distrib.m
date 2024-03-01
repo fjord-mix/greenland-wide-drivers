@@ -1,7 +1,7 @@
 function [params,iOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,i_reg,experiments_taxis,experiments_time_dt)
 %% A more statistically driven approach to sensitivity tests
 % derives distributions for all parameters on which our model simulations
-% will depend on: W, L, Zg, Zs, Ta, Sa, Qa, Da
+% will depend on: L, H, W, Zg, Zs, Ta, Sa, Qa, Da, P0, and C0
 
 %% Get compiled fjord data in pre-processed structure
 % also selects the desired period in time
@@ -73,17 +73,17 @@ probs(end+1) = socn_pd;
 iOpts.Marginals(end+1) = uq_KernelMarginals(socn_anom{i_reg},[min(socn_anom{i_reg}), max(socn_anom{i_reg})]);
 
 % only applies omega to eastern Greenland
-if ismember(i_reg,[2,4,6]) 
-    iOpts.Marginals(end+1).Type     = 'Gaussian';
-    iOpts.Marginals(end).Parameters = [0.1429 0.1167]; % [1/7 days, 3.5/30 days] as per Harden et al. (2011; JClimate)
-    iOpts.Marginals(end).Bounds     = [0 1];
-else
-    omeg_pd = makedist('Normal','mu',0.,'sigma',0.);
-    iOpts.Marginals(end+1).Type = 'Constant' ;
-    iOpts.Marginals(end).Parameters = 0;
-end
-
-probs(end+1) = omeg_pd;
+% if ismember(i_reg,[2,4,6]) 
+%     iOpts.Marginals(end+1).Type     = 'Gaussian';
+%     iOpts.Marginals(end).Parameters = [0.1429 0.1167]; % [1/7 days, 3.5/30 days] as per Harden et al. (2011; JClimate)
+%     iOpts.Marginals(end).Bounds     = [0 1];
+% else
+%     omeg_pd = makedist('Normal','mu',0.,'sigma',0.);
+%     iOpts.Marginals(end+1).Type = 'Constant' ;
+%     iOpts.Marginals(end).Parameters = 0;
+% end
+% 
+% probs(end+1) = omeg_pd;
 %% Gets the glacier forcing
 
 % Subglacial discharge - we want the variation in amplitude rather than
@@ -116,6 +116,13 @@ probs(end+1)                    = q_pd;
 %Plot to check parameter space
 % figure('Name','Qsg parameter space'); histogram(random(q_pd,1000));
 
+% Solid-ice discharge (same procedure as for T and S)
+% [d_forcing,d_anom,~,~] = get_var_clim_by_region(fjords_processed,'D');
+[d_forcing,d_anom,~,~] = get_var_forcing_by_region(fjords_processed,'D');
+d_pd                   = fitdist(d_anom{i_reg},'kernel');
+probs(end+1) = d_pd;
+iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom{i_reg},[min(d_anom{i_reg}), max(d_anom{i_reg})]);
+
 % considering we use an entrainment coefficient of 0.1, P0=[5,30] is
 % equivalent to a plume width of 50-300 m
 p_pd              = makedist('Uniform','lower',5,'upper',30); 
@@ -124,14 +131,12 @@ iOpts.Marginals(end).Parameters = [5 30];
 iOpts.Marginals(end).Bounds     = [5 30];
 probs(end+1)                    = p_pd;
 
-% Solid-ice discharge (same procedure as for T and S)
-% [d_forcing,d_anom,~,~] = get_var_clim_by_region(fjords_processed,'D');
-[d_forcing,d_anom,~,~] = get_var_forcing_by_region(fjords_processed,'D');
-% d_pd                   = fitdist(d_anom{i_reg},'kernel');
-% Ignoring D (for now?)
-% probs(end+1) = d_pd;
-% iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom{i_reg},[min(d_anom{i_reg}), max(d_anom{i_reg})]);
-
+% Considering we use a shelf-exchange coefficient between 1e3 and 1e5
+p_c0              = makedist('Uniform','lower',1e3,'upper',1e5); 
+iOpts.Marginals(end+1).Type     = 'uniform';
+iOpts.Marginals(end).Parameters = [1e3 1e5];
+iOpts.Marginals(end).Bounds     = [1e3 1e5];
+probs(end+1)                    = p_c0;
 
 %% interpolates time series variables to the actual time steps used by the model
 datasets.opts.dt            = experiments_time_dt; % time step in days
@@ -155,7 +160,7 @@ params.Tdec  = tocn_decay(:,:,i_reg);
 params.Socn  = socn_forcing(:,:,i_reg);
 params.Sdec  = socn_decay(:,:,i_reg);
 params.Qglc  = q_forcing(:,i_reg);
-params.Dglc  = d_forcing(:,i_reg) .*0; % setting to zero (for now?)
+params.Dglc  = d_forcing(:,i_reg);
 params.t     = time_axis;
 params.zi    = fjord_dummy.f.zi;
 params.xi    = fjord_dummy.f.xi;
@@ -172,10 +177,10 @@ iOpts.Marginals(5).Name = 'Zg/H';
 % iOpts.Marginals(4).Name = 'Zg';
 iOpts.Marginals(6).Name = 'Ta';
 iOpts.Marginals(7).Name = 'Sa';
-iOpts.Marginals(8).Name = 'omega';
-iOpts.Marginals(9).Name = 'Qa';
+iOpts.Marginals(8).Name = 'Qa';
+iOpts.Marginals(9).Name = 'Da';
 iOpts.Marginals(10).Name = 'P0';
-% iOpts.Marginals(11).Name = 'Da';
+iOpts.Marginals(11).Name = 'C0';
 
 end
 

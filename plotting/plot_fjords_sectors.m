@@ -120,7 +120,7 @@ legend_handles = [hs_f; hs_g; hs_r; handles_regions];
 legend_text    = {'Fjords','Glaciers','Runoff','SW','SE','CW','CE','NW','NE','NO'};
 % hl = legend(legend_handles,legend_text,'Location','northwest','fontsize', 14);
 hl = legend(legend_handles,legend_text,'fontsize', 14);
-
+set(hl,'Box','on','Color',[1.,1.,1.], 'EdgeColor',[0.,0.,0.]) ;
 
 cb1.Position = [.56 .53 .0675 .35];
 cb2.Position = [.56 .165 .0675 .35];

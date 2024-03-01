@@ -9,7 +9,7 @@ n_regions=size(ensemble,2);
 n_runs=size(ensemble,1);
 for i_reg=1:n_regions
     for k_run=1:n_runs
-        if ~isempty(ensemble(k_run,i_reg).temp)
+        if ~isempty(ensemble(k_run,i_reg).temp) && (size(ensemble(k_run,i_reg).temp,2) == size(ensemble(k_run,i_reg).ts,2))
             [ohc_fjord,osc_fjord,active_depth] = get_active_fjord_contents(ensemble(k_run,i_reg));
             
             zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.zgl,ensemble(k_run,i_reg).p.silldepth]));
