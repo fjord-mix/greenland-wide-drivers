@@ -8,7 +8,7 @@ addpath(genpath(collation_path))
 addpath(genpath(uqlab_path))
 addpath(genpath('./'))
 
-[datasets,fjords_compilation,fjords_map,~] = compile_datasets(data_path);
+[datasets,fjords_compilation,fjords_map,~,glaciers_compilation] = compile_datasets(data_path);
 outs_path = [data_path,'/greenland/FjordMIX/boxmodel/pce/']; % where the model output files will be saved
 figs_path = [project_path,'/figs/pce/'];                     % where the figures and animations will be saved
 letters = {'a','b','c','d','e','f','g','h'};
@@ -18,7 +18,7 @@ regions = {'SW','SE','CW','CE','NW','NE','NO'};
 %% Initialise all needed variables
 n_runs    = 700; % runs for producing the surrogate model
 % n_valid   = floor(n_runs/10); % independent runs for surrogate model validation
-n_surr    = 1e6; % sample size for the surrogate model itself
+n_surr    = 1e5; % sample size for the surrogate model itself
 time_step = 0.1; % in days
 n_regions = length(regions);
 time_axis = datetime(2010,01,15):1:datetime(2018,12,15);
@@ -26,14 +26,12 @@ time_axis = datetime(2010,01,15):1:datetime(2018,12,15);
 % initialising traiing and validation dataset structures
 if exist('ensemble',"var"),       clear ensemble; end
 if exist('ensemble_valid',"var"), clear ensemble_valid; end
-ensemble(n_runs,n_regions)        = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[],"phi",[],"qvs",[],"qsg",[]);
-% ensemble_valid(n_valid,n_regions) = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[],"phi",[],"qvs",[]);
+ensemble(n_runs,n_regions)        = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[],"phi",[],"qvs",[],"qsg",[],"qts",[]);
 
 Parameters = cell([1, n_regions]);
 IOpts      = cell([1, n_regions]);
-X          = zeros([n_runs,n_regions,10]);
-% Xvalid     = zeros([n_valid,n_regions,10]);
-Xeval     = zeros([n_surr,n_regions,10]);
+X          = zeros([n_runs,n_regions,11]);
+Xeval     = zeros([n_surr,n_regions,11]);
 
 uqlab % Initialise UQLab
 
@@ -47,11 +45,9 @@ for i_reg=1:n_regions
 
     % perform latin hypercube sampling of our parametre space
     X(:,i_reg,:)      = uq_getSample(input,n_runs,'LHS');  % training dataset
-    % Xvalid(:,i_reg,:) = uq_getSample(input,n_valid,'LHS'); % validation dataset
-    Xeval(:,i_reg,:)  = uq_getSample(input,1e6,'LHS'); % surrogate model
+    Xeval(:,i_reg,:)  = uq_getSample(input,n_surr,'LHS'); % surrogate model
     toc
 end
-% clear input
 
 %% Run the model for all iterations
 
