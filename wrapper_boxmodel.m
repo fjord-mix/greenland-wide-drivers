@@ -8,7 +8,8 @@ function [fjord_out] = wrapper_boxmodel(X,Parameters,flag_debug)
 [p,a] = get_model_default_parameters(); % default params, standard initialisation
 p.H = Parameters.H;
 p.Hmin=5;
-p.M0=0;
+% p.M0=0;
+p.C0=X(11);
 p.P0=X(10);
 
 p.dt = Parameters.t(2)-Parameters.t(1);
@@ -26,19 +27,19 @@ p.zgl       = -X(5) .* X(2); % Zg = (Zg/H) * H
 
 dTanom = X(6);
 dSanom = X(7);
-Xfrq   = X(8);
-dQamp  = X(9);
-dDanom = 0;%X(11); % ignoring solid-ice discharge (for now?)
+% Xfrq   = X(8);
+dQamp  = X(8);
+dDanom = X(9); % ignoring solid-ice discharge (for now?)
 
 %% Set up model forcings
 % Xamp=0.92;  % if using anomaly to profiles
-Xamp=80; % if using isopycnal stretching; maximum range in isopycnal depth STD from Jackson & Straneo (2016; JPO)
+% Xamp=80; % if using isopycnal stretching; maximum range in isopycnal depth STD from Jackson & Straneo (2016; JPO)
 
 % we modulate the "storm events" to only happen in winter
-doy_peak = 173; % june 22nd
-winter_wave = -sin(2*pi/365 .* (Parameters.t - (doy_peak - 365/4))); % 1 at peak winter, -1 at peak summer
-winter_wave(winter_wave < 0) = 0;
-Xper = (Xamp .* sin(-2*pi*Xfrq*Parameters.t)) .* winter_wave; 
+% doy_peak = 173; % june 22nd
+% winter_wave = -sin(2*pi/365 .* (Parameters.t - (doy_peak - 365/4))); % 1 at peak winter, -1 at peak summer
+% winter_wave(winter_wave < 0) = 0;
+% Xper = (Xamp .* sin(-2*pi*Xfrq*Parameters.t)) .* winter_wave; 
 
 % Ocean forcings
 % f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* (dTanom + dTanom .* Xper)))'; % if using anomaly to profiles
@@ -47,9 +48,9 @@ f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* dTanom))'; % if using isopycnal s
 f.Ss  = (Parameters.Socn + (Parameters.Sdec .* dSanom))'; % if using isopycnal stretching
 f.zs  = -Parameters.zs;
 
-if ismember(Parameters.regID,[2,4,6]) % isopycnal stretching due to storms only applies to eastern Greenland    
-    [f.Ts,f.Ss] = heave_profiles(f.Ts,f.Ss,f.zs,Xper,p.sigma_bnds(2)); % using Cowton et al. value for the pycnocline
-end
+% if ismember(Parameters.regID,[2,4,6]) % isopycnal stretching due to storms only applies to eastern Greenland    
+%     [f.Ts,f.Ss] = heave_profiles(f.Ts,f.Ss,f.zs,Xper,p.sigma_bnds(2)); % using Cowton et al. value for the pycnocline
+% end
 
 zs = flip(f.zs);
 Ts = flip(f.Ts,1); 
@@ -89,7 +90,7 @@ fjord_run.a = a;
 
 %% Run the model itself, postprocess, and return the desired metrics for evaluation
 
-fjord_out = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[],"phi",[],"qvs",[]);
+fjord_out = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[],"phi",[],"qvs",[],"qsg",[],"qts",[]);
 try
     [fjord_run.s,fjord_run.f] = boxmodel(fjord_run.p, fjord_run.t, fjord_run.f, fjord_run.a);
 
@@ -99,6 +100,7 @@ try
     fjord_out.qvs   = fjord_run.s.QVs;
     fjord_out.qsg   = fjord_run.s.QSg;
     fjord_out.phi   = fjord_run.s.phi;
+    fjord_out.qts   = fjord_run.s.QTs;
     fjord_out.ts    = fjord_run.s.Ts;
     fjord_out.ss    = fjord_run.s.Ss;
 catch ME
@@ -107,6 +109,7 @@ catch ME
     fjord_run.s.H  = NaN;
     fjord_out.qvs  = NaN;
     fjord_out.qsg  = NaN;
+    fjord_out.qts  = NaN;
     fjord_out.phi  = NaN;
     fjord_run.s.Ts = NaN;
     fjord_run.s.Ss = NaN;
