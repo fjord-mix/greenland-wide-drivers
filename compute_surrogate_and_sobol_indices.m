@@ -48,7 +48,7 @@ for i_reg=1:n_regions
     MetaOpts.TruncOptions.MaxInteraction = 2;
     MetaOpts.Bootstrap.Replications = 1e3; % for assessing the model accuracy
     % MetaOpts.LARS.LarsEarlyStop = false;
-    MetaOpts.OMP.OmpEarlyStop = false;
+    % MetaOpts.OMP.OmpEarlyStop = false;
     % MetaOpts.OMP.ModifiedLoo=0;
 
     % Specifying NSamples would get UQLab to perform the runs for us
@@ -60,8 +60,8 @@ for i_reg=1:n_regions
     % with NaN as a result (as defined in the wrapper_boxmodel function)
     Xreg = X(:,i_reg,:);                    
     Xsur = Xeval(:,i_reg,:);
-    ohc_reg = ohc_out(:,i_reg);
-    osc_reg = osc_out(:,i_reg);
+    ohc_reg = ohc_out(2,:,i_reg)';
+    osc_reg = osc_out(2,:,i_reg)';
     Ynum_ohc{i_reg} = ohc_reg;
     Ynum_osc{i_reg} = osc_reg;
     
