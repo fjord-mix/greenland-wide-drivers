@@ -4,10 +4,9 @@
 % plot_reg_ocn_forcings(datasets,fjords_compilation)
 % figure(1); exportgraphics(gcf,[figs_path,'hovmoller_Ts.png'],'Resolution',300)
 % figure(2); exportgraphics(gcf,[figs_path,'hovmoller_Ss.png'],'Resolution',300)
-% figure(3); exportgraphics(gcf,[figs_path,'series_discharge_hc_sc.png'],'Resolution',300)
 
 % hs = plot_fjords_sectors(datasets,fjords_map,fjords_compilation);
-% exportgraphics(hs.hf,[figs_path,'grl_fjords_compiation.png'],'Resolution',300)
+% exportgraphics(hs.hf,[figs_path,'grl_fjords_compilation.png'],'Resolution',300)
 
 % hs = plot_fjords_summary(datasets,fjords_map,fjords_compilation); %plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off'; 
 % hf = plot_distributions(datasets,fjords_compilation);
@@ -21,7 +20,7 @@ ok_runs  = zeros([1, n_regions]);
 % ok_vruns = zeros([1, n_regions]);
 regions_lbl = regions;
 for i_reg=1:n_regions
-    total_runs = ohc_out(:,i_reg);
+    total_runs = ohc_out(1,:,i_reg);
     ok_runs(i_reg) = sum(~isnan(total_runs));
     regions_lbl{i_reg} = [regions_lbl{i_reg},' ( n=',num2str(ok_runs(i_reg)),')'];
 
@@ -39,31 +38,39 @@ plot_reg_ocn_forcings(datasets,fjords_compilation)
 % exportgraphics(gcf,[figs_path,'sections_ocn_forcing_reg_temp','.png'],'Resolution',300)
 % exportgraphics(gcf,[figs_path,'sections_ocn_forcing_reg_salt','.png'],'Resolution',300)
 
+plot_reg_glacier_forcings(datasets,fjords_compilation)
+% exportgraphics(gcf,[figs_path,'series_glacier_discharge.png'],'Resolution',300)
+
 plot_reg_ts(datasets,fjords_compilation)
 % exportgraphics(gcf,[figs_path,'ts_diag_ocn_forcing_reg','.png'],'Resolution',300)
+
+%% Addressing which "temperature metric" best links fjord-modified tempts in contact w/ glacier and fjord processes
+
+plot_heat_dt_correlations(time_axis,ensemble,regions);
+% exportgraphics(gcf,[figs_path,'xcorr_heat_transp_layers_gline_v2','.png'],'Resolution',300)
 
 %% Plot the time series to see how they all behave
 % will also receive a formatted timetable for easier operations with dT and dS
 % although not a good practice to mix processing and figure plotting, this minimises redundant code/computations
-[~,tt_ensemble] = plot_ensemble_dt_ds(ensemble,time_axis,regions_lbl);
+% [~,tt_ensemble] = plot_ensemble_dt_ds(ensemble,time_axis,regions_lbl);
 % exportgraphics(gcf,[figs_path,'ensemble_series_mp_n',num2str(n_runs),'.png'],'Resolution',300)
 
+[~,tmp_ensemble] = plot_ensemble_dt_ds_layers(ensemble,time_axis,2,regions);
+% exportgraphics(gcf,[figs_path,'ensemble_series_mp_midlayer_n',num2str(n_runs),'_ts.png'],'Resolution',300)
 %% Show how different dT and dS are for summer and non-summer months
 
-[~] = plot_seasonal_cycle(datasets,fjords_compilation,tt_ensemble,regions,1); % requires running "plot_ensemble_dt_ds" first, for 'tt_ensemble'
+[~] = plot_seasonal_cycle(datasets,fjords_compilation,tmp_ensemble,regions,1); % requires running "plot_ensemble_dt_ds" first, for 'tt_ensemble'
 % exportgraphics(gcf,[figs_path,'seasonal_cycles_ensemble_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plots the lag between fjord and shelf
-plot_ensemble_ts_lags(ensemble,360);
+% plot_ensemble_ts_lags(ensemble,360); % very convoluted...
 % exportgraphics(gcf,[figs_path,'lags_ts_mp_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plotting surrogate vs numerical model
 
-% plot_model_fits(sur_model_ohc,Ynum_ohc,Ysur_ohc,Yind_ohc,Yvld_ohc,ok_runs,'temperature','^oC');
 plot_model_fits(sur_model_ohc,Ynum_ohc,Ysur_ohc,[],[],ok_runs,'temperature','^oC');
 % exportgraphics(gcf,[figs_path,'pce_fit_dt_n',num2str(n_runs),'.png'],'Resolution',300)
 
-% plot_model_fits(sur_model_osc,Ynum_osc,Ysur_osc,Yind_osc,Yvld_osc,ok_runs,'salinity','');
 plot_model_fits(sur_model_osc,Ynum_osc,Ysur_osc,[],[],ok_runs,'salinity','');
 % exportgraphics(gcf,[figs_path,'pce_fit_ds_n',num2str(n_runs),'.png'],'Resolution',300)
 
@@ -74,72 +81,25 @@ plot_model_fits(sur_model_osc,Ynum_osc,Ysur_osc,[],[],ok_runs,'salinity','');
 
 %% construct the numerical model kernel density plot (just for comparison)
 
-[hf,hp,hl] = plot_numerical_model_distributions(ohc_out,osc_out,regions_lbl);
+% [hf,hp,hl] = plot_numerical_model_distributions(ohc_out,osc_out,regions_lbl);
 % exportgraphics(gcf,[figs_path,'prob_dist_boxmodel_dt_ds_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plotting the Borgonovo Indices (quantifying role of inputs in each region's fjord-shelf differences for each region)
 % Original publication: https://doi.org/10.1016/j.ress.2006.04.015
-figure('Name','Borgonovo Indices','position',[40 40 1000 400])
-for i_reg=1:7
-    borgResults_ohc  = BorgonovoA_ohc{i_reg}.Results;
-    borgResults_osc  = BorgonovoA_osc{i_reg}.Results;
-    borgIndices = [borgResults_ohc.Delta borgResults_osc.Delta];
 
-    subplot(2,4,i_reg); hold on; box on; grid on
-    hb=uq_bar(gca,1:length(IOpts{i_reg}.Marginals), borgIndices, 1.,'edgecolor','black');%,'grouped');
-    text(0.01,1.075,sprintf('(%s) %s',letters{i_reg},regions{i_reg}),'units','normalized','fontsize',12)
-    set(gca,'XTick', 1:length(IOpts{i_reg}.Marginals),'XTickLabel', borgResults_ohc.VariableNames)
-    if i_reg < 4, xlabel(''); end
-    if i_reg==1 || i_reg==5, ylabel('Borgonovo indices'); end
-    ylim([0 0.5])
-end
-hl = legend(hb,{'Temperature','Salinity'},'fontsize',12);
-hl.Position(1)=hl.Position(1)+0.175;
-% exportgraphics(gcf,[figs_path,'borgonovo_delta_n',num2str(n_runs),'.png'],'Resolution',300)
+hf = plot_index_matrix([],BorgonovoA_ohc,'Delta',IOpts,regions,'dT Borgonovo Index \delta_i');
+exportgraphics(gcf,[figs_path,'borgonovo_delta_dT.png'],'Resolution',300)
+hf = plot_index_matrix([],BorgonovoA_osc,'Delta',IOpts,regions,'dS Borgonovo Index \delta_i');
+exportgraphics(gcf,[figs_path,'borgonovo_delta_dS.png'],'Resolution',300)
 
 
-% for i_reg=1:7
-%     uq_display(BorgonovoA_ohc{1},1,'Joint PDF',3);
-% end
 
 %% Plotting the Sobol indices (quantifying role of inputs in the variability between fjords in the same region)
 
-figure('Name','First-order Sobol Indices','position',[40 40 1000 400])
-for i_reg=1:7
-    sobolResults_ohc  = sobolA_ohc{i_reg}.Results;
-    sobolResults_osc  = sobolA_osc{i_reg}.Results;
-    sobolIndices = [sobolResults_ohc.FirstOrder sobolResults_osc.FirstOrder];
-
-    subplot(2,4,i_reg); hold on; box on; grid on
-    hb=uq_bar(gca,1:length(IOpts{i_reg}.Marginals), sobolIndices, 1.,'grouped');
-    text(0.01,1.075,sprintf('(%s) %s',letters{i_reg},regions{i_reg}),'units','normalized','fontsize',12)
-    set(gca,'XTick', 1:length(IOpts{i_reg}.Marginals),'XTickLabel', sobolResults_ohc.VariableNames)
-    if i_reg < 4, xlabel(''); end
-    if i_reg==1 || i_reg==5, ylabel('First-order Sobol indices'); end
-    ylim([0 1])
-end
-hl = legend(hb,{'Temperature','Salinity'},'fontsize',12);
-hl.Position(1)=hl.Position(1)+0.175;
-% exportgraphics(gcf,[figs_path,'sobol_first_n',num2str(n_runs),'.png'],'Resolution',300)
-
-
-figure('Name','Total Sobol Indices','position',[40 40 1000 400])
-for i_reg=1:7
-    sobolResults_ohc  = sobolA_ohc{i_reg}.Results;
-    sobolResults_osc  = sobolA_osc{i_reg}.Results;
-    sobolIndices = [sobolResults_ohc.Total sobolResults_osc.Total];
-
-    subplot(2,4,i_reg); hold on; box on; grid on
-    hb=uq_bar(gca,1:length(IOpts{i_reg}.Marginals), sobolIndices, 1.,'grouped');
-    text(0.01,1.075,sprintf('(%s) %s',letters{i_reg},regions{i_reg}),'units','normalized','fontsize',12)
-    set(gca,'XTick', 1:length(IOpts{i_reg}.Marginals),'XTickLabel', sobolResults_ohc.VariableNames)
-    if i_reg < 4, xlabel(''); end
-    if i_reg==1 || i_reg==5, ylabel('Total Sobol indices'); end
-    ylim([0 1])
-end
-hl = legend(hb,{'Temperature','Salinity'},'fontsize',12);
-hl.Position(1)=hl.Position(1)+0.175;
-% exportgraphics(gcf,[figs_path,'sobol_total_n',num2str(n_runs),'.png'],'Resolution',300)
+hf = plot_index_matrix([],sobolA_ohc,'FirstOrder',IOpts,regions,'dT First-order Sobol index S_i');
+exportgraphics(gcf,[figs_path,'sobol_first_dT.png'],'Resolution',300)
+hf = plot_index_matrix([],sobolA_ohc,'Total',IOpts,regions,'dT Total Sobol index S');
+exportgraphics(gcf,[figs_path,'sobol_total_dT.png'],'Resolution',300)
 
 
 %% Convergence test to see if our choice of n_runs was enough
