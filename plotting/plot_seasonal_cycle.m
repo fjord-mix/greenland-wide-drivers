@@ -46,7 +46,7 @@ for i_reg=1:n_regions
     clim_mon = groupsummary(tt_ensemble{i_reg},"Time","monthofyear","mean");
 
     subplot(2,2,1); hold on; grid on; box on;
-    hp_r = plot(clim_mon.mean_Tf,'LineStyle','-','Color',region_line_color(i_reg,:),'linewidth',1.5);
+    plot(clim_mon.mean_Tf,'LineStyle','-','Color',region_line_color(i_reg,:),'linewidth',1.5);
     plot(clim_mon.mean_Ts,'LineStyle','--','Color',region_line_color(i_reg,:),'linewidth',1.5);
 
     subplot(2,2,2); hold on; grid on; box on;
@@ -58,7 +58,7 @@ for i_reg=1:n_regions
     plot(clim_mon.mean_Ss,'LineStyle','--','Color',region_line_color(i_reg,:),'linewidth',1.5);
 
     subplot(2,2,3); hold on; grid on; box on;
-    plot(clim_mon.mean_dT,'LineStyle','-','Color',region_line_color(i_reg,:),'linewidth',1.5);
+    hp_r = plot(clim_mon.mean_dT,'LineStyle','-','Color',region_line_color(i_reg,:),'linewidth',1.5);
     
     subplot(2,2,4); hold on; grid on; box on;
     plot(clim_mon.mean_dS,'LineStyle','-','Color',region_line_color(i_reg,:),'linewidth',1.5);
@@ -91,7 +91,18 @@ for i_reg=1:n_regions
 end
 for i_reg=1:n_regions % making its own loop to get around Matlab adding extra markers to the lineplots
     qcli_mon = groupsummary(tt_q{i_reg},"Time","monthofyear","mean");
+    
     subplot(2,2,3); hold on; grid on; box on
+    yyaxis right
+    % x2 = [double(qcli_mon.monthofyear_Time), fliplr(double(qcli_mon.monthofyear_Time))];
+    % inBetween = [zeros(size(qcli_mon.mean_D)), fliplr(qcli_mon.mean_D)];
+    % fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
+    plot(qcli_mon.mean_D,'LineStyle','--','Marker','none','Color',region_line_color(i_reg,:),'linewidth',1.);
+    ax=gca;
+    ax.YColor=[0 0 0];
+    yyaxis left
+
+    subplot(2,2,4); hold on; grid on; box on
     yyaxis right
     x2 = [double(qcli_mon.monthofyear_Time), fliplr(double(qcli_mon.monthofyear_Time))];
     inBetween = [zeros(size(qcli_mon.mean_Qsg)), fliplr(qcli_mon.mean_Qsg)];
@@ -105,30 +116,33 @@ end
 subplot(2,2,1)
 text(0.02,1.05,'(a)','fontsize',14,'Units','normalized')
 ylabel('Temperature (^oC)'); 
-hl = legend(region_handles,regions_lbl,'location','northwest','fontsize',12);
-hl.NumColumns = 2;
 xlim([1 12])
 set(gca,'fontsize',14)
 
 subplot(2,2,2)
 text(0.02,1.05,'(b)','fontsize',14,'Units','normalized')
 ylabel('Salinity');
-hl = legend(sf_handles,{'Fjord','Shelf'},'fontsize',12);
-hl.NumColumns = 2;
+hl2 = legend(sf_handles,{'Fjord','Shelf'},'Location','south','fontsize',12);
+hl2.NumColumns = 2;
 xlim([1 12])
 set(gca,'fontsize',14)
 
 subplot(2,2,3)
 text(0.02,1.05,'(c)','fontsize',14,'Units','normalized')
-ylabel('Temperature difference (^oC)'); 
-xlabel('Month'); xlim([1 12])
+xlabel('Month'); ylabel('Temperature difference (^oC)'); 
+xlim([1 12]);    ylim([-1.5 1.5])
+hl = legend(region_handles,regions_lbl,'location','southwest','fontsize',12);
+hl.NumColumns = 2;
+set(gca,'fontsize',14)
+yyaxis right
+ylabel('Iceberg discharge (m^3s^{-1})','fontsize',14)
+
+subplot(2,2,4)
+text(0.02,1.05,'(d)','fontsize',14,'Units','normalized')
+xlabel('Month'); ylabel('Salinity difference');
+xlim([1 12]);    ylim([-0.11 0.11])
 set(gca,'fontsize',14)
 yyaxis right
 ylabel('Subglacial discharge (m^3s^{-1})','fontsize',14)
-subplot(2,2,4)
-text(0.02,1.05,'(d)','fontsize',14,'Units','normalized')
-ylabel('Salinity difference');
-xlabel('Month'); xlim([1 12])
-set(gca,'fontsize',14)
 
 end

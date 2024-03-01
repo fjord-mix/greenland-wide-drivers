@@ -1,13 +1,9 @@
 Ynum_ohc      = cell([1,n_regions]); % Ynum: numerical model results for training
 Ynum_osc      = cell([1,n_regions]);
-% Yind_ohc      = cell([1,n_regions]); % Yind: numerical model results for validation
-% Yind_osc      = cell([1,n_regions]);
 Ysur_ohc      = cell([1,n_regions]); % Ysur: surrogate model results evaluated at the same points
 Ysur_osc      = cell([1,n_regions]); 
 Yeval_ohc     = cell([1,n_regions]); % Yeval: surrogate model results evaluated at a much larger input range
 Yeval_osc     = cell([1,n_regions]);
-% Yvld_ohc      = cell([1,n_regions]); % Yvld: surrogate model results for independent dataset (validation)
-% Yvld_osc      = cell([1,n_regions]);
 Yboo_ohc      = cell([1,n_regions]); % Yboo: bootstrap PCEs from Ynum
 Yboo_osc      = cell([1,n_regions]);
 sur_model_ohc = cell([1,n_regions]); % sur_model: UQLab model objects
@@ -52,7 +48,7 @@ for i_reg=1:n_regions
     MetaOpts.TruncOptions.MaxInteraction = 2;
     MetaOpts.Bootstrap.Replications = 1e3; % for assessing the model accuracy
     % MetaOpts.LARS.LarsEarlyStop = false;
-    MetaOpts.OMP.OmpEarlyStop = false;
+    % MetaOpts.OMP.OmpEarlyStop = false;
     % MetaOpts.OMP.ModifiedLoo=0;
 
     % Specifying NSamples would get UQLab to perform the runs for us
@@ -63,29 +59,20 @@ for i_reg=1:n_regions
     % So instead we ran the simulations before, and just filtered the runs
     % with NaN as a result (as defined in the wrapper_boxmodel function)
     Xreg = X(:,i_reg,:);                    
-    % Xind = Xvalid(:,i_reg,:);
     Xsur = Xeval(:,i_reg,:);
-    ohc_reg = ohc_out(:,i_reg);
-    osc_reg = osc_out(:,i_reg);
-    % ohc_ind = ohc_vld(:,i_reg);
-    % osc_ind = osc_vld(:,i_reg);
+    ohc_reg = ohc_out(2,:,i_reg)';
+    osc_reg = osc_out(2,:,i_reg)';
     Ynum_ohc{i_reg} = ohc_reg;
     Ynum_osc{i_reg} = osc_reg;
-    % Yind_ohc{i_reg} = ohc_ind;
-    % Yind_osc{i_reg} = osc_ind;
-
+    
     MetaOpts.ExpDesign.X = single(Xreg(~isnan(ohc_reg),:));
     MetaOpts.ExpDesign.Y = single(ohc_reg(~isnan(ohc_reg)));
-    % MetaOpts.ValidationSet.X = Xind(~isnan(ohc_ind),:);
-    % MetaOpts.ValidationSet.Y = ohc_ind(~isnan(ohc_ind));
-
-
+    
     fprintf('Creating OHC surrogate model for %s...\n',regions{i_reg})
     sur_model_ohc{i_reg} = uq_createModel(MetaOpts);                 % Create the surrogate model
     fprintf('Done. Evaluating model and storing results...\n')
     [Ysur_ohc{i_reg},~,Yboo_ohc{i_reg}]      = uq_evalModel(sur_model_ohc{i_reg},Xreg);  % run the surrogate model for the same inputs as the numerical model (incl. bootstraping results)
     % Ysur_ohc{i_reg}  = uq_evalModel(sur_model_ohc{i_reg},Xreg); % run the surrogate model for the same inputs as the numerical model
-    % Yvld_ohc{i_reg}  = uq_evalModel(sur_model_ohc{i_reg},Xind);  % run the surrogate model for an independent set of inputs (validation)
     Yeval_ohc{i_reg} = uq_evalModel(sur_model_ohc{i_reg},Xsur); % run the surrogate model for a much larger N
     
     fprintf('Done. Computing OHC Sobol indices for %s...\n',regions{i_reg})
@@ -94,14 +81,11 @@ for i_reg=1:n_regions
 
     % Same for salt content - but no need to change inputs because they are the same
     fprintf('Creating OSC surrogate model for %s...\n',regions{i_reg})
-    % MetaOpts.Degree = 1:1:30;
     MetaOpts.ExpDesign.Y = osc_reg(~isnan(osc_reg)); 
-    % MetaOpts.ValidationSet.Y = osc_ind(~isnan(osc_ind));
     sur_model_osc{i_reg} = uq_createModel(MetaOpts);
     fprintf('Done. Evaluating model and storing results...\n')
     [Ysur_osc{i_reg},~,Yboo_osc{i_reg}]      = uq_evalModel(sur_model_osc{i_reg},Xreg);
     % Ysur_osc{i_reg}  = uq_evalModel(sur_model_osc{i_reg},Xreg); 
-    % Yvld_osc{i_reg}  = uq_evalModel(sur_model_osc{i_reg},Xind);
     Yeval_osc{i_reg} = uq_evalModel(sur_model_osc{i_reg},Xsur);
     
     fprintf('Done. Computing OSC Sobol indices for %s...\n',regions{i_reg})

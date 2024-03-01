@@ -1,6 +1,8 @@
-function [hf,tt_ensemble] = plot_ensemble_dt_ds(ensemble,time_axis_plt,regions_lbl)
+function [hf,tt_ensemble] = plot_ensemble_dt_ds(ensemble,time_axis,regions_lbl)
 
-time_axis_plt = time_axis_plt';
+% time axis for plotting the results, excluding t0
+time_axis_plt = time_axis(2:end); % datetime(2010,01,15)+1:1:datetime(2018,12,15); 
+% time_axis_plt = time_axis_plt';
 n_regions=size(ensemble,2);
 n_runs=size(ensemble,1);
 region_handles = [];
@@ -24,7 +26,7 @@ for i_reg=1:n_regions
 
     %% Computing the mean T and S over the "active" areas of the shelf (above sill) and fjord (above sill/gl, whichever is deeper)
     for k_run=1:n_runs
-        if ~isempty(ensemble(k_run,i_reg).temp)
+        if ~isempty(ensemble(k_run,i_reg).temp) && (size(ensemble(k_run,i_reg).temp,2) == size(ensemble(k_run,i_reg).ts,2))
             [ohc_fjd(k_run,:),osc_fjd(k_run,:),hact_fjd(k_run)] = get_active_fjord_contents(ensemble(k_run,i_reg));
 
             zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.zgl,ensemble(k_run,i_reg).p.silldepth]));

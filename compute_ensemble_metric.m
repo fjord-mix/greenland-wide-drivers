@@ -4,60 +4,63 @@ n_regions=size(ensemble,2);
 avg_silldepth   = zeros(size(ensemble,2));
 avg_activedepth = zeros(size(ensemble,2));
 
-ohc_out = NaN([n_runs, n_regions]);
-osc_out = NaN([n_runs, n_regions]);
+ohc_out = NaN([3,n_runs, n_regions]);
+osc_out = NaN([3,n_runs, n_regions]);
 for i_reg=1:n_regions
     for k_run=1:n_runs
         if (length(ensemble(k_run,i_reg).temp) == min_length-1) && all(~isnan(ensemble(k_run,i_reg).temp(:)))
-            [heat_content,salt_content,activedepth] = get_active_fjord_contents(ensemble(k_run,i_reg));
-            
-            zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.zgl,ensemble(k_run,i_reg).p.silldepth]));
-            % z_bottom = max(abs(ensemble(k_run,i_reg).p.silldepth,ensemble(k_run,i_reg).p.zgl));
-            z_bottom = abs(ensemble(k_run,i_reg).p.zgl);
-            i_bottom = find(abs(zs0) == abs(z_bottom));
-            zs0 = zs0(i_bottom:end);
+            % [heat_content,salt_content,activedepth] = get_active_fjord_contents(ensemble(k_run,i_reg));
+            [tf_out,sf_out,hf_out] = get_layered_fjord_properties(ensemble(k_run,i_reg));
 
-            Ss0 = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss,zs0,'pchip','extrap');
-            Ts0 = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts,zs0,'pchip','extrap');
-
-            % hc_shelf = squeeze(trapz(zs0,Ts0)./abs(ensemble(k_run,i_reg).p.silldepth));
-            % sc_shelf = squeeze(trapz(zs0,Ss0)./abs(ensemble(k_run,i_reg).p.silldepth));
-            hc_shelf = squeeze(trapz(zs0,Ts0)./abs(activedepth));
-            sc_shelf = squeeze(trapz(zs0,Ss0)./abs(activedepth));
             avg_silldepth(i_reg)   = avg_silldepth(i_reg)   +abs(ensemble(k_run,i_reg).p.silldepth)./length(ensemble(:,i_reg));
-            avg_activedepth(i_reg) = avg_activedepth(i_reg) +activedepth./length(ensemble(:,i_reg));
-            % taxis_shelf = 1:1:size(sc_reg,1);
-            % for i_reg=1:length(regions)
-            %     p = polyfit(taxis_shelf,hc_reg(:,i_reg),1);
-            %     tr_ohc_shelf(i_reg) = p(1)*12;
-            %     % tr_ohc_shelf(i_reg) = mean(hc_reg(end-12:end,i_reg))-mean(hc_reg(1:12,i_reg));
-            %     p = polyfit(taxis_shelf,sc_reg(:,i_reg),1);
-            %     tr_osc_shelf(i_reg) = p(1)*12;
-            %     % tr_osc_shelf(i_reg) = mean(sc_reg(end-12:end,i_reg))-mean(sc_reg(1:12,i_reg));
-            % end
+            h_active = sum(squeeze(sum(hf_out(1:2,:,:),2,'omitnan')));
+            avg_activedepth(i_reg) = avg_activedepth(i_reg) +mean(h_active)./length(ensemble(:,i_reg));
+            
+            z_ssfc = 25;
+            z_deep = abs(ensemble(k_run,i_reg).p.zgl);
+            zs0 = unique(sort([0,-z_ssfc,-z_deep,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.silldepth]));
+            % z_bottom = max(abs(ensemble(k_run,i_reg).p.silldepth,ensemble(k_run,i_reg).p.zgl));
+            
+            i_ssfc = find(abs(zs0) == abs(z_ssfc));
+            i_deep = find(abs(zs0) == abs(z_deep));
+            zs_top = zs0(i_ssfc:end);
+            zs_int = zs0(i_deep+1:i_ssfc);
+            zs_dep = zs0(1:i_deep);
 
-            % ohc_start = mean(heat_content(1:365)); % get the mean for the first year
-            % osc_start = mean(salt_content(1:365));
-            % 
-            % ohc_end = mean(heat_content(end-365:end)); % get the mean for the last year
-            % osc_end = mean(salt_content(end-365:end));
-            % 
-            % p = polyfit(ensemble(k_run,i_reg).time,heat_content,1);
-            % ohc_trend = p(1);
-            % p = polyfit(ensemble(k_run,i_reg).time,salt_content,1);
-            % osc_trend = p(1);
-        
-            % get the difference to account for total warming/freshening
-            % ohc_out(k_run,i_reg) = ohc_end-ohc_start; 
-            % osc_out(k_run,i_reg) = osc_end-osc_start;
-            % ohc_out(k_run,i_reg) = ohc_trend *365; % get output "per year"
-            % osc_out(k_run,i_reg) = osc_trend *365;
-            ohc_out(k_run,i_reg) = mean(heat_content - hc_shelf);
-            osc_out(k_run,i_reg) = mean(salt_content - sc_shelf);
+            % TODO: best definition of these depth intervals or limiting Zg and Zs
+            if ~isempty(zs_top)
+                salt_top = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss,zs_top,'pchip','extrap');
+                temp_top = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts,zs_top,'pchip','extrap');
+                ts_top = squeeze(trapz(zs_top,temp_top))./max(abs(zs_top));
+                ss_top = squeeze(trapz(zs_top,salt_top))./max(abs(zs_top));
+                ohc_out(1,k_run,i_reg) = mean(tf_out(1,:) - ts_top);
+                osc_out(1,k_run,i_reg) = mean(sf_out(1,:) - ss_top);
+            end
+            if ~isempty(zs_int) && ~isempty(zs_top)
+                salt_int = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss,zs_int,'pchip','extrap');
+                temp_int = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts,zs_int,'pchip','extrap');
+                ts_int = squeeze(trapz(zs_int,temp_int))./(max(abs(zs_int)) - max(abs(zs_top)));
+                ss_int = squeeze(trapz(zs_int,salt_int))./(max(abs(zs_int)) - max(abs(zs_top)));
+                ohc_out(2,k_run,i_reg) = mean(tf_out(2,:) - ts_int);
+                osc_out(2,k_run,i_reg) = mean(sf_out(2,:) - ss_int);
+            end
+            if ~isempty(zs_dep) && ~isempty(zs_int)
+                salt_dep = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ss,zs_dep,'pchip','extrap');
+                temp_dep = interp1(ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).ts,zs_dep,'pchip','extrap');
+                ts_dep = squeeze(trapz(zs_dep,temp_dep))./(max(abs(zs_dep)) - max(abs(zs_int)));
+                ss_dep = squeeze(trapz(zs_dep,salt_dep))./(max(abs(zs_dep)) - max(abs(zs_int)));
+                ohc_out(3,k_run,i_reg) = mean(tf_out(3,:) - ts_dep);
+                osc_out(3,k_run,i_reg) = mean(sf_out(3,:) - ss_dep);
+            end    
+            
         else 
             % if the time series is too short, i.e., the model crashed
-            ohc_out(k_run,i_reg) = NaN;
-            osc_out(k_run,i_reg) = NaN;
+            ohc_out(:,k_run,i_reg) = NaN;
+            osc_out(:,k_run,i_reg) = NaN;
+        end
+        if sum(isinf(ohc_out(:,k_run,i_reg))) > 0 || sum(isinf(osc_out(:,k_run,i_reg))) > 0
+            ohc_out(:,k_run,i_reg) = NaN;
+            osc_out(:,k_run,i_reg) = NaN;
         end
     end
 end
