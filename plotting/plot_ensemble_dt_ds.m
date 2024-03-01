@@ -26,7 +26,7 @@ for i_reg=1:n_regions
 
     %% Computing the mean T and S over the "active" areas of the shelf (above sill) and fjord (above sill/gl, whichever is deeper)
     for k_run=1:n_runs
-        if ~isempty(ensemble(k_run,i_reg).temp)
+        if ~isempty(ensemble(k_run,i_reg).temp) && (size(ensemble(k_run,i_reg).temp,2) == size(ensemble(k_run,i_reg).ts,2))
             [ohc_fjd(k_run,:),osc_fjd(k_run,:),hact_fjd(k_run)] = get_active_fjord_contents(ensemble(k_run,i_reg));
 
             zs0 = unique(sort([0,ensemble(k_run,i_reg).zs,ensemble(k_run,i_reg).p.zgl,ensemble(k_run,i_reg).p.silldepth]));
