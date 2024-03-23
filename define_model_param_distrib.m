@@ -1,4 +1,4 @@
-function [params,iOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,i_reg,experiments_taxis,experiments_time_dt)
+function [params,iOpts,probs,fjords_processed] = define_model_param_distrib(datasets,fjords_compilation,glaciers_compilation,i_reg,experiments_taxis,experiments_time_dt)
 %% A more statistically driven approach to sensitivity tests
 % derives distributions for all parameters on which our model simulations
 % will depend on: L, H, W, Zg, Zs, Ta, Sa, Qa, Da, P0, and C0
@@ -8,7 +8,7 @@ function [params,iOpts,probs,fjords_processed] = define_model_param_distrib(data
 verbose.plot=1;  % change to 1 to produce plots of all parameter distributions
 verbose.print=0; % change 1 to print basic fjord statistics
 
-if nargin < 4 || isempty(experiments_taxis)
+if nargin < 5 || isempty(experiments_taxis)
     datasets.opts.time_start = datetime(2010,01,15);
     datasets.opts.time_end   = datetime(2018,12,15);
 else
@@ -17,7 +17,7 @@ else
 end
 datasets.opts.time_interval = [datasets.opts.time_start,datasets.opts.time_end]; 
 datasets.opts.dt            = 30.0; % time step (in days) for creating the forcings
-if nargin < 5
+if nargin < 6
     experiments_time_dt       = 0.10; % time step (in days) for the actual experiments
 end
 fjords_processed(size(fjords_compilation)) = struct("p",[],"a",[],"f",[],"t",[],"m",[]);
@@ -86,28 +86,61 @@ iOpts.Marginals(end+1) = uq_KernelMarginals(socn_anom{i_reg},[min(socn_anom{i_re
 % probs(end+1) = omeg_pd;
 %% Gets the glacier forcing
 
+runtime_axis = [datetime(datasets.opts.time_start):datasets.opts.dt:datetime(datasets.opts.time_end)]';
 % Subglacial discharge - we want the variation in amplitude rather than
 % anomalies; otherwise the signal will be dominated by small variations in non-summer months
 str_reg = {'SW','SE','CW','CE','NW','NE','NO'};
-q_amp_max=NaN(size(fjords_processed));
-q_amp_min=NaN(size(fjords_processed));
-for k=1:length(fjords_processed)
-    if strcmp(fjords_processed(k).m.region,str_reg{i_reg})
-        [v_peaks,~] = findpeaks(fjords_processed(k).f.Qsg,'MinPeakProminence',10);
+q_amp_max=NaN(size(glaciers_compilation));
+q_amp_min=NaN(size(glaciers_compilation));
+
+if datasets.opts.restrict_to_fjords
+    % [q_clim,q_anom,~,~] = get_var_clim_by_region(fjords_processed,'Qsg');
+    [q_forcing,~,~,~] = get_var_forcing_by_region(fjords_processed,'Qsg');
+    q_forcing = q_forcing(:,i_reg);
+    for k=1:size(q_forcing,1)
+        for peak_prominence=10:-0.5:0.5
+            [v_peaks,~] = findpeaks(q_forcing(k,:),'MinPeakProminence',peak_prominence);
+            if length(v_peaks) > 3 % at least 3 distinct peaks need to be picked in the series
+                break
+            end
+        end
+        try
         q_amp_max(k) = max(v_peaks)./mean(v_peaks);
         q_amp_min(k) = min(v_peaks)./mean(v_peaks);
+        catch
+            disp('glacial discharge is really low (<0.5 m3/s). Skipping glacier...')
+        end
     end
+else
+    q_reg=NaN([length(glaciers_compilation),length(runtime_axis)]);
+    for k=1:length(glaciers_compilation)
+        if strcmp(glaciers_compilation(k).region,str_reg{i_reg})
+            q_reg(k,:) = get_total_glacier_runoff(glaciers_compilation(k),runtime_axis);
+            for peak_prominence=10:-0.5:0.5
+                [v_peaks,~] = findpeaks(q_reg(k,:),'MinPeakProminence',peak_prominence);
+                if length(v_peaks) > 3 % at least 3 distinct peaks need to be picked in the series
+                    break
+                end
+            end
+            try
+            q_amp_max(k) = max(v_peaks)./mean(v_peaks);
+            q_amp_min(k) = min(v_peaks)./mean(v_peaks);
+            catch
+                disp('glacial discharge is really low (<0.5 m3/s). Skipping glacier...')
+            end
+        end
+    end
+    q_forcing = mean(q_reg,1,'omitnan');
 end
-q_amp_max = mean(q_amp_max,'omitnan');
-q_amp_min = mean(q_amp_min,'omitnan');
-% [q_clim,q_anom,~,~] = get_var_clim_by_region(fjords_processed,'Qsg');
-[q_forcing,~,~,~] = get_var_forcing_by_region(fjords_processed,'Qsg');
-q_pd              = makedist('Uniform','lower',q_amp_min,'upper',q_amp_max);
 
 % It makes no sense to have Qsg in terms of anomalies, because in the
 % frequency distribution, the very small variations in non-summer months would
 % dominate the signal. So we prescribe a uniform distribution of
 % "amplifying factors" instead
+q_amp_max = mean(q_amp_max,'omitnan');
+q_amp_min = mean(q_amp_min,'omitnan');
+q_pd      = makedist('Uniform','lower',q_amp_min,'upper',q_amp_max);
+
 iOpts.Marginals(end+1).Type     = 'uniform';
 iOpts.Marginals(end).Parameters = [q_amp_min q_amp_max];
 iOpts.Marginals(end).Bounds     = [0 1.5*q_amp_max];
@@ -117,11 +150,31 @@ probs(end+1)                    = q_pd;
 % figure('Name','Qsg parameter space'); histogram(random(q_pd,1000));
 
 % Solid-ice discharge (same procedure as for T and S)
-% [d_forcing,d_anom,~,~] = get_var_clim_by_region(fjords_processed,'D');
-[d_forcing,d_anom,~,~] = get_var_forcing_by_region(fjords_processed,'D');
-d_pd                   = fitdist(d_anom{i_reg},'kernel');
+if datasets.opts.restrict_to_fjords
+    % [d_forcing,d_anom,~,~] = get_var_clim_by_region(fjords_processed,'D');
+    [d_forcing,d_anom,~,~] = get_var_forcing_by_region(fjords_processed,'D');
+    d_forcing=d_forcing(:,i_reg);
+    d_anom=d_anom{i_reg};
+else
+    d_reg=NaN([length(glaciers_compilation),length(runtime_axis)]);
+    for k=1:length(glaciers_compilation)
+        if strcmp(glaciers_compilation(k).region,str_reg{i_reg})
+            time_discharge = glaciers_compilation(k).iceberg.time_axis;
+            % we need to convert from total discharge in the month to discharge per second
+            seconds_in_year = eomday(time_discharge.Year,time_discharge.Month)*86400*12;
+            Gt_to_m3_ice = 1e9*1e3/916.7; % Giga * kg / (kg/m^3) assuming glacier ice density of 916.7 kg/m^3
+            D_s = glaciers_compilation(k).iceberg.discharge./seconds_in_year .* Gt_to_m3_ice;
+            [~] = data_overlap_check(runtime_axis,time_discharge,'iceberg'); % simple check that the data is available for the simulation period
+            d_reg(k,:) = interp1(time_discharge,D_s,runtime_axis,'linear','extrap'); 
+        end
+    end
+    d_forcing = squeeze(median(d_reg,1,'omitnan'));
+    d_anom = d_reg - d_forcing;
+    d_anom = d_anom(~isnan(d_anom));
+end
+d_pd                   = fitdist(d_anom,'kernel');
 probs(end+1) = d_pd;
-iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom{i_reg},[min(d_anom{i_reg}), max(d_anom{i_reg})]);
+iOpts.Marginals(end+1) = uq_KernelMarginals(d_anom,[min(d_anom), max(d_anom)]);
 
 % considering we use an entrainment coefficient of 0.1, P0=[5,30] is
 % equivalent to a plume width of 50-300 m
@@ -159,8 +212,8 @@ params.Tocn  = tocn_forcing(:,:,i_reg);
 params.Tdec  = tocn_decay(:,:,i_reg);
 params.Socn  = socn_forcing(:,:,i_reg);
 params.Sdec  = socn_decay(:,:,i_reg);
-params.Qglc  = q_forcing(:,i_reg);
-params.Dglc  = d_forcing(:,i_reg);
+params.Qglc  = q_forcing;%(:,i_reg);
+params.Dglc  = d_forcing;%(:,i_reg);
 params.t     = time_axis;
 params.zi    = fjord_dummy.f.zi;
 params.xi    = fjord_dummy.f.xi;
