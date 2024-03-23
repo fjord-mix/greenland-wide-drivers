@@ -5,11 +5,11 @@
 % figure(1); exportgraphics(gcf,[figs_path,'hovmoller_Ts.png'],'Resolution',300)
 % figure(2); exportgraphics(gcf,[figs_path,'hovmoller_Ss.png'],'Resolution',300)
 
-% hs = plot_fjords_sectors(datasets,fjords_map,fjords_compilation);
-% exportgraphics(hs.hf,[figs_path,'grl_fjords_compilation.png'],'Resolution',300)
+% hs = plot_fjords_sectors(datasets,fjords_map,fjords_compilation,glaciers_compilation);
+% exportgraphics(hs.hf,[figs_path,'grl_fjords_compilation_allglaciers.png'],'Resolution',300)
 
 % hs = plot_fjords_summary(datasets,fjords_map,fjords_compilation); %plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off'; 
-% hf = plot_distributions(datasets,fjords_compilation);
+% hf = plot_distributions(datasets,fjords_compilation,glaciers_compilation);
 % exportgraphics(hf,[figs_path,'summary_input_probs2010-2018_ratios.png'],'Resolution',300)
 
 
@@ -38,7 +38,7 @@ plot_reg_ocn_forcings(datasets,fjords_compilation)
 % exportgraphics(gcf,[figs_path,'sections_ocn_forcing_reg_temp','.png'],'Resolution',300)
 % exportgraphics(gcf,[figs_path,'sections_ocn_forcing_reg_salt','.png'],'Resolution',300)
 
-plot_reg_glacier_forcings(datasets,fjords_compilation)
+plot_reg_glacier_forcings(datasets,fjords_compilation,glaciers_compilation)
 % exportgraphics(gcf,[figs_path,'series_glacier_discharge.png'],'Resolution',300)
 
 plot_reg_ts(datasets,fjords_compilation)
@@ -49,17 +49,25 @@ plot_reg_ts(datasets,fjords_compilation)
 plot_heat_dt_correlations(time_axis,ensemble,regions);
 % exportgraphics(gcf,[figs_path,'xcorr_heat_transp_layers_gline_v2','.png'],'Resolution',300)
 
+%% Plotting hovmoller of ensemble-averaged Tf and Ts per region to compare
+for i_reg=3:7
+    plot_hov_fjord_shelf(ensemble,time_axis,i_reg,regions);
+    % figure(i_reg);
+    exportgraphics(gcf,[figs_path,'hovmoller_temp_',regions{i_reg},'.png'],'Resolution',300)
+end
+
 %% Plot the time series to see how they all behave
 % will also receive a formatted timetable for easier operations with dT and dS
 % although not a good practice to mix processing and figure plotting, this minimises redundant code/computations
 % [~,tt_ensemble] = plot_ensemble_dt_ds(ensemble,time_axis,regions_lbl);
 % exportgraphics(gcf,[figs_path,'ensemble_series_mp_n',num2str(n_runs),'.png'],'Resolution',300)
 
-[~,tmp_ensemble] = plot_ensemble_dt_ds_layers(ensemble,time_axis,2,regions);
-% exportgraphics(gcf,[figs_path,'ensemble_series_mp_midlayer_n',num2str(n_runs),'_ts.png'],'Resolution',300)
+[~,tmp_ensemble,tmp_spread_ensemble] = plot_ensemble_dt_ds_layers(ensemble,time_axis,2,regions);
+% exportgraphics(gcf,[figs_path,'ensemble_series_mp_midlayer_n',num2str(n_runs),'.png'],'Resolution',300)
+
 %% Show how different dT and dS are for summer and non-summer months
 
-[~] = plot_seasonal_cycle(datasets,fjords_compilation,tmp_ensemble,regions,1); % requires running "plot_ensemble_dt_ds" first, for 'tt_ensemble'
+[~] = plot_seasonal_cycle(datasets,fjords_compilation,glaciers_compilation,tmp_ensemble,tmp_spread_ensemble,regions,1); % requires running "plot_ensemble_dt_ds" first, for 'tt_ensemble'
 % exportgraphics(gcf,[figs_path,'seasonal_cycles_ensemble_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plots the lag between fjord and shelf
@@ -88,18 +96,18 @@ plot_model_fits(sur_model_osc,Ynum_osc,Ysur_osc,[],[],ok_runs,'salinity','');
 % Original publication: https://doi.org/10.1016/j.ress.2006.04.015
 
 hf = plot_index_matrix([],BorgonovoA_ohc,'Delta',IOpts,regions,'dT Borgonovo Index \delta_i');
-exportgraphics(gcf,[figs_path,'borgonovo_delta_dT.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'borgonovo_delta_dT.png'],'Resolution',300)
 hf = plot_index_matrix([],BorgonovoA_osc,'Delta',IOpts,regions,'dS Borgonovo Index \delta_i');
-exportgraphics(gcf,[figs_path,'borgonovo_delta_dS.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'borgonovo_delta_dS.png'],'Resolution',300)
 
 
 
 %% Plotting the Sobol indices (quantifying role of inputs in the variability between fjords in the same region)
 
 hf = plot_index_matrix([],sobolA_ohc,'FirstOrder',IOpts,regions,'dT First-order Sobol index S_i');
-exportgraphics(gcf,[figs_path,'sobol_first_dT.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'sobol_first_dT.png'],'Resolution',300)
 hf = plot_index_matrix([],sobolA_ohc,'Total',IOpts,regions,'dT Total Sobol index S');
-exportgraphics(gcf,[figs_path,'sobol_total_dT.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'sobol_total_dT.png'],'Resolution',300)
 
 
 %% Convergence test to see if our choice of n_runs was enough
