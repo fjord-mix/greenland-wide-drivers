@@ -1,4 +1,4 @@
-function fig_handles = plot_fjords_sectors(datasets,fjords_map,fjords)
+function fig_handles = plot_fjords_sectors(datasets,fjords_map,fjords,glaciers)
 % set(0,'DefaultFigureWindowStyle','docked') % will dock the figure by default
 set(0,'DefaultFigureWindowStyle','normal') % will have the figure in a separate window
 ss = 10; % for subsampling and faster plot browsing
@@ -60,7 +60,7 @@ fjord = fjords(i);
 % hp_fo = plot([fjord.ocean.x,fjord.x],[fjord.ocean.y,fjord.y],':','linewidth',2.5,'Color',fjord_color(i,:));
 % hs_o = scatter(gca,fjord.ocean.x,fjord.ocean.y,25,fjord_marker_color,'filled','MarkerEdgeColor','black','MarkerFaceColor',fjord_color(i,:),'MarkerFaceAlpha',0.9,'Marker','diamond');
 
-
+if datasets.opts.restrict_to_fjords
 % Plotting each linked glacier to fjord
 if isfield(fjord,'glaciers')
 glaciers = fjord.glaciers;
@@ -80,8 +80,25 @@ for j=1:length(glaciers)
     end
 end % for glaciers
 end % isfield glaciers
-
+end % restrict_to_tfjords
 end % for fjords
+if datasets.opts.restrict_to_fjords==0
+    for i_glaciers=1:length(glaciers)
+        glacier=glaciers(i_glaciers);
+        glacier_color = glacier_line_color(glacier.regionID,:);
+
+        if isfield(glacier,'runoff') && datasets.opts.plot_runoff
+            if sum(glacier.runoff.q) > 0 % glaciers without associated runoff have all zeros in their discharge time series            
+                [~]  = scatter(ax3,glacier.runoff.x,glacier.runoff.y,25,glacier_color,'filled','MarkerEdgeColor','black','MarkerFaceAlpha',1.0,'Marker','o');
+                hp_rg = plot([glacier.x_ref,glacier.runoff.x],[glacier.y_ref,glacier.runoff.y],':','linewidth',1.5,'Color','black');
+            end
+        end
+        if datasets.opts.plot_glaciers
+            [~]  = scatter(ax3,glacier.x_ref,glacier.y_ref,40,glacier_color,'filled','MarkerEdgeColor','black','MarkerFaceAlpha',0.9,'Marker','^');
+        end
+    end
+
+end
 axis xy equal
 
 linkaxes([ax1,ax2,ax3]);
@@ -132,7 +149,7 @@ fig_handles.hi_sfc = hi_sfc;
 fig_handles.hs_r = hs_r;
 fig_handles.hp_rg = hp_rg;
 fig_handles.hs_g = hs_g;
-fig_handles.hp_gf = hp_gf;
+if datasets.opts.restrict_to_fjords, fig_handles.hp_gf = hp_gf; end
 fig_handles.hs_f = hs_f;
 fig_handles.hl   = hl;
 fig_handles.cb1 = cb1;

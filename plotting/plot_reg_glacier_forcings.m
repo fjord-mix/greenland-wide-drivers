@@ -1,4 +1,4 @@
-function plot_reg_glacier_forcings(datasets,fjords_compilation)
+function plot_reg_glacier_forcings(datasets,fjords_compilation,glaciers_compilation)
 
 letters = {'a','b','c','d','e','f','g','h'};
 regions_lbl = {'SW','SE','CW','CE','NW','NE','NO'};
@@ -14,21 +14,35 @@ for i=1:length(fjords_compilation)
 end
 time_axis     = fjords_processed(1).t;
 %% Plotting subglacial and solid-ice discharge
-qsg_reg=NaN([length(fjords_processed),length(time_axis),length(regions_lbl)]);
-d_reg=NaN(size(qsg_reg));
-for i_fjord=1:length(fjords_processed)
-    fjord = fjords_processed(i_fjord);
-    qsg_reg(i_fjord,:,fjord.m.regionID) = fjord.f.Qsg;
-    d_reg(i_fjord,:,fjord.m.regionID)   = fjord.f.D;
 
-    % compute heat and salt contents per unit area
-    % fjord_rho = (fjord.p.betaS*fjord.f.Ss - fjord.p.betaT*fjord.f.Ts);
-    % sc_reg(i_fjord,:,fjord.m.regionID) = trapz(fjord.f.zs,fjord.f.Ss.* fjord_rho)./fjord.p.H;
-    % hc_reg(i_fjord,:,fjord.m.regionID) = trapz(fjord.f.zs,(fjord.f.Ts+273.15).* fjord.p.cw .* fjord_rho)./fjord.p.H;
+if datasets.opts.restrict_to_fjords
+    qsg_reg=NaN([length(fjords_processed),length(time_axis),length(regions_lbl)]);
+    d_reg=NaN(size(qsg_reg));
+    for i_fjord=1:length(fjords_processed)
+        fjord = fjords_processed(i_fjord);
+        qsg_reg(i_fjord,:,fjord.m.regionID) = fjord.f.Qsg;
+        d_reg(i_fjord,:,fjord.m.regionID)   = fjord.f.D;
+    end
+else
+    runtime_axis = [datetime(datasets.opts.time_start):datasets.opts.dt:datetime(datasets.opts.time_end)]';
+    qsg_reg=NaN([length(glaciers_compilation),length(time_axis),length(regions_lbl)]);
+    d_reg=NaN(size(qsg_reg));
+    for i_glacier=1:length(glaciers_compilation)
+        glacier = glaciers_compilation(i_glacier);
+
+        time_discharge = glacier.iceberg.time_axis;
+        seconds_in_year = eomday(time_discharge.Year,time_discharge.Month)*86400*12; % we need to convert from total discharge in the month to discharge per second
+        Gt_to_m3_ice = 1e9*1e3/916.7; % Giga * kg / (kg/m^3) assuming glacier ice density of 916.7 kg/m^3
+        D_s = glacier.iceberg.discharge./seconds_in_year .* Gt_to_m3_ice;
+        [~] = data_overlap_check(runtime_axis,time_discharge,'iceberg'); % simple check that the data is available for the simulation period
+        
+        d_reg(i_glacier,:,glacier.regionID)   = interp1(time_discharge,D_s,runtime_axis,'linear','extrap'); 
+        qsg_reg(i_glacier,:,glacier.regionID) = get_total_glacier_runoff(glacier,runtime_axis);
+    end
+
 end
 
-
-time_axis_dq = fjords_processed(1).m.time_axis';
+time_axis_dq = runtime_axis';%fjords_processed(1).m.time_axis';
 region_handles = [];
 figure('Name','Subglacial and solid-ice discharge','Position',[20 20 1200 400])
 for i_reg=1:length(regions_lbl)
@@ -48,7 +62,7 @@ for i_reg=1:length(regions_lbl)
     hp = fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
     plot(time_axis_dq,mean_ln,'Color',region_line_color(i_reg,:)); 
     region_handles=[region_handles hp];
-    ylim([0 2e3])
+    % ylim([0 1e3])
 
     subplot(1,2,2); hold on; box on
     ylabel('Solid-ice discharge (m^{3}s^{-1})');
