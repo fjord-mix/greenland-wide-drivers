@@ -30,8 +30,9 @@ for i_reg=1:length(regions_lbl)
     i_present = i_above_sill & ~i_above_plume;
 
     depths_subsurf = depths < -25;
-    [~,imax_temp] = max(temp_forcing(depths_subsurf,i_reg));
-    z_aw_core = abs(depths(imax_temp));
+    max_temp = max(temp_forcing(depths_subsurf,i_reg));
+    imax_temp = find(temp_forcing(depths_subsurf,i_reg) == max_temp);
+    z_aw_core = abs(depths(imax_temp(end)));
 
     xlim([min(salt_forcing(:,i_reg))-0.1 max(salt_forcing(:,i_reg))+0.1])
     ylim([min(temp_forcing(:,i_reg))-0.1 max(temp_forcing(:,i_reg))+0.1])

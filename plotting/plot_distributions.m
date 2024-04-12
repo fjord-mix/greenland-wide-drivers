@@ -1,4 +1,4 @@
-function hf = plot_distributions(datasets,fjords_compilation)
+function hf = plot_distributions(datasets,fjords_compilation,glaciers_compilation)
 fjord_stats = print_fjord_statistics(fjords_compilation);
 figure("Name",'Probability functions','Position',[50 50 1200 700]);
 
@@ -56,7 +56,7 @@ text(0.95,0.95,'(h)','Units','normalized','fontsize',14,'HorizontalAlignment','r
 xlabel('z_s/H','fontsize',14); % xlabel('W (m)','fontsize',14);
 
 for i_reg=1:7
-    [~,~,probs,~] = define_model_param_distrib(datasets,fjords_compilation,i_reg);
+    [~,~,probs,~] = define_model_param_distrib(datasets,fjords_compilation,glaciers_compilation,i_reg);
     
     %% Ocean parameter distributions
     x_t = linspace(-5, 5,1000);

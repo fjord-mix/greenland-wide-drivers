@@ -1,4 +1,4 @@
-function hf = plot_seasonal_cycle(datasets,fjords_compilation,tt_ensemble,regions_lbl,verbose)
+function hf = plot_seasonal_cycle(datasets,fjords_compilation,glaciers_compilation,tt_ensemble,tt_std_ensemble,regions_lbl,verbose)
 
 if nargin < 5, verbose=0; end
 
@@ -22,12 +22,30 @@ end
 time_axis = datasets.opts.time_start:datasets.opts.dt:datasets.opts.time_end;
 % time_axis_plt = time_axis(2:end)';
 
-qsg_reg = NaN([length(fjords_processed),length(time_axis),length(regions_lbl)]);
-d_reg   = NaN(size(qsg_reg));
-for i_fjord=1:length(fjords_processed)
-    fjord = fjords_processed(i_fjord);
-    qsg_reg(i_fjord,:,fjord.m.regionID) = fjord.f.Qsg;
-    d_reg(i_fjord,:,fjord.m.regionID)   = fjord.f.D;
+if datasets.opts.restrict_to_fjords
+    qsg_reg = NaN([length(fjords_processed),length(time_axis),length(regions_lbl)]);
+    d_reg   = NaN(size(qsg_reg));
+    for i_fjord=1:length(fjords_processed)
+        fjord = fjords_processed(i_fjord);
+        qsg_reg(i_fjord,:,fjord.m.regionID) = fjord.f.Qsg;
+        d_reg(i_fjord,:,fjord.m.regionID)   = fjord.f.D;
+    end
+else
+    runtime_axis = [datetime(datasets.opts.time_start):datasets.opts.dt:datetime(datasets.opts.time_end)]';
+    qsg_reg=NaN([length(glaciers_compilation),length(time_axis),length(regions_lbl)]);
+    d_reg=NaN(size(qsg_reg));
+    for i_glacier=1:length(glaciers_compilation)
+        glacier = glaciers_compilation(i_glacier);
+
+        time_discharge = glacier.iceberg.time_axis;
+        seconds_in_year = eomday(time_discharge.Year,time_discharge.Month)*86400*12; % we need to convert from total discharge in the month to discharge per second
+        Gt_to_m3_ice = 1e9*1e3/916.7; % Giga * kg / (kg/m^3) assuming glacier ice density of 916.7 kg/m^3
+        D_s = glacier.iceberg.discharge./seconds_in_year .* Gt_to_m3_ice;
+        [~] = data_overlap_check(runtime_axis,time_discharge,'iceberg'); % simple check that the data is available for the simulation period
+        
+        d_reg(i_glacier,:,glacier.regionID)   = interp1(time_discharge,D_s,runtime_axis,'linear','extrap'); 
+        qsg_reg(i_glacier,:,glacier.regionID) = get_total_glacier_runoff(glacier,runtime_axis);
+    end
 end
 
 
@@ -44,8 +62,15 @@ end
 hf = figure('Name','Seasonal cycles','Position',[20 20 1000 600]);
 for i_reg=1:n_regions
     clim_mon = groupsummary(tt_ensemble{i_reg},"Time","monthofyear","mean");
+    
+    clim_mon_std = groupsummary(tt_std_ensemble{i_reg},"Time","monthofyear","mean");
+    tf_lower = clim_mon.mean_Tf - clim_mon_std.mean_Tf;
+    tf_upper = clim_mon.mean_Tf + clim_mon_std.mean_Tf;
+    x2 = [double(clim_mon.monthofyear_Time); flipud(double(clim_mon.monthofyear_Time))];
+    inBetween = [tf_lower; flipud(tf_upper)];
 
     subplot(2,2,1); hold on; grid on; box on;
+    fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
     plot(clim_mon.mean_Tf,'LineStyle','-','Color',region_line_color(i_reg,:),'linewidth',1.5);
     plot(clim_mon.mean_Ts,'LineStyle','--','Color',region_line_color(i_reg,:),'linewidth',1.5);
 
@@ -54,6 +79,13 @@ for i_reg=1:n_regions
         hp_f = plot(clim_mon.mean_Sf,'-k','linewidth',1.);
         hp_s = plot(clim_mon.mean_Sf,'--k','linewidth',1.);
     end
+
+    sf_lower = clim_mon.mean_Sf - clim_mon_std.mean_Sf;
+    sf_upper = clim_mon.mean_Sf + clim_mon_std.mean_Sf;
+    x2 = [double(clim_mon.monthofyear_Time); flipud(double(clim_mon.monthofyear_Time))];
+    inBetween = [sf_lower; flipud(sf_upper)];
+
+    fill(x2, inBetween, region_line_color(i_reg,:),'edgecolor','none','facealpha',0.2);
     plot(clim_mon.mean_Sf,'LineStyle','-','Color',region_line_color(i_reg,:),'linewidth',1.5);
     plot(clim_mon.mean_Ss,'LineStyle','--','Color',region_line_color(i_reg,:),'linewidth',1.5);
 

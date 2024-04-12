@@ -1,4 +1,4 @@
-function [hf,tmp_ensemble] = plot_ensemble_dt_ds_layers(ensemble,time_axis,i_tgt_layer,regions_lbl)
+function [hf,tmp_ensemble,tmp_spread_ensemble] = plot_ensemble_dt_ds_layers(ensemble,time_axis,i_tgt_layer,regions_lbl)
 
 % time axis for plotting the results, excluding t0
 time_axis_plt = time_axis(2:end); % datetime(2010,01,15)+1:1:datetime(2018,12,15); 
@@ -10,7 +10,8 @@ region_line_color = lines(n_regions);
 
 % avg_silldepth   = NaN([1,size(ensemble,2)]);
 % avg_activedepth = NaN([1,size(ensemble,2)]);
-tmp_ensemble     = cell([1,n_regions]);
+tmp_ensemble        = cell([1,n_regions]);
+tmp_spread_ensemble = cell(size(tmp_ensemble));
 % dT_ens_mean = NaN([3,length(time_axis_plt)]);
 % tf_ens_mean = NaN([3,length(time_axis_plt)]);
 % ts_ens_mean = NaN([3,length(time_axis_plt)]);
@@ -92,6 +93,13 @@ for i_reg=1:n_regions
     sf_ens_mean = mean(bootstrp(1e3,@(x)[median(x,1,'omitnan')],squeeze(osc_fjd)));
     ss_ens_mean = mean(bootstrp(1e3,@(x)[median(x,1,'omitnan')],squeeze(osc_shf)));
 
+    dT_ens_std = mean(bootstrp(1e3,@(x)[std(x,1,'omitnan')],squeeze(ohc_reg)));
+    tf_ens_std = mean(bootstrp(1e3,@(x)[std(x,1,'omitnan')],squeeze(ohc_fjd)));
+    ts_ens_std = mean(bootstrp(1e3,@(x)[std(x,1,'omitnan')],squeeze(ohc_shf)));
+    dS_ens_std = mean(bootstrp(1e3,@(x)[std(x,1,'omitnan')],squeeze(osc_reg)));
+    sf_ens_std = mean(bootstrp(1e3,@(x)[std(x,1,'omitnan')],squeeze(osc_fjd)));
+    ss_ens_std = mean(bootstrp(1e3,@(x)[std(x,1,'omitnan')],squeeze(osc_shf)));
+
     fprintf('Layer %d:\n',i_tgt_layer)
     lm = fitlm(datenum(time_axis_plt),dT_ens_mean);
     fprintf("Trend in %s dT: %.4f/yr (p=%.2f)\n",regions_lbl{i_reg}(1:2),lm.Coefficients.Estimate(2)*365,lm.ModelFitVsNullModel.Pvalue);
@@ -140,6 +148,9 @@ for i_reg=1:n_regions
     tmp_ensemble{i_reg} = timetable(time_axis_plt',dT_ens_mean',tf_ens_mean',ts_ens_mean',...
                                                    dS_ens_mean',sf_ens_mean',ss_ens_mean',...
                                     'VariableNames',{'dT','Tf','Ts','dS','Sf','Ss'});
+    tmp_spread_ensemble{i_reg} = timetable(time_axis_plt',dT_ens_std',tf_ens_std',ts_ens_std',...
+                                                   dS_ens_std',sf_ens_std',ss_ens_std',...
+                                    'VariableNames',{'dT','Tf','Ts','dS','Sf','Ss'});
 end
     
 %% Adding labels to panels and such
@@ -147,6 +158,7 @@ subplot(2,2,1)
 text(0.03,1.07,'(a)','fontsize',14,'units','normalized')
 ylabel('Temperature difference (^oC)'); %xlabel('Time');
 hl = legend(region_handles,regions_lbl,'fontsize',10,'Location','southeast');
+ylim([-2.5 2])
 hl.NumColumns=2;
 set(gca,'fontsize',14)
 
@@ -154,15 +166,18 @@ subplot(2,2,3)
 text(0.03,1.07,'(b)','fontsize',14,'units','normalized')
 ylabel('Temperature (^oC)'); xlabel('Time');
 hl2 = legend([hp_fjd,hp_shf],{'Fjord','Shelf'},'fontsize',10,'Location','southeast');
+ylim([-2 7])
 set(gca,'fontsize',14)
 
 subplot(2,2,2)
 text(0.03,1.07,'(c)','fontsize',14,'units','normalized')
 ylabel('Salinity difference'); %xlabel('Time');
+ylim([-0.4 0.3])
 set(gca,'fontsize',14)
 
 subplot(2,2,4)
 text(0.03,1.07,'(d)','fontsize',14,'units','normalized')
 ylabel('Salinity'); xlabel('Time');
+ylim([33.4 35.0])
 set(gca,'fontsize',14)
 end

@@ -8,9 +8,9 @@ function [fjord_out] = wrapper_boxmodel(X,Parameters,flag_debug)
 [p,a] = get_model_default_parameters(); % default params, standard initialisation
 p.H = Parameters.H;
 p.Hmin=5;
-% p.M0=0;
-p.C0=X(11);
-p.P0=X(10);
+% p.M0=0;      % no icebergs if zero
+p.C0=X(11);  % no shelf-exchange if zero
+p.P0=X(10);  % no meltwater plume if zero
 
 p.dt = Parameters.t(2)-Parameters.t(1);
 %% Getting the parameters to be explored into variables that we can more easily recall
