@@ -195,47 +195,54 @@ fjord_model(idx)=[]; % remove the empty elements
 n_fjord_runs = length(fjord_model);
 range_C0 = [1e3,5e3,1e4,5e4,1e5];
 range_P0 = 5:5:30;
+range_M0 = [5e-9,1e-8,2e-8,5e-8];
 range_gamma = 0.4:0.05:0.6;
 n_C0 = length(range_C0);
 n_P0 = length(range_P0);
+n_M0 = length(range_M0);
 n_gamma = length(range_gamma);
 if exist('ensemble',"var"),clear ensemble; end
 % ensemble(n_fjord_runs, length(range_C0), length(range_P0)) = struct("p",[],"a",[],"f",[],"t",[],"m",[],"c",[],"s",[]);
-ensemble(n_fjord_runs, length(range_C0), length(range_P0)) = struct("p",[],"t",[],"m",[],"s",[]);
+ensemble(n_fjord_runs, length(range_C0), length(range_P0),length(range_M0),length(range_gamma)) = struct("p",[],"t",[],"m",[],"s",[]);
 run_counter=0;
 for i_fjord=1:n_fjord_runs
-    for i_C0=1:n_C0
-        for i_P0=1:n_P0
-            for i_gamma=1:n_gamma
-                run_counter = run_counter+1;
-                cur_fjord = fjord_model(i_fjord);
-                cur_fjord.p.C0 = range_C0(i_C0);
-                cur_fjord.p.P0 = range_P0(i_P0);
-                cur_fjord.p.gamma = range_gamma(i_gamma);
-                % cur_fjord.p.plot_runtime=1;
-                tic
-                try
-                    [cur_fjord.s,cur_fjord.f] = boxmodel(cur_fjord.p, cur_fjord.t, cur_fjord.f, cur_fjord.a);
-                    ensemble(i_fjord,i_C0,i_P0).p = cur_fjord.p;
-                    ensemble(i_fjord,i_C0,i_P0).t = cur_fjord.t;
-                    ensemble(i_fjord,i_C0,i_P0).m = cur_fjord.m;
-                    % ensemble(i_fjord,i_C0,i_P0).s.Tfinal = mean(cur_fjord.s.T(:,end-365:end),2); % last 30 days(?)
-                    % ensemble(i_fjord,i_C0,i_P0).s.Sfinal = mean(cur_fjord.s.S(:,end-365:end),2);
-                    % ensemble(i_fjord,i_C0,i_P0).s.Hfinal = mean(cur_fjord.s.H(:,end-365:end),2);
-                    ensemble(i_fjord,i_C0,i_P0).s.Tfinal = mean(cur_fjord.s.T(:,33500:35500:end),2); % last peak-melt season
-                    ensemble(i_fjord,i_C0,i_P0).s.Sfinal = mean(cur_fjord.s.S(:,33500:35500:end),2);
-                    ensemble(i_fjord,i_C0,i_P0).s.Hfinal = mean(cur_fjord.s.H(:,33500:35500:end),2);
-                    fprintf('run %d complete. ',run_counter)
-                catch ME
-                    fprintf('run %d failed: %s. ',run_counter,ME.message)
-                end
-                toc
-                fprintf('\n')
-            end % for i_gamma
-        end % for i_P0
-    end % for i_C0
-end
-save([outs_path,'boxmodel_runs_n',num2str(n_C0*n_P0),'_peakmelt_wice'],'-v7.3','ensemble','fjord_model');
+tic
+for i_C0=1:n_C0
+for i_P0=1:n_P0
+for i_M0=1:n_M0
+for i_gamma=1:n_gamma
+    run_counter = run_counter+1;
+    cur_fjord = fjord_model(i_fjord);
+    cur_fjord.p.C0 = range_C0(i_C0);
+    cur_fjord.p.P0 = range_P0(i_P0);
+    cur_fjord.p.M0 = range_M0(i_M0);
+    cur_fjord.p.gamma = range_gamma(i_gamma);
+    % cur_fjord.p.plot_runtime=1;
+    try
+        [cur_fjord.s,cur_fjord.f] = boxmodel(cur_fjord.p, cur_fjord.t, cur_fjord.f, cur_fjord.a);
+        ensemble(i_fjord,i_C0,i_P0,i_M0,i_gamma).p = cur_fjord.p;
+        ensemble(i_fjord,i_C0,i_P0,i_M0,i_gamma).t = cur_fjord.t;
+        ensemble(i_fjord,i_C0,i_P0,i_M0,i_gamma).m = cur_fjord.m;
+        % ensemble(i_fjord,i_C0,i_P0).s.Tfinal = mean(cur_fjord.s.T(:,end-365:end),2); % last 30 days(?)
+        % ensemble(i_fjord,i_C0,i_P0).s.Sfinal = mean(cur_fjord.s.S(:,end-365:end),2);
+        % ensemble(i_fjord,i_C0,i_P0).s.Hfinal = mean(cur_fjord.s.H(:,end-365:end),2);
+        ensemble(i_fjord,i_C0,i_P0,i_M0,i_gamma).s.Tfinal = mean(cur_fjord.s.T(:,33500:35500:end),2); % last peak-melt season
+        ensemble(i_fjord,i_C0,i_P0,i_M0,i_gamma).s.Sfinal = mean(cur_fjord.s.S(:,33500:35500:end),2);
+        ensemble(i_fjord,i_C0,i_P0,i_M0,i_gamma).s.Hfinal = mean(cur_fjord.s.H(:,33500:35500:end),2);
+        fprintf('run %d complete. ',run_counter)
+    catch ME
+        fprintf('run %d failed: %s. ',run_counter,ME.message)
+    end
+    fprintf('\n')
+end % for i_gamma
+end % for i_M0
+end % for i_P0
+end % for i_C0
+fprintf('Done with fjord %d. ',i_fjord)
+toc
+fprintf('\n')
+end % for i_fjord
+save([outs_path,'boxmodel_runs_n',num2str(n_C0*n_P0*n_M0*n_gamma),''],'-v7.3','ensemble','fjord_model');
 disp('Outputs saved.')
 %% post-processing to make things 1:1 comparable
 
@@ -250,22 +257,26 @@ for i=1:size(ensemble,1)
     n_completed = 0; % completed runs for that fjord
 
     % n_layers = ensemble(i,1,1).p.N+ensemble(i,1,1).p.sill;
-    tf_box_comp = NaN([length(zf_obs),n_fjord_runs,length(range_C0),length(range_P0)]);
+    tf_box_comp = NaN([length(zf_obs),n_fjord_runs,n_C0,n_P0,n_M0,n_gamma]);
     sf_box_comp = NaN(size(tf_box_comp));
     for j=1:size(ensemble,2)
-        for k=1:size(ensemble,3)
-            if ~isempty(ensemble(i,j,k).s)
-                ints=[0; cumsum(ensemble(i,j,k).s.Hfinal)];
+    for k=1:size(ensemble,3)
+    for l=1:size(ensemble,4)
+    for m=1:size(ensemble,5)
+            if ~isempty(ensemble(i,j,k,l,m).s) && ~isnan(ensemble(i,j,k,l,m).s.Hfinal)
+                ints=[0; cumsum(ensemble(i,j,k,l,m).s.Hfinal)];
                 z_box = (ints(1:end-1)+ints(2:end))/2;
-                tf_box = ensemble(i,j,k).s.Tfinal; 
-                sf_box = ensemble(i,j,k).s.Sfinal; 
+                tf_box = ensemble(i,j,k,l,m).s.Tfinal; 
+                sf_box = ensemble(i,j,k,l,m).s.Sfinal; 
                 
-                tf_box_comp(:,i,j,k) = interp1(z_box,tf_box,zf_obs,'nearest','extrap');
-                sf_box_comp(:,i,j,k) = interp1(z_box,sf_box,zf_obs,'nearest','extrap');
+                tf_box_comp(:,i,j,k,l,m) = interp1(z_box,tf_box,zf_obs,'nearest','extrap');
+                sf_box_comp(:,i,j,k,l,m) = interp1(z_box,sf_box,zf_obs,'nearest','extrap');
                 n_completed = n_completed+1;
             end
-        end
-    end
+    end % m
+    end % l
+    end % k
+    end % j
     res_obs(i).zf = zf_obs;
     res_obs(i).tf = tf_obs;
     res_obs(i).sf = sf_obs;
@@ -275,10 +286,10 @@ for i=1:size(ensemble,1)
     res_obs(i).ss = fjord_model(i).c.ss;
 
     res_box(i).zf = z_box;
-    res_box(i).tf = median(tf_box_comp(:,i,:,:),[3, 4],'omitnan');
-    res_box(i).tfmin = min(tf_box_comp(:,i,:,:),[],[3, 4],'omitnan');
-    res_box(i).tfmax = max(tf_box_comp(:,i,:,:),[],[3, 4],'omitnan');
-    res_box(i).sf = mean(sf_box_comp(:,i,:,:),[3, 4],'omitnan');
+    res_box(i).tf = median(tf_box_comp(:,i,:,:,:,:),[3,4,5,6],'omitnan');
+    res_box(i).tfmin = min(tf_box_comp(:,i,:,:,:,:),[],[3,4,5,6],'omitnan');
+    res_box(i).tfmax = max(tf_box_comp(:,i,:,:,:,:),[],[3,4,5,6],'omitnan');
+    res_box(i).sf = median(sf_box_comp(:,i,:,:,:,:),[3,4,5,6],'omitnan');
     res_box(i).id = fjord_model(i).m.ID{1};
     res_box(i).name = fjord_model(i).m.name{1};
     res_box(i).n = n_completed;
@@ -312,4 +323,4 @@ for i=1:n_fjord_runs
 end
 legend([hs, hf, hm], {"Shelf","Fjord","Model"},'fontsize',14,'Location','Southeast')
 
-% exportgraphics(gcf,[figs_path,'temp_profiles_2019_n',num2str(n_C0*n_P0),'_peakmelt_wice.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'temp_profiles_2019_n',num2str(n_C0*n_P0*n_M0*n_gamma),'_peakmelt_wice.png'],'Resolution',300)
