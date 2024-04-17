@@ -1,19 +1,7 @@
 %% Driver file for simulating the fjords presented in Cowton et al. (2023, GRL)
 
 %% Configuring paths
-run load_local_paths.m % sets data_path, import_path, collation_path, model_path, and project_path
-addpath(genpath(import_path))
-addpath(genpath(model_path))
-addpath(genpath(collation_path))
-addpath(genpath(uqlab_path))
-addpath(genpath('./'))
-
-inputs_path = [data_path,'/greenland/Cowton2023GRL/'];                % where the input data is stored
-outs_path   = [data_path,'/greenland/FjordMIX/boxmodel/cowton2023/']; % where the model output files will be saved
-figs_path   = [project_path,'/figs/cowton2023/'];                     % where the figures and animations will be saved
-
-
-fun = @(s) all(structfun(@isempty,s)); % tiny function to get rid of empty entries in array
+run setup_paths
 
 %% Initialise all needed variables
 
@@ -30,34 +18,19 @@ fjord_names = {'Qeqertaarsuusarsuup','Nuussuup','Tuttulikassaap','Nunatakassaap'
                'Salliarsutsip','Umiammakku','Kangilliup','Kangerlussuup','SermeqSilarleq','SermeqKujalleq'} ;
 
 %% Compiling data for all fjords around Greenland (requires data-compilation repository)
-[datasets,fjords_compilation,fjords_map,~,glaciers_compilation] = compile_datasets(data_path);
-datasets.opts.time_start = time_start;
-datasets.opts.time_end   = time_end;
-datasets.opts.dt         = 30; % time step (in days) for compiling the forcings (basically just a dummy here)
-fjords_processed(size(fjords_compilation)) = struct("p",[],"a",[],"f",[],"t",[],"m",[]);
-for i=1:length(fjords_compilation)
-    fjords_processed(i) = prepare_boxmodel_input(datasets,fjords_compilation(i));
-end
+run compile_process_fjords
 
 % These are the IDs of the corresponding fjords above in the "fjords_processed" data structure
 fjord_ids = [4,9,17,20,22,23,24,25,28,29,30,31,24,37];
 
 
 %% Reading the data from Cowton et al. (2023)
+run load_cowton2023_data
 
-% modelled subglacial discharge
-qsg_glaciers = load([inputs_path,'/runoff/runoff.txt']);
-time_glaciers = datetime(load([inputs_path,'runoff/runoff_tvec.txt']));
 tgt_period = time_glaciers > time_start & time_glaciers < time_end;
 qsg_all = qsg_glaciers(tgt_period,:);
 taxis_qsg = time_glaciers(tgt_period);
 clear qsg_glaciers time_glaciers tgt_period % bit of tidying up
-
-% CTD profiles
-ctd_data   = load([inputs_path,'/fjords/NW_fjord_TSz']);
-meta_table = readtable([inputs_path,'/fjords/Fjords_table.xlsx'],'Range','A3:I17'); % I had to unmerge some sells from the original table, otherwise Matlab would not get the header names (why were they merged in the first place?!)
-
-
 
 %% Preparing the model runs
 n_fjords = size(meta_table,1);
