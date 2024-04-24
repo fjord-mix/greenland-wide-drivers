@@ -1,9 +1,8 @@
 %% Driver file for simulating the fjords simulated by Tom using MITgcm
 
-%% Configuring paths
-run setup_paths
 
-%% Initialise all needed variables
+%% Initialise all needed paths and variables
+run setup_paths
 
 i_yr = 4; % we want only 2019 data for now, because we only have geometry data for glaciers with data for 2019
 time_start = datetime(2019,01,01);
@@ -12,73 +11,69 @@ input_dt   = 30;
 model_dt   = 0.1;
 tgt_day = 300; % which day of the 400-day run we want to compare
 
-letters = {'B','F'};
+fjord_letters     = {'B','F','G','M'};
+fjords_files_list = {'NUU_80','KAK_10','NAA_20','SES_10'};
 
-fjord_names = {'Nuussuup','Kakiffaat'} ;
+%% Compiling all "external" data used (Greenland fjord compilation and Cowton et al., 2023)
+run compile_process_fjords % requires data-compilation repository
 
+run load_cowton2023_data
 
-%% Compiling data for all fjords around Greenland (requires data-compilation repository)
-run compile_process_fjords
+%% Selecting which fjords from which compilation we want, and the time period for discharge data
 
 % These are the IDs of the corresponding fjords above in the "fjords_processed" data structure
-fjord_ids = [9,23];
+% useful function to find them:
+% plot_fjords_summary(datasets,fjords_map,fjords_compilation); %plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off';
+fjord_ids = [9,23,24,36];
 
-%% Reading the data from Cowton et al. (2023)
-run load_cowton2023_data
+% will look for matching letters in the table to find which fjords we want
+ids_cowton_fjords = zeros(size(fjord_letters));
+for i=1:height(meta_table)
+    for j=1:length(fjord_letters)
+        if strcmp(meta_table.Var1(i),fjord_letters{j}), ids_cowton_fjords(j)=i;end
+    end
+end
 
 tgt_period = 150:250; %time_glaciers > time_start & time_glaciers < time_end;
 qsg_all = qsg_glaciers(tgt_period,:);
 taxis_qsg = time_glaciers(tgt_period);
 clear qsg_glaciers time_glaciers tgt_period % bit of tidying up
 
-qsg_all = [qsg_all(:,2),qsg_all(:,6)];
-meta_table = [meta_table(2,:);meta_table(6,:)];
-ids_cowton_fjords = [2,6];
+qsg_all    = qsg_all(:,ids_cowton_fjords);
+meta_table = meta_table(ids_cowton_fjords,:);
+
 
 %% Reading the MITgcm outputs
 
-mitgcm_kak   = load([inputs_path,'/MITgcm/KAK_10']);
-icebergs_kak = load([inputs_path,'/MITgcm/icebergArea_KAK_10']);
-mitgcm_nuu   = load([inputs_path,'/MITgcm/NUU_80']);
-icebergs_nuu = load([inputs_path,'/MITgcm/icebergArea_NUU_80']);
-x_mitgcm=1:400:size(mitgcm_kak.T,1)*400;
-y_mitgcm=1:250:size(mitgcm_kak.T,2)*250;
-z_mitgcm=1:10:size(mitgcm_kak.T,3)*10;
-t_mitgcm=0:10:400;
-j_fjord = 1:144;
+mitgcm(length(fjords_files_list)) = struct('x',[],'y',[],'z',[],'t',[],'Tprofile',[],'Tupper',[],'Tinter',[],'Tlower',[],'Iprofile',[],'Ivolume',[]);
+for i=1:length(fjords_files_list)
+    mitgcm_out = load([inputs_path,'/MITgcm/',fjords_files_list{i}]);
+    icebergs_out = load([inputs_path,'/MITgcm/icebergArea_',fjords_files_list{i}]);
 
-% Using zero as _fillValue is not a good practice, but should not be
-mitgcm_kak.T(mitgcm_kak.S == 0) = NaN;
-mitgcm_nuu.T(mitgcm_nuu.S == 0) = NaN;
+    x_mitgcm=1:400:size(mitgcm_out.T,1)*400;
+    y_mitgcm=1:250:size(mitgcm_out.T,2)*250;
+    z_mitgcm=1:10:size(mitgcm_out.T,3)*10;
+    t_mitgcm=0:10:400;
+    j_fjord = 1:144;
 
-temp_kak = squeeze(mean(mitgcm_kak.T(j_fjord,:,:,:),[1,2],'omitnan'));
-temp_nuu = squeeze(mean(mitgcm_nuu.T(j_fjord,:,:,:),[1,2],'omitnan'));
+    % Using zero as _fillValue is not a good practice, but should not be an issue
+    mitgcm_out.T(mitgcm_out.S == 0) = NaN;
+    temp_out = squeeze(mean(mitgcm_out.T(j_fjord,:,:,:),[1,2],'omitnan'));
 
-% Fjord "B"
-mitgcm(1).x = x_mitgcm;
-mitgcm(1).y = y_mitgcm;
-mitgcm(1).z = z_mitgcm;
-mitgcm(1).t = t_mitgcm;
-mitgcm(1).Tprofile = temp_nuu(:,tgt_day/10);
-mitgcm(1).Tupper = mean(temp_nuu(1:5,:),1,'omitnan');
-mitgcm(1).Tinter = mean(temp_nuu(5:25,:),1,'omitnan');
-mitgcm(1).Tlower = mean(temp_nuu(25:50,:),1,'omitnan');
-mitgcm(1).Iprofile = squeeze(mean(icebergs_nuu.icebergArea,[1,2],'omitnan'));
-mitgcm(1).Ivolume = icebergs_nuu.icebergArea.*10;
+    mitgcm(i).x = x_mitgcm;
+    mitgcm(i).y = y_mitgcm;
+    mitgcm(i).z = z_mitgcm;
+    mitgcm(i).t = t_mitgcm;
+    mitgcm(i).Tprofile = temp_out(:,tgt_day/10);
+    mitgcm(i).Tupper = mean(temp_out(1:5,:),1,'omitnan');
+    mitgcm(i).Tinter = mean(temp_out(5:25,:),1,'omitnan');
+    mitgcm(i).Tlower = mean(temp_out(25:50,:),1,'omitnan');
+    mitgcm(i).Iprofile = squeeze(mean(icebergs_out.icebergArea,[1,2],'omitnan'));
+    mitgcm(i).Ivolume = icebergs_out.icebergArea.*10;
 
-% Fjord "F"
-mitgcm(2).x = x_mitgcm;
-mitgcm(2).y = y_mitgcm;
-mitgcm(2).z = z_mitgcm;
-mitgcm(2).t = t_mitgcm;
-mitgcm(2).Tprofile = temp_kak(:,tgt_day/10);
-mitgcm(2).Tupper = mean(temp_kak(1:5,:),1,'omitnan');
-mitgcm(2).Tinter = mean(temp_kak(5:25,:),1,'omitnan');
-mitgcm(2).Tlower = mean(temp_kak(25:50,:),1,'omitnan');
-mitgcm(2).Iprofile = squeeze(mean(icebergs_kak.icebergArea,[1,2],'omitnan'));
-mitgcm(2).Ivolume = icebergs_kak.icebergArea.*10;
-clear i_fjord temp_kak temp_nuu t_mitgcm z_mitgcm y_mitgcm x_mitgcm % bit of tidying up
-
+    clear i_fjord temp_out icebergs_out t_mitgcm z_mitgcm y_mitgcm x_mitgcm % bit of tidying up
+end
+disp('MITgcm data read.')
 %% Preparing the model runs
 n_fjords = size(meta_table,1);
 
@@ -147,31 +142,34 @@ for i_fjord=1:n_fjords
     
     % obtain Qsg
     % interpolate from daily Qsg data to the model time axes
-    taxis_qsg_julian = juliandate(taxis_qsg);
-    taxis_qsg_num = taxis_qsg_julian-taxis_qsg_julian(1);
-    taxis_qsg_num_dtmodel = taxis_qsg_num(1):t(2)-t(1):taxis_qsg_num(end);
-    qsg_dtmodel = interp1(taxis_qsg_num,qsg_all(:,i_fjord),taxis_qsg_num_dtmodel);
-    f.Qsg = [zeros([1,200/model_dt]), qsg_dtmodel, zeros([1,100/model_dt])];
-    clear taxis_qsg_julian taxis_qsg_num taxis_qsg_num_dtmodel qsg_dtmodel % bit of tidying up
+    % taxis_qsg_julian = juliandate(taxis_qsg);
+    % taxis_qsg_num = taxis_qsg_julian-taxis_qsg_julian(1);
+    % taxis_qsg_num_dtmodel = taxis_qsg_num(1):t(2)-t(1):taxis_qsg_num(end);
+    % qsg_dtmodel = interp1(taxis_qsg_num,qsg_all(:,i_fjord),taxis_qsg_num_dtmodel);
+    % f.Qsg = [zeros([1,200/model_dt]), qsg_dtmodel, zeros([1,100/model_dt])];
+    % clear taxis_qsg_julian taxis_qsg_num taxis_qsg_num_dtmodel qsg_dtmodel % bit of tidying up
+    % no meltwater
+    f.Qsg=zeros(size(t));
+    p.P0=0;
 
     % obtain iceberg data
 
     % no icebergs
     % p.M0=0; 
     % f.zi = -800:10:0;
-    % f.zi = f.zi';
+    % % f.zi = f.zi';
     % f.D  = zeros(1,length(t));
-    % f.xi = (p.nu0/sum(a.H0))*exp(p.nu0*f.zi/sum(a.H0))/(1-exp(-p.nu0));
+    % f.xi = (p.nu0/abs(p.zgl))*exp(p.nu0*f.zi'/abs(p.zgl))/(1-exp(-p.nu0));
     % a.I0 = 0*f.zi;
 
     % obs-based
-    % runtime_axis = datasets.opts.time_start:model_dt:datasets.opts.time_end;
+    runtime_axis = datasets.opts.time_start:model_dt:datasets.opts.time_end;
     [f.zi,ice_d,f.xi,a.I0] = get_total_iceberg_discharge(datasets,fjords_compilation(fjord_ids(i_fjord)).glaciers,runtime_axis',p,a);
     f.D = ice_d(1:length(t)); % we need to interp/extrapolate the 1-year discharge for 400 days
     
     % MITgcm-based (hybrid: using f.xi and f.zi from here and f.D from obs)
-    f.xi = flip(mitgcm(i_fjord).Iprofile./trapz(mitgcm(i_fjord).z,mitgcm(i_fjord).Iprofile)); % get avg. iceberg concentration in each layer and make its integral equal 1
-    f.zi = -flip(mitgcm(i_fjord).z);
+    % f.xi = flip(mitgcm(i_fjord).Iprofile./trapz(mitgcm(i_fjord).z,mitgcm(i_fjord).Iprofile)); % get avg. iceberg concentration in each layer and make its integral equal 1
+    % f.zi = -flip(mitgcm(i_fjord).z);
     % f.D = zeros(size(t)); % only consider the initial iceberg concentration in the fjord, and no discharge afterwards
     % f.D(1) = mean(mitgcm(i_fjord).Ivolume(:),'omitnan'); % should this be "mean" or "sum"??
     
@@ -189,37 +187,36 @@ for i_fjord=1:n_fjords
     fjord_model(i_fjord).c.ss = ctd.salt.s;
     fjord_model(i_fjord).c.zs = ctd.depth.s;
 
-    % Sanity-check plot to make sure the boxes, T,S profiles, Qsg and D all make sense
-    % figure('Position',[100 100 800 500]);
-    % ints=[0,-cumsum(a.H0)];
-    % subplot(1,3,1); hold on; box on;
-    % plot(f.Ts(:,1),f.zs);
-    % scatter(a.T0,(ints(1:end-1)+ints(2:end))/2,'filled');
-    % for j=1:size(ints,2)
-    %     yline(ints(j));
-    % end
-    % yline(p.zgl,'--k','linewidth',0.5)
-    % yline(p.silldepth,'--k','linewidth',0.5)
-    % ylim([-p.H 0])
-    % subplot(1,3,2); hold on; box on;
-    % plot(f.Ss(:,1),f.zs);
-    % scatter(a.S0,(ints(1:end-1)+ints(2:end))/2,'filled');
-    % for j=1:size(ints,2)
-    %     yline(ints(j));
-    % end
-    % yline(p.zgl,'--k','linewidth',0.5)
-    % yline(p.silldepth,'--k','linewidth',0.5)
-    % ylim([-p.H 0])
-    % subplot(1,3,3); hold on; box on; grid on;
-    % plot(t,f.Qsg);
-    % plot(t,f.D);
-    % legend('Subglacial discharge','Solid-ice discharge');
+    % % Sanity-check plot to make sure the boxes, T,S profiles, Qsg and D all make sense
+    figure('Position',[100 100 800 500]);
+    ints=[0,-cumsum(a.H0)];
+    subplot(1,3,1); hold on; box on;
+    plot(f.Ts(:,1),f.zs);
+    scatter(a.T0,(ints(1:end-1)+ints(2:end))/2,'filled');
+    for j=1:size(ints,2)
+        yline(ints(j));
+    end
+    yline(p.zgl,'--k','linewidth',0.5)
+    yline(p.silldepth,'--k','linewidth',0.5)
+    ylim([-p.H 0])
+    subplot(1,3,2); hold on; box on;
+    plot(f.Ss(:,1),f.zs);
+    scatter(a.S0,(ints(1:end-1)+ints(2:end))/2,'filled');
+    for j=1:size(ints,2)
+        yline(ints(j));
+    end
+    yline(p.zgl,'--k','linewidth',0.5)
+    yline(p.silldepth,'--k','linewidth',0.5)
+    ylim([-p.H 0])
+    subplot(1,3,3); hold on; box on; grid on;
+    plot(t,f.Qsg);
+    plot(t,f.D);
+    legend('Subglacial discharge','Solid-ice discharge');
 
     clear t m p a f % bit of tidying up
 end
-
+disp('Model inputs processing done.')
 %% Run the model
-
 
 n_fjord_runs = length(fjord_model);
 range_C0 = [1e3,5e3,1e4,5e4,1e5];
@@ -235,16 +232,18 @@ if exist('ensemble',"var"),clear ensemble; end
 % ensemble(n_fjord_runs, length(range_C0), length(range_P0)) = struct("p",[],"a",[],"f",[],"t",[],"m",[],"c",[],"s",[]);
 ensemble(n_fjord_runs, length(range_C0), length(range_P0),length(range_M0),length(range_gamma)) = struct("p",[],"t",[],"m",[],"s",[]);
 run_counter=0;
+% i_M0=1; i_gamma=1;
+i_P0=1;
 for i_fjord=1:n_fjord_runs
 tic
 for i_C0=1:n_C0
-for i_P0=1:n_P0
+% for i_P0=1:n_P0
 for i_M0=1:n_M0
 for i_gamma=1:n_gamma
     run_counter = run_counter+1;
     cur_fjord = fjord_model(i_fjord);
     cur_fjord.p.C0 = range_C0(i_C0);
-    cur_fjord.p.P0 = range_P0(i_P0);
+    cur_fjord.p.P0 = 0;%range_P0(i_P0);
     cur_fjord.p.M0 = range_M0(i_M0);
     cur_fjord.p.gamma = range_gamma(i_gamma);
     % cur_fjord.p.plot_runtime=1;
@@ -279,15 +278,15 @@ for i_gamma=1:n_gamma
     fprintf('\n')
 end % for i_gamma
 end % for i_M0
-end % for i_P0
+% end % for i_P0
 end % for i_C0
 fprintf('Done with fjord %d. ',i_fjord)
 toc
 fprintf('\n')
 end % for i_fjord
-save([outs_path,'boxmodel_runs_MITgcm_hybice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day)],'-v7.3','ensemble','fjord_model');
+save([outs_path,'boxmodel_runs_MITgcm_noice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day)],'-v7.3','ensemble','fjord_model');
 disp('Outputs saved.')
-% load([outs_path,'boxmodel_runs_MITgcm_comp_n',num2str(n_combinations),'_day',num2str(tgt_day)]);
+% load([outs_path,'boxmodel_runs_MITgcm_obsice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day)]);
 %% post-processing to make things 1:1 comparable
 
 
@@ -362,16 +361,17 @@ for i=1:size(ensemble,1)
     res_box(i).name = fjord_model(i).m.name{1};
     res_box(i).n = n_completed;
 end
-
+disp('Postprocessing done.')
 %% Plotting results
 lcolor = lines(3);
-figure('Name','Temperature comparison','Position',[40 40 1200 800]);
-tiledlayout(2,2);
+fsize=12;
+figure('Name','Temperature comparison','Position',[40 40 1200 400*length(fjord_model)]);
+tiledlayout(length(fjord_model),2);
 for i=1:n_fjord_runs
     
     nexttile; hold on; box on; grid on
-    text(0.02,1.05,sprintf("(%s) %s",res_box(i).id,res_box(i).name),'units','normalized','fontsize',14)
-    text(0.02,0.05,sprintf("n=%d",res_box(i).n),'Units','normalized','FontSize',14)
+    text(0.02,1.05,sprintf("(%s) %s",res_box(i).id,res_box(i).name),'units','normalized','fontsize',fsize)
+    text(0.02,0.05,sprintf("n=%d",res_box(i).n),'Units','normalized','FontSize',fsize)
 
     % figure; hold on
     % y2 = [res_obs(i).zf; flip(res_obs(i).zf)]';
@@ -384,9 +384,12 @@ for i=1:n_fjord_runs
     hm = plot(mitgcm(i).Tprofile,-mitgcm(i).z,'linewidth',1.5,'color','k');
     plot(res_box(i).tfmin,-res_obs(i).zf,'linewidth',1.5,'color',lcolor(3,:),'LineStyle','--');
     plot(res_box(i).tfmax,-res_obs(i).zf,'linewidth',1.5,'color',lcolor(3,:),'LineStyle','--');
+    scatter(0,fjord_model(i).p.zgl,40,'v','filled','MarkerFaceColor','black')
+    plot([0 0],[-fjord_model(i).p.H fjord_model(i).p.silldepth],'-k','linewidth',2)
     xlabel('Temperature (^oC)'); ylabel('Depth (m)');
-    set(gca,'fontsize',14)
+    set(gca,'fontsize',fsize)
     xlim([-2 6])
+    ylim([-fjord_model(i).p.H 0])
 
     nexttile; hold on; box on; grid on
     if length(res_box(i).t) == length(res_box(i).Tupper)
@@ -408,17 +411,19 @@ for i=1:n_fjord_runs
         % plot(res_box(i).t,res_box(i).Tlower_max,'linewidth',1.5,'color',lcolor(3,:),'LineStyle',':');
        
     end
-    ylabel('Box model Temperature (^oC)'); xlabel('Model time (days)');
-    set(gca,'fontsize',14)
+    ylim([-2 5.5])
+    ylabel('Temperature (^oC)'); xlabel('Model time (days)');
+    set(gca,'fontsize',fsize)
     if i==1 
-        hl = legend([hs, hf, hb, hm], {"Shelf","Fjord","Box model","MITgcm"},'fontsize',14,'Location','Southeast'); 
-        title(hl,sprintf('Profiles at day %d\n(10-day avg.)',tgt_day))
+        hl1 = legend([hs, hf, hb, hm], {"Shelf","Fjord","Box model","MITgcm"},'fontsize',fsize,'Location','Southeast'); 
+        title(hl1,sprintf('Profiles at day %d\n(10-day avg.)',tgt_day))
     end
-    if i==2 
-        hl = legend([hbl,hml,hu,hi,hl],{"Box model","MITgcm","0-50 m","50-250 m","250-500 m"},'fontsize',14,'Location','Northeast'); 
-        title(hl,'Time series')
+    if i==1%n_fjords
+        hl2 = legend([hbl,hml,hu,hi,hl],{"Box model","MITgcm","0-50 m","50-250 m","250-500 m"},'fontsize',fsize,'Location','Northeast'); 
+        title(hl2,'Time series')
+        hl2.NumColumns=1;
     end
 end
 
 
-% exportgraphics(gcf,[figs_path,'temp_profiles_MITgcm_hybice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'temp_profiles_MITgcm_noplume_comp_n',num2str(n_combinations),'_day',num2str(tgt_day),'.png'],'Resolution',300)
