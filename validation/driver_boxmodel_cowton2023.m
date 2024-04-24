@@ -135,7 +135,7 @@ for i_fjord=1:n_fjords
         % f.zi = -800:10:0;
         % f.zi = f.zi';
         % f.D  = zeros(1,length(t));
-        % f.xi = (p.nu0/sum(a.H0))*exp(p.nu0*f.zi/sum(a.H0))/(1-exp(-p.nu0));
+        % f.xi = (p.nu0/abs(p.zgl))*exp(p.nu0*f.zi/abs(p.zgl))/(1-exp(-p.nu0));
         % a.I0 = 0*f.zi;
         
         % obtain iceberg data - for later
