@@ -6,9 +6,9 @@ fun = @(s) all(structfun(@isempty,s)); % tiny function to get rid of empty entri
 
 %% Initialise all needed variables
 
-i_yr = 4; % we want only 2019 data for now, because we only have geometry data for glaciers with data for 2019
-time_start = datetime(2019,01,01);
-time_end   = datetime(2019,12,31);
+i_yr = 4; % {1,2,3,4} for {2016,2017,2018,2019}
+time_start = datetime(2015+i_yr,01,01);
+time_end   = datetime(2015+i_yr,12,31);
 input_dt   = 30;
 model_dt   = 0.1;
 n_years    = 4; % how many years we want to run
@@ -21,15 +21,14 @@ fjord_names = {'Qeqertaarsuusarsuup','Nuussuup','Tuttulikassaap','Nunatakassaap'
                'Kakiffaat','Naajarsuit','Sermeq',...
                'Salliarsutsip','Umiammakku','Kangilliup','Kangerlussuup','SermeqSilarleq','SermeqKujalleq'} ;
 
-%% Compiling data for all fjords around Greenland (requires data-compilation repository)
-run compile_process_fjords
+%% Compiling data 
+
+run compile_process_fjords % Read compilation of all fjords around Greenland (requires data-compilation repository)
 
 % These are the IDs of the corresponding fjords above in the "fjords_processed" data structure
 fjord_ids = [4,9,17,20,22,23,24,25,28,29,30,31,24,37];
 
-
-%% Reading the data from Cowton et al. (2023)
-run load_cowton2023_data
+run load_cowton2023_data % Reading the data from Cowton et al. (2023)
 
 tgt_period = time_glaciers > time_start & time_glaciers < time_end;
 qsg_all = qsg_glaciers(tgt_period,:);
@@ -165,7 +164,7 @@ for i_fjord=1:n_fjords
         plot(t,f.Qsg);
         plot(t,f.D);
         legend('Subglacial discharge','Solid-ice discharge');
-        % exportgraphics(gcf,[figs_path,'forcing_summary_c13_fjord',letters{i_fjord},'.png'],'Resolution',300)
+        exportgraphics(gcf,[figs_path,'forcing_summary_c13_fjord_',letters{i_fjord},'_',num2str(2015+i_yr),'.png'],'Resolution',300)
         
         clear m p a f % bit of tidying up
     end
@@ -257,9 +256,9 @@ fprintf('Done with fjord %d. ',i_fjord)
 toc
 fprintf('\n')
 end % for i_fjord
-save([outs_path,'boxmodel_runs_c13comp_n',num2str(n_combinations),'_day',num2str(tgt_day)],'-v7.3','ensemble','fjord_model');
+save([outs_path,'boxmodel_runs_c13comp_n',num2str(n_combinations),'_',num2str(2015+i_yr)],'-v7.3','ensemble','fjord_model');
 disp('Outputs saved.')
-% load([outs_path,'boxmodel_runs_MITgcm_obsice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day)]);
+% load([outs_path,'boxmodel_runs_MITgcm_obsice_comp_n',num2str(n_combinations),'_',num2str(2015+i_yr)]);
 
 %% post-processing to make things 1:1 comparable
 
@@ -349,7 +348,7 @@ for i=1:n_fjord_runs
 
     figure(hf_profiles)
     nexttile; hold on; box on; grid on
-    text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i).id,res_box(i).name, fjord_model(i).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
+    text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i).ID,res_box(i).name, fjord_model(i).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
     text(0.02,0.02,sprintf("n=%d",res_box(i).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
 
     % figure; hold on
@@ -381,7 +380,7 @@ for i=1:n_fjord_runs
 
     figure(hf_series)
     nexttile; hold on; box on; grid on
-    text(0.02,0.99,sprintf("(%s) %s (%.0f km long; n=%d)",res_box(i).id,res_box(i).name, fjord_model(i).p.L/1e3,res_box(i).n),'units','normalized','VerticalAlignment','top','fontsize',fsize)
+    text(0.02,0.99,sprintf("(%s) %s (%.0f km long; n=%d)",res_box(i).ID,res_box(i).name, fjord_model(i).p.L/1e3,res_box(i).n),'units','normalized','VerticalAlignment','top','fontsize',fsize)
     % text(0.02,0.02,sprintf("n=%d",res_box(i).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
     if length(res_box(i).t) == length(res_box(i).Tupper)
         
@@ -425,5 +424,5 @@ for i=1:n_fjord_runs
 end
 
 
-% figure(hf_profiles); exportgraphics(gcf,[figs_path,'temp_profiles_2019_n',num2str(n_C0*n_P0*n_M0*n_gamma),'.png'],'Resolution',300)
-% figure(hf_series); exportgraphics(gcf,[figs_path,'temp_series_2019_n',num2str(n_C0*n_P0*n_M0*n_gamma),'.png'],'Resolution',300)
+% figure(hf_profiles); exportgraphics(gcf,[figs_path,'temp_profiles_',num2str(2015+i_yr),'_n',num2str(n_C0*n_P0*n_M0*n_gamma),'.png'],'Resolution',300)
+% figure(hf_series); exportgraphics(gcf,[figs_path,'temp_series_',num2str(2015+i_yr),'_n',num2str(n_C0*n_P0*n_M0*n_gamma),'.png'],'Resolution',300)
