@@ -45,14 +45,18 @@ meta_table = meta_table(ids_cowton_fjords,:);
 
 %% Reading the MITgcm outputs
 
+if exist('mitgcm',"var"),       clear mitgcm; end
 mitgcm(length(fjords_files_list)) = struct('x',[],'y',[],'z',[],'t',[],'Tprofile',[],'Tupper',[],'Tinter',[],'Tlower',[],'Iprofile',[],'Ivolume',[]);
 for i=1:length(fjords_files_list)
     mitgcm_out = load([inputs_path,'/MITgcm/',fjords_files_list{i}]);
     icebergs_out = load([inputs_path,'/MITgcm/icebergArea_',fjords_files_list{i}]);
+    dx=400;
+    dy=250;
+    dz=10;
 
-    x_mitgcm=1:400:size(mitgcm_out.T,1)*400;
-    y_mitgcm=1:250:size(mitgcm_out.T,2)*250;
-    z_mitgcm=1:10:size(mitgcm_out.T,3)*10;
+    x_mitgcm=1:dx:size(mitgcm_out.T,1)*dx;
+    y_mitgcm=1:dy:size(mitgcm_out.T,2)*dy;
+    z_mitgcm=1:dz:size(mitgcm_out.T,3)*dz;
     t_mitgcm=0:10:400;
     j_fjord = 1:144;
 
@@ -68,10 +72,13 @@ for i=1:length(fjords_files_list)
     mitgcm(i).Tupper = mean(temp_out(1:5,:),1,'omitnan');
     mitgcm(i).Tinter = mean(temp_out(5:25,:),1,'omitnan');
     mitgcm(i).Tlower = mean(temp_out(25:50,:),1,'omitnan');
-    mitgcm(i).Iprofile = squeeze(mean(icebergs_out.icebergArea,[1,2],'omitnan'));
-    mitgcm(i).Ivolume = icebergs_out.icebergArea.*10;
+    mitgcm(i).Iprofile = squeeze(mean(icebergs_out.icebergArea,[1,2],'omitnan'))/(dx*dy);
+    mitgcm(i).a = trapz(mitgcm(i).z,mitgcm(i).Iprofile);
+    % tetrahedral conversion of area to volume, assuming the iceberg concentration integral as the characteristic length scale
+    % mitgcm(i).Ivolume = mitgcm(i).a/(6.*sqrt(6)).*icebergs_out.icebergArea; 
+    mitgcm(i).Ivolume = dz.*icebergs_out.icebergArea; 
 
-    clear i_fjord temp_out icebergs_out t_mitgcm z_mitgcm y_mitgcm x_mitgcm % bit of tidying up
+    clear i_fjord temp_out icebergs_out t_mitgcm z_mitgcm y_mitgcm x_mitgcm dx dy dz% bit of tidying up
 end
 disp('MITgcm data read.')
 %% Preparing the model runs
@@ -137,7 +144,7 @@ for i_fjord=1:n_fjords
 
     % flipping the ocean forcing like the model wants it
     f.zs = flip(f.zs);
-    f.Ts = flip(f.Ts,2)'; 
+    f.Ts = flip(f.Ts,2)';
     f.Ss = flip(f.Ss,2)';
     
     % obtain Qsg
@@ -151,8 +158,6 @@ for i_fjord=1:n_fjords
     % no meltwater
     % f.Qsg=zeros(size(t));
     % p.P0=0;
-
-    % obtain iceberg data
 
     % no icebergs
     % p.M0=0; 
@@ -168,12 +173,12 @@ for i_fjord=1:n_fjords
     % f.D = ice_d(1:length(t)); % we need to interp/extrapolate the 1-year discharge for 400 days
     
     % MITgcm-based (hybrid: using f.xi and f.zi from here and f.D from obs)
-    f.xi = flip(mitgcm(i_fjord).Iprofile./trapz(mitgcm(i_fjord).z,mitgcm(i_fjord).Iprofile)); % get avg. iceberg concentration in each layer and make its integral equal 1
+    p.icestatic=1; % icebergs do not evolve in MITgcm
+    f.xi = flip(mitgcm(i_fjord).Iprofile./mitgcm(i_fjord).a); % get avg. iceberg concentration in each layer and make its integral equal 1
     f.zi = -flip(mitgcm(i_fjord).z);
     f.D = zeros(size(t)); % only consider the initial iceberg concentration in the fjord, and no discharge afterwards
-    f.D(1) = sum(mitgcm(i_fjord).Ivolume(:),'omitnan'); % should this be "mean" or "sum"??
-    
-    a.I0 = (f.D(1)/(p.W*p.L)).*f.xi;
+    D0 = sum(mitgcm(i_fjord).Ivolume(:),'omitnan');
+    a.I0 = (D0/(p.W*p.L)).*f.xi;
 
     fjord_model(i_fjord).t = t;
     fjord_model(i_fjord).m = m;
@@ -188,33 +193,36 @@ for i_fjord=1:n_fjords
     fjord_model(i_fjord).c.zs = ctd.depth.s;
 
     % % Sanity-check plot to make sure the boxes, T,S profiles, Qsg and D all make sense
-    figure('Position',[100 100 800 500]);
-    ints=[0,-cumsum(a.H0)];
-    subplot(1,3,1); hold on; box on;
-    plot(f.Ts(:,1),f.zs);
-    scatter(a.T0,(ints(1:end-1)+ints(2:end))/2,'filled');
-    for j=1:size(ints,2)
-        yline(ints(j));
-    end
-    yline(p.zgl,'--k','linewidth',0.5)
-    yline(p.silldepth,'--k','linewidth',0.5)
-    ylim([-p.H 0])
-    subplot(1,3,2); hold on; box on;
-    plot(f.Ss(:,1),f.zs);
-    scatter(a.S0,(ints(1:end-1)+ints(2:end))/2,'filled');
-    for j=1:size(ints,2)
-        yline(ints(j));
-    end
-    yline(p.zgl,'--k','linewidth',0.5)
-    yline(p.silldepth,'--k','linewidth',0.5)
-    ylim([-p.H 0])
-    subplot(1,3,3); hold on; box on; grid on;
-    plot(t,f.Qsg);
-    plot(t,f.D);
-    legend('Subglacial discharge','Solid-ice discharge');
-    % exportgraphics(gcf,[figs_path,'forcing_summary_obsice_fjord',fjord_letters{i_fjord},'.png'],'Resolution',300)
+    % figure('Position',[100 100 800 500]);
+    % ints=[0,-cumsum(a.H0)];
+    % subplot(1,3,1); hold on; box on;
+    % plot(f.Ts(:,1),f.zs);
+    % scatter(a.T0,(ints(1:end-1)+ints(2:end))/2,'filled');
+    % for j=1:size(ints,2)
+    %     yline(ints(j));
+    % end
+    % yline(p.zgl,'--k','linewidth',0.5)
+    % yline(p.silldepth,'--k','linewidth',0.5)
+    % ylim([-p.H 0])
+    % subplot(1,3,2); hold on; box on;
+    % plot(f.Ss(:,1),f.zs);
+    % scatter(a.S0,(ints(1:end-1)+ints(2:end))/2,'filled');
+    % for j=1:size(ints,2)
+    %     yline(ints(j));
+    % end
+    % yline(p.zgl,'--k','linewidth',0.5)
+    % yline(p.silldepth,'--k','linewidth',0.5)
+    % ylim([-p.H 0])
+    % subplot(1,3,3); hold on; box on; grid on;
+    % plot(t,f.Qsg);
+    % yyaxis right
+    % yline(D0);
+    % legend('Subglacial discharge','Solid-ice discharge');
+    % %
+    % exportgraphics(gcf,[figs_path,'forcing_summary_MITice_fjord',fjord_letters{i_fjord},'.png'],'Resolution',300)IP
+    % 
 
-    clear t m p a f % bit of tidying up
+    clear m p a f % bit of tidying up
 end
 disp('Model inputs processing done.')
 %% Run the model
@@ -223,7 +231,7 @@ n_fjord_runs = length(fjord_model);
 range_C0 = [1e3,5e3,1e4,5e4,1e5];
 range_P0 = 5:5:30;
 range_M0 = [5e-9,1e-8,2e-8,5e-8];
-range_gamma = 0.4:0.05:0.6;
+range_gamma = 0.1:0.05:0.9;
 n_C0 = length(range_C0);
 n_P0 = length(range_P0);
 n_M0 = length(range_M0);
@@ -285,7 +293,7 @@ fprintf('Done with fjord %d. ',i_fjord)
 toc
 fprintf('\n')
 end % for i_fjord
-save([outs_path,'boxmodel_runs_MITgcm_obsice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day)],'-v7.3','ensemble','fjord_model');
+save([outs_path,'boxmodel_runs_MITgcm_MITice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day),'_icebergs_cube'],'-v7.3','ensemble','fjord_model');
 disp('Outputs saved.')
 % load([outs_path,'boxmodel_runs_MITgcm_obsice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day)]);
 %% post-processing to make things 1:1 comparable
@@ -337,7 +345,7 @@ for i=1:size(ensemble,1)
     res_obs(i).ts = fjord_model(i).c.ts;
     res_obs(i).ss = fjord_model(i).c.ss;
 
-    res_box(i).t  = ensemble(i,1,1,1,1).t(2:end);
+    res_box(i).t  = t(2:end); %ensemble(i,1,1,1,1).t(2:end);
     res_box(i).zf = z_box;
     res_box(i).tf = median(tf_box_comp(:,i,:,:,:),[3,4,5,6],'omitnan');
     res_box(i).tfmin = min(tf_box_comp(:,i,:,:,:),[],[3,4,5,6],'omitnan');
@@ -426,4 +434,4 @@ for i=1:n_fjord_runs
 end
 
 
-% exportgraphics(gcf,[figs_path,'temp_profiles_MITgcm_obsice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'temp_profiles_MITgcm_MITice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day),'_icebergs_cube.png'],'Resolution',300)
