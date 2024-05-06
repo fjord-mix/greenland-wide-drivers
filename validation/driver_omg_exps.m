@@ -1,20 +1,13 @@
-run load_local_paths.m % sets data_path, import_path, collation_path, model_path, and project_path
-addpath(genpath(import_path))
-addpath(genpath(model_path))
-addpath(genpath(collation_path))
-addpath(genpath(uqlab_path))
-addpath(genpath('./'))
-
-outs_path = [data_path,'/greenland/FjordMIX/boxmodel/pce/']; % where the model output files will be saved
-figs_path = [project_path,'/figs/pce/'];                     % where the figures and animations will be saved
+run setup_paths
 letters = {'a','b','c','d','e','f','g','h'};
 years   = {'2016','2017','2018','2019','2020'};
-fjord_names = {'NW system','Kangerlussuaq'};
+fjord_names = {'NW Kanger','Kangerlussuaq'};
 
 file_omg_ctd = [data_path,'/greenland/obs/all_OMG_CTD_from_csv_ver_1.3.mat']; % obtained from: https://doi.org/10.1029/2021GL097081; % OMG original dataset can be accessed from: https://doi.org/10.5067/OMGEV-CTDS1 
 
 time_start = datetime(2017,01,01);
 time_end   = datetime(2020,12,31);
+
 run compile_process_fjords % we can safely ignore the warnings, as we are using (slightly) different forcings
 
 tgt_day = 630; % end of melt season
@@ -148,8 +141,8 @@ for i_season=1:length(years)
                 h_missing = fjords_tgt(i).p.H - max(abs(zs));
                 depth_range_missing = max(abs(zs))+1:1:fjords_tgt(i).p.H;
                 new_zs = [zs -depth_range_missing];
-                ts = interp1(zs,ts,new_zs,'nearest','extrap');
-                ss = interp1(zs,ss,new_zs,'nearest','extrap');
+                ts = medfilt1(interp1(zs,ts,new_zs,'nearest','extrap'),71); % also filters out noise
+                ss = medfilt1(interp1(zs,ss,new_zs,'nearest','extrap'),71);
                 zs = new_zs;
                 clear new_zs h_missing depth_range_missing % tidying up
             end
@@ -304,12 +297,15 @@ for i_gamma=1:n_gamma
         for k=1:length(cur_fjord.s.t)
             ints=[0; cumsum(cur_fjord.s.H(:,k))];
             z_box = (ints(1:end-1)+ints(2:end))/2;
-            Tregular(:,k) = interp1(z_box,cur_fjord.s.T(:,k),cur_fjord.c.zs,'nearest','extrap');
+            Tregular(:,k) = interp1(z_box,cur_fjord.s.T(:,k),-cur_fjord.c.zs,'nearest','extrap');
         end
+        range_upper = -cur_fjord.c.zs < 50;
+        range_inter = -cur_fjord.c.zs > 50 & -cur_fjord.c.zs < 250;
+        range_lower = -cur_fjord.c.zs > 250 & -cur_fjord.c.zs < 500;
         
-        ensemble(i_fjord,i_C0,i_P0,i_M0,i_gamma).s.Tupper = mean(Tregular(1:5,:),1,'omitnan');   % avg temp of the upper 50 m
-        ensemble(i_fjord,i_C0,i_P0,i_M0,i_gamma).s.Tinter = mean(Tregular(5:25,:),1,'omitnan');  % avg temp of the 50 - 250 m layer
-        ensemble(i_fjord,i_C0,i_P0,i_M0,i_gamma).s.Tlower = mean(Tregular(25:50,:),1,'omitnan'); % avg temp of the 250 - 500 m layer
+        ensemble(i_fjord,i_C0,i_P0,i_M0,i_gamma).s.Tupper = mean(Tregular(range_upper,:),1,'omitnan');   % avg temp of the upper 50 m
+        ensemble(i_fjord,i_C0,i_P0,i_M0,i_gamma).s.Tinter = mean(Tregular(range_inter,:),1,'omitnan');  % avg temp of the 50 - 250 m layer
+        ensemble(i_fjord,i_C0,i_P0,i_M0,i_gamma).s.Tlower = mean(Tregular(range_lower,:),1,'omitnan'); % avg temp of the 250 - 500 m layer
         fprintf('Output interpolation complete. ')
     catch ME
         fprintf('run %d failed: %s. ',run_counter,ME.message)
@@ -356,8 +352,8 @@ for i=1:size(ensemble,1)
             tf_box = ensemble(i,j,k,l,n).s.Tfinal; 
             sf_box = ensemble(i,j,k,l,n).s.Sfinal; 
             
-            tf_box_comp(:,i,j,k,l,n) = interp1(z_box,tf_box,zf_obs,'nearest','extrap');
-            sf_box_comp(:,i,j,k,l,n) = interp1(z_box,sf_box,zf_obs,'nearest','extrap');
+            tf_box_comp(:,i,j,k,l,n) = interp1(z_box,tf_box,-zf_obs,'nearest','extrap');
+            sf_box_comp(:,i,j,k,l,n) = interp1(z_box,sf_box,-zf_obs,'nearest','extrap');
 
             tupper_box_comp(:,i,j,k,l,n) = ensemble(i,j,k,l,n).s.Tupper;
             tinter_box_comp(:,i,j,k,l,n) = ensemble(i,j,k,l,n).s.Tinter;
@@ -404,13 +400,17 @@ end
 
 %% Plotting results
 lcolor = lines(3);
+n_fjords_to_plot=0;
+for i=1:n_fjord_runs
+    if res_box(i).n>0,n_fjords_to_plot=n_fjords_to_plot+1; end
+end
 
+figure('Name','Temperature comparison','Position',[40 40 1200 220*n_fjords_to_plot]);
+tiledlayout(n_fjords_to_plot,2);
 for i=1:n_fjord_runs
     if ~isempty(res_box(i)) & res_box(i).n>0
-        figure('Name','Temperature comparison','Position',[40 40 1200 800]);
-        tiledlayout(1,2);
         nexttile; hold on; box on; grid on
-        text(0.02,1.05,sprintf("Fjord: %s",res_box(i).name),'units','normalized','fontsize',14)
+        text(0.02,1.01,sprintf("%s",res_box(i).name),'units','normalized','verticalAlignment','bottom','fontsize',14)
         text(0.02,0.05,sprintf("n=%d",res_box(i).n),'Units','normalized','FontSize',14)
     
         % figure; hold on
@@ -426,8 +426,6 @@ for i=1:n_fjord_runs
         xlabel('Temperature (^oC)'); ylabel('Depth (m)');
         set(gca,'fontsize',14)
         xlim([-2 6])
-        hleg = legend([hs, hf, hb], {"Shelf","Fjord","Box model"},'fontsize',14,'Location','Southeast'); 
-        title(hleg,sprintf('Profiles at day %d\n(10-day avg.)',tgt_day))
     
         nexttile; hold on; box on; grid on
         if length(res_box(i).t) == length(res_box(i).Tupper)
@@ -443,13 +441,13 @@ for i=1:n_fjord_runs
             % plot(res_box(i).t,res_box(i).Tlower_max,'linewidth',1.5,'color',lcolor(3,:),'LineStyle',':');
            
         end
-        ylabel('Box model Temperature (^oC)'); xlabel('Model time (days)');
+        ylabel('Temperature (^oC)'); xlabel('Model time (days)');
         set(gca,'fontsize',14)
-
-        hleg = legend([hu,hi,hl],{"0-50 m","50-250 m","250-500 m"},'fontsize',14,'Location','Northeast'); 
-        title(hleg,'Time series')
     end
 end
-
+hleg = legend([hu,hi,hl],{"0-50 m","50-250 m","250-500 m"},'fontsize',14,'Location','Northeast'); 
+title(hleg,'Time series')
+hleg = legend([hs, hf, hb], {"Shelf","Fjord","Box model"},'fontsize',14,'Location','Southeast'); 
+title(hleg,sprintf('Profiles at day %d\n(10-day avg.)',tgt_day))
 
 % exportgraphics(gcf,[figs_path,'temp_profiles_OMG_2fjords_comp_n',num2str(n_combinations),'_day',num2str(tgt_day),'.png'],'Resolution',300)
