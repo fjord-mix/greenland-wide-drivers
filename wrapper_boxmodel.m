@@ -9,8 +9,8 @@ function [fjord_out] = wrapper_boxmodel(X,Parameters,flag_debug)
 p.H = Parameters.H;
 p.Hmin=5;
 % p.M0=0;      % no icebergs if zero
-p.C0=X(11);  % no shelf-exchange if zero
-p.P0=X(10);  % no meltwater plume if zero
+p.C0=X(9);  % no shelf-exchange if zero
+p.P0=X(8);  % no meltwater plume if zero
 
 p.dt = Parameters.t(2)-Parameters.t(1);
 %% Getting the parameters to be explored into variables that we can more easily recall
@@ -25,11 +25,17 @@ p.zgl       = -X(5) .* X(2); % Zg = (Zg/H) * H
 % p.silldepth = X(3); 
 % p.zgl       = X(4); 
 
-dTanom = X(6);
-dSanom = X(7);
-% Xfrq   = X(8);
-dQamp  = X(8);
-dDanom = X(9); % ignoring solid-ice discharge (for now?)
+dQamp  = X(6);
+dDanom = X(7); % ignoring solid-ice discharge (for now?)
+
+if length(X) > 10
+    dTanom = X(10);
+    dSanom = X(11);
+    % Xfrq   = X(12);
+else
+    i_cast=X(10);
+end
+
 
 %% Set up model forcings
 % Xamp=0.92;  % if using anomaly to profiles
@@ -42,19 +48,33 @@ dDanom = X(9); % ignoring solid-ice discharge (for now?)
 % Xper = (Xamp .* sin(-2*pi*Xfrq*Parameters.t)) .* winter_wave; 
 
 % Ocean forcings
-% f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* (dTanom + dTanom .* Xper)))'; % if using anomaly to profiles
-% f.Ss  = (Parameters.Socn + (Parameters.Sdec .* (dSanom + dSanom .* Xper)))'; % if using anomaly to profiles
-f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* dTanom))'; % if using isopycnal stretching
-f.Ss  = (Parameters.Socn + (Parameters.Sdec .* dSanom))'; % if using isopycnal stretching
-f.zs  = -Parameters.zs;
+if length(X) > 10
+    % f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* (dTanom + dTanom .* Xper)))'; % if using anomaly to profiles
+    % f.Ss  = (Parameters.Socn + (Parameters.Sdec .* (dSanom + dSanom .* Xper)))'; % if using anomaly to profiles
+    f.Ts  = (Parameters.Tocn + (Parameters.Tdec .* dTanom))'; % if using isopycnal stretching
+    f.Ss  = (Parameters.Socn + (Parameters.Sdec .* dSanom))'; % if using isopycnal stretching
+    f.zs  = -Parameters.zs;
+    
+    % if ismember(Parameters.regID,[2,4,6]) % isopycnal stretching due to storms only applies to eastern Greenland    
+    %     [f.Ts,f.Ss] = heave_profiles(f.Ts,f.Ss,f.zs,Xper,p.sigma_bnds(2)); % using Cowton et al. value for the pycnocline
+    % end
+    zs = flip(f.zs);
+    Ts = flip(f.Ts,1); 
+    Ss = flip(f.Ss,1);
+else
+    temp_profile  = Parameters.ocn(i_cast).T;
+    salt_profile  = Parameters.ocn(i_cast).S;
+    depth_profile = Parameters.ocn(i_cast).depth;
 
-% if ismember(Parameters.regID,[2,4,6]) % isopycnal stretching due to storms only applies to eastern Greenland    
-%     [f.Ts,f.Ss] = heave_profiles(f.Ts,f.Ss,f.zs,Xper,p.sigma_bnds(2)); % using Cowton et al. value for the pycnocline
-% end
+    f.Ts = repmat(temp_profile,length(Parameters.t),1);
+    f.Ss = repmat(salt_profile,length(Parameters.t),1);
+    f.zs = repmat(depth_profile,length(Parameters.t),1);
+    Ts = f.Ts;
+    Ss = f.Ss;
+    zs = f.zs;
+end
 
-zs = flip(f.zs);
-Ts = flip(f.Ts,1); 
-Ss = flip(f.Ss,1);
+
 
 a.H0 = double(get_fjord_boxes_from_density(mean(Ts,2),mean(Ss,2),zs,p));
 % Check sum of layer thicknesses is equal to fjord depth.
