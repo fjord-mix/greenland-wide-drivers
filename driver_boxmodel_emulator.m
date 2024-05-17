@@ -41,8 +41,8 @@ time_axis = datetime(2010,01,15):1:datetime(2018,12,15);
 if exist('ensemble',"var"), clear ensemble; end
 ensemble(n_train) = struct("time",[],"temp",[],"salt",[],"H",[],"ts",[],"ss",[],"zs",[],"p",[],"phi",[],"qvs",[],"qsg",[],"qts",[]);
 
-X          = zeros([n_train,n_inputs]);
-Xemul      = zeros([n_emul,n_inputs]);
+% X          = zeros([n_train,n_inputs]);
+% Xemul      = zeros([n_emul,n_inputs]);
 
 uqlab % Initialise UQLab
 
@@ -73,7 +73,7 @@ end
 fprintf('Model training runs complete.\n')
 toc    
 
-fprintf('Computing dT for the different layers...\n')
-dT_out = compute_fjord_shelf_differences(ensemble,'T');
-% [ohc_out,osc_out] = compute_ensemble_metric(ensemble,length(time_axis));
-fprintf('Done.\n')
+% fprintf('Computing dT for the different layers...\n')
+% dT_out = compute_fjord_shelf_differences(ensemble,'T');
+% % [ohc_out,osc_out] = compute_ensemble_metric(ensemble,length(time_axis));
+% fprintf('Done.\n')

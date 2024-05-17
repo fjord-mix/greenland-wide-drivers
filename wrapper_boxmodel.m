@@ -33,7 +33,7 @@ if length(X) > 10
     dSanom = X(11);
     % Xfrq   = X(12);
 else
-    i_cast=X(10);
+    i_cast=int32(X(10));
 end
 
 
@@ -62,13 +62,28 @@ if length(X) > 10
     Ts = flip(f.Ts,1); 
     Ss = flip(f.Ss,1);
 else
-    temp_profile  = Parameters.ocn(i_cast).T;
-    salt_profile  = Parameters.ocn(i_cast).S;
-    depth_profile = Parameters.ocn(i_cast).depth;
+    ts = Parameters.ocn(i_cast).temp;
+    ss = Parameters.ocn(i_cast).sal;
+    zs = -Parameters.ocn(i_cast).depth';
 
-    f.Ts = repmat(temp_profile,length(Parameters.t),1);
-    f.Ss = repmat(salt_profile,length(Parameters.t),1);
-    f.zs = repmat(depth_profile,length(Parameters.t),1);
+    if max(abs(zs)) < p.H % if our profile does not extend to the bottom of the fjord
+        % h_missing = p.H - max(abs(zs));
+        depth_range_missing = max(abs(zs))+1:1:p.H;
+        new_zs = [zs -depth_range_missing];
+        ts = interp1(zs,ts,new_zs,'nearest','extrap');
+        ss = interp1(zs,ss,new_zs,'nearest','extrap');
+        zs = new_zs;
+        clear new_zs depth_range_missing % tidying up
+    end
+    % filtering out some noise, which might cause unnecessary instabilities in the model
+    % and flipping arrays, because they need to go from bottom to top (negative depths)
+    ts = flip(medfilt1(ts,11)); 
+    ss = flip(medfilt1(ss,11)); 
+    zs = flip(zs);
+    
+    f.Ts = repmat(ts',length(Parameters.t),1)';
+    f.Ss = repmat(ss',length(Parameters.t),1)';
+    f.zs = zs;
     Ts = f.Ts;
     Ss = f.Ss;
     zs = f.zs;
@@ -96,11 +111,15 @@ f.zi = Parameters.zi;
 f.xi = Parameters.xi;
 a.I0 = Parameters.I0;
 
+
 %% For plotting purposes
 if nargin > 2
     p.plot_runtime=flag_debug; % for debugging purposes
 end
-% run figure_forcings_summary.m
+% % Sanity-check plot to make sure the boxes, T,S profiles, Qsg and D all make sense
+run figure_forcings_summary.m
+
+
 
 %% Preparing fjord encapsulating structure
 fjord_run.t = Parameters.t;
