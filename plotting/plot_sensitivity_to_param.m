@@ -34,7 +34,7 @@ for i_param=1:length(param_names)
         %     text(0.02,1.05,sprintf("(%s) %s (%.0f km long)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','fontsize',14)
         % end
         if i_fjord==1
-            text(0.02,0.95,sprintf("%s = [%.1e,%.1e]",param_names{i_param},param_ranges{i_param}(1),param_ranges{i_param}(end)),'units','normalized','fontsize',14)
+            text(0.02,0.05,sprintf("%s = [%.1e,%.1e]",param_names{i_param},param_ranges{i_param}(1),param_ranges{i_param}(end)),'units','normalized','fontsize',14)
         end
         havg = plot(tfmean,-res_obs(i_fjord).zf,'linewidth',1.5,'color',[0.5 0.5 0.5]);
         hbnd = plot(tfmin,-res_obs(i_fjord).zf,'linewidth',1.5,'color',[0.5 0.5 0.5],'LineStyle','--');
@@ -45,8 +45,9 @@ for i_param=1:length(param_names)
         plot(tfmax,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(i_fjord,:),'LineStyle','--');
         hfjd = plot(tfmean,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(i_fjord,:));
 
-        scatter(0-0.1*i_fjord,fjord_model(i_fjord).p.zgl,40,'v','filled','MarkerFaceColor',lcolor(i_fjord,:))
-        plot([0-0.1*i_fjord 0-0.1*i_fjord],[-fjord_model(i_fjord).p.H fjord_model(i_fjord).p.silldepth],'-','linewidth',2,'color',lcolor(i_fjord,:))
+        base_gl_and_sill_t = 2.5;
+        scatter(base_gl_and_sill_t-0.1*i_fjord,fjord_model(i_fjord).p.zgl,40,'v','filled','MarkerFaceColor',lcolor(i_fjord,:))
+        plot([base_gl_and_sill_t-0.1*i_fjord base_gl_and_sill_t-0.1*i_fjord],[-fjord_model(i_fjord).p.H fjord_model(i_fjord).p.silldepth],'-','linewidth',2,'color',lcolor(i_fjord,:))
     
         set(gca,'fontsize',14)
         xlim([-1 2.5])
@@ -77,7 +78,7 @@ for i_param=1:length(param_names)
         sfmax = max(sf,[],2,'omitnan');
     
         if i_fjord==1
-            text(0.98,0.95,sprintf("%s = [%.1e,%.1e]",param_names{i_param},param_ranges{i_param}(1),param_ranges{i_param}(end)),'units','normalized','fontsize',14,'HorizontalAlignment','right')
+            text(0.02,0.05,sprintf("%s = [%.1e,%.1e]",param_names{i_param},param_ranges{i_param}(1),param_ranges{i_param}(end)),'units','normalized','fontsize',14,'HorizontalAlignment','left')
         end
         havg_s = plot(sfmean,-res_obs(i_fjord).zf,'linewidth',1.5,'color',[0.5 0.5 0.5]);
         hbnd_s = plot(sfmin,-res_obs(i_fjord).zf,'linewidth',1.5,'color',[0.5 0.5 0.5],'LineStyle','--');
@@ -88,15 +89,16 @@ for i_param=1:length(param_names)
         plot(sfmax,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(i_fjord,:),'LineStyle','--');
         hfjd_s = plot(sfmean,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(i_fjord,:));
 
-        scatter(35-0.1*i_fjord,fjord_model(i_fjord).p.zgl,40,'v','filled','MarkerFaceColor',lcolor(i_fjord,:))
-        plot([35-0.1*i_fjord 35-0.1*i_fjord],[-fjord_model(i_fjord).p.H fjord_model(i_fjord).p.silldepth],'-','linewidth',2,'color',lcolor(i_fjord,:))
+        base_gl_and_sill_s = 35;
+        scatter(base_gl_and_sill_s-0.1*i_fjord,fjord_model(i_fjord).p.zgl,40,'v','filled','MarkerFaceColor',lcolor(i_fjord,:))
+        plot([base_gl_and_sill_s-0.1*i_fjord base_gl_and_sill_s-0.1*i_fjord],[-fjord_model(i_fjord).p.H fjord_model(i_fjord).p.silldepth],'-','linewidth',2,'color',lcolor(i_fjord,:))
     
         set(gca,'fontsize',14)
         xlim([33 35])
         % ylim([-fjord_model(i_fjord).p.H 0])
         if i_param==1
             handle_fjords_s = [handle_fjords_s hfjd_s];
-            lbl_fjords{i_fjord} = res_box(i_fjord).name;
+            lbl_fjords{i_fjord} = sprintf("%s (%.0f km long)",res_box(i_fjord).name,fjord_model(i_fjord).p.L/1e3);
         end
     end
 
