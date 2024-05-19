@@ -11,6 +11,7 @@ input_dt   = 30;
 model_dt   = 0.1;
 tgt_day = 300; % which day of the 400-day run we want to compare
 
+flag_ice          = 'obs'; %{'MIT'|'obs','no'} for choosing which iceberg treatment (MIT-derived, observation-derived, no icebergs)
 fjord_letters     = {'B','F','G','M'};
 fjords_files_list = {'NUU_80','KAK_10','NAA_20','SES_10'};
 
@@ -80,15 +81,19 @@ for i=1:length(fjords_files_list)
     mitgcm(i).Supper = mean(salt_out(1:5,:),1,'omitnan');
     mitgcm(i).Sinter = mean(salt_out(5:25,:),1,'omitnan');
     mitgcm(i).Slower = mean(salt_out(25:50,:),1,'omitnan');
+
     % tetrahedral conversion of area to volume, assuming the average cuboid edge as the characteristic length scale:
     % It makes no sense to use a tetrahedron here (as done in the box model itself). 
     % The IceBerg module in MITgcm treats icebergs as being "rectangular in plan-view and have vertical sides". 
-    % Therefore, treating the volume-to-surface-area conversion as a cube makes more sense than a tetrahedron.
+    % Therefore, treating the volume-to-surface-area conversion as a cuboid makes more sense than a tetrahedron.
     % were it a tetrahedron: mitgcm(i).Ivolume = mitgcm(i).a/(6.*sqrt(6)).*icebergs_out.icebergArea;
-    mitgcm(i).a = (dx+dy+dz)./3; %(2*dx*dy + 2*dx*dz + 2*dy*dz)/dz; % trapz(mitgcm(i).z,mitgcm(i).Iprofile);
+    % Here we are using the formula for characteristic length a = Vbody/Asurf
+    % Alternatives for 'a': {(dx+dy+dz)./3 | (2*dx*dy + 2*dx*dz + 2*dy*dz)/dz | trapz(mitgcm(i).z,mitgcm(i).Iprofile)}
+    % mitgcm(i).Iprofile = squeeze(mean(icebergs_out.icebergArea,[1,2],'omitnan'))/(dx*dy*dz);
+    mitgcm(i).a = 60;%(dx+dy+dz)./3; %(dx*dy*dz)./(2*dx*dy + 2*dx*dz + 2*dy*dz);
     mitgcm(i).Ivolume = mitgcm(i).a/6.*icebergs_out.icebergArea; % A = 6/a*V --> V = A*a/6
     mitgcm(i).Iprofile = squeeze(mean(mitgcm(i).Ivolume,[1,2],'omitnan'))./(dx*dy*dz);
-    % mitgcm(i).Iprofile = squeeze(mean(icebergs_out.icebergArea,[1,2],'omitnan'))/(dx*dy*dz);
+    
 
     clear i_fjord j_fjord temp_out icebergs_out t_mitgcm z_mitgcm y_mitgcm x_mitgcm dx dy dz% bit of tidying up
 end
@@ -173,32 +178,39 @@ for i_fjord=1:n_fjords
     % p.P0=0;
 
     % no icebergs
-    % p.M0=0; 
-    % f.zi = -800:10:0;
-    % % f.zi = f.zi';
-    % f.D  = zeros(1,length(t));
-    % f.xi = (p.nu0/abs(p.zgl))*exp(p.nu0*f.zi'/abs(p.zgl))/(1-exp(-p.nu0));
-    % a.I0 = 0*f.zi;
+    if strcmp(flag_ice,'no')
+        p.M0=0; 
+        f.zi = -800:10:0;
+        % f.zi = f.zi';
+        f.D  = zeros(1,length(t));
+        f.xi = (p.nu0/abs(p.zgl))*exp(p.nu0*f.zi'/abs(p.zgl))/(1-exp(-p.nu0));
+        a.I0 = 0*f.zi;
+    end
 
     % obs-based
-    runtime_axis = datasets.opts.time_start:model_dt:datasets.opts.time_end;
-    [f.zi,ice_d,f.xi,a.I0] = get_total_iceberg_discharge(datasets,fjords_compilation(fjord_ids(i_fjord)).glaciers,runtime_axis',p,a);
-    f.D = ice_d(1:length(t)); % we need to interp/extrapolate the 1-year discharge for 400 days
-    
+    if strcmp(flag_ice,'obs')
+        runtime_axis = datasets.opts.time_start:model_dt:datasets.opts.time_end;
+        [f.zi,ice_d,f.xi,a.I0] = get_total_iceberg_discharge(datasets,fjords_compilation(fjord_ids(i_fjord)).glaciers,runtime_axis',p);
+        f.D = ice_d(1:length(t)); % we need to interp/extrapolate the 1-year discharge for 400 days
+    end
+
     % MITgcm-based (hybrid: using f.xi and f.zi from here and f.D from obs)
-    % p.icestatic=1; % icebergs do not evolve in MITgcm
-    % f.xi = flip(mitgcm(i_fjord).Iprofile./mitgcm(i_fjord).a); % get avg. iceberg concentration in each layer and make its integral equal 1
-    % f.zi = -flip(mitgcm(i_fjord).z);
-    % f.D = zeros(size(t)); % only consider the initial iceberg concentration in the fjord, and no discharge afterwards
-    % D0 = sum(mitgcm(i_fjord).Ivolume(:),'omitnan');
-    % a.I0 = (D0/(p.W*p.L)).*f.xi;
+    if strcmp(flag_ice,'MIT')
+        p.icestatic=1; % icebergs do not evolve in MITgcm
+        f.xi = flip(mitgcm(i_fjord).Iprofile./trapz(mitgcm(i).z,mitgcm(i).Iprofile)); % get avg. iceberg concentration in each layer and make its integral equal 1
+        f.zi = -flip(mitgcm(i_fjord).z);
+        f.D = zeros(size(t)); % only consider the initial iceberg concentration in the fjord, and no discharge afterwards
+        D0 = sum(mitgcm(i_fjord).Ivolume(:),'omitnan');
+        a.I0 = (D0/(p.W*p.L)).*f.xi;
+        fjord_model(i_fjord).a.D0 = D0;
+    end
 
     fjord_model(i_fjord).t = t;
     fjord_model(i_fjord).m = m;
     fjord_model(i_fjord).p = p;
     fjord_model(i_fjord).a = a;
     fjord_model(i_fjord).f = f;
-    fjord_model(i_fjord).a.D0 = D0;
+    
     fjord_model(i_fjord).c.tf = ctd.temp.f;
     fjord_model(i_fjord).c.sf = ctd.salt.f;
     fjord_model(i_fjord).c.zf = ctd.depth.f;
@@ -351,7 +363,9 @@ toc
 fprintf('\n')
 end % for i_fjord
 clear i_fjord i1 i2 i3 i4 i5 
-file_out = [outs_path,'boxmodel_runs_MITgcm_obsice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day),'_3layers'];
+
+file_out = [outs_path,'boxmodel_runs_MITgcm_',flag_obs_or_mit,'ice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day),'_3layers_a_60m'];
+
 save(file_out,'-v7.3','ensemble','fjord_model');
 fprintf('Outputs saved in %s.\n',file_out)
 % load(file_out);
@@ -475,10 +489,10 @@ disp('Postprocessing done.')
 %% Plotting results
 
 plot_sensitivity_to_param(res_box,res_obs,fjord_model,param_names,range_params);
-% exportgraphics(gcf,[figs_path,'temp_profiles_sensitivity_n',num2str(n_combinations),'_day',num2str(tgt_day),'_3layers.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'temp_profiles_',flag_ice,'ice_sensitivity_n',num2str(n_combinations),'_day',num2str(tgt_day),'_3layers.png'],'Resolution',300)
 
 plot_ensemble_results(tgt_day,res_box,res_obs,fjord_model,mitgcm,dims_ensemble,param_names,range_params,n_fjord_runs);
-% exportgraphics(gcf,[figs_path,'temp_profiles_MITgcm_MITice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day),'_3layers.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'temp_profiles_MITgcm_',flag_ice,'ice_comp_n',num2str(n_combinations),'_day',num2str(tgt_day),'_3layers.png'],'Resolution',300)
 
 plot_ens_mitgcm_boxed(res_box,fjord_model,n_fjord_runs);
 % exportgraphics(gcf,[figs_path,'temp_series_box_MITgcm',num2str(n_combinations),'_3layers.png'],'Resolution',300)
