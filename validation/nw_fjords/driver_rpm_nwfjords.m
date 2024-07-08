@@ -1,4 +1,4 @@
-%% Driver file for simulating the fjords presented in Cowton et al. (2023, GRL)
+%% Driver file for simulating the 10 NW fjords
 
 %% Configuring paths
 run setup_paths
@@ -6,21 +6,44 @@ fun = @(s) all(structfun(@isempty,s)); % tiny function to get rid of empty entri
 
 %% Initialise all needed variables
 
-i_yr = 4; % {1,2,3,4} for {2016,2017,2018,2019}
-time_start = datetime(2015+i_yr,01,01);
-time_end   = datetime(2015+i_yr,12,31);
-input_dt   = 30;
-dt_in_h    = 2.;
-model_dt   = dt_in_h/24.; % time step in days (2h/24 ~ 0.083 days)
-n_years    = 4; % how many years we want to run
+n_runs     = 10;              % number of runs per fjord
+input_dt   = 30;              % time step of model input (in days)
+dt_in_h    = 2.;              % time step in hours
+model_dt   = dt_in_h/24.;     % time step in days (2h/24 ~ 0.083 days)
+n_years    = 4;               % how many years we want to run
 tgt_days   = [935,1010,1150]; % which days of the run we want to compare: year 3 peak-melt and post-melt, following pre-melt
 name_days  = {'peak','post','winter'};
+
+i_yr       = 4; % {1,2,3,4} for {2016,2017,2018,2019}
+time_start = datetime(2015+i_yr,01,01);
+time_end   = datetime(2015+i_yr,12,31);
 
 letters = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n'};
 
 fjord_names = {'Qeqertaarsuusarsuup','Nuussuup','Tuttulikassaap','Nunatakassaap','Illulip',...
                'Kakiffaat','Naajarsuit','Sermeq',...
                'Salliarsutsip','Umiammakku','Kangilliup','Kangerlussuup','SermeqSilarleq','SermeqKujalleq'} ;
+
+
+%% Define parameter space
+param_names = {'C0','P0','K0','A0'};
+range_params = {[1e2,1e5],...    % C0 
+                [01,75],...      % P0 no crashes with [1,40]
+                [1e-4,1e-3],...  % K0
+                [0,3e8]};        % A0
+
+rng('default') % set the seed for reproducibility
+uqlab
+for i_param=1:length(param_names)
+    iOpts.Marginals(i_param).Type       = 'uniform';
+    iOpts.Marginals(i_param).Parameters = range_params{i_param};
+    iOpts.Marginals(i_param).Bounds     = range_params{i_param};
+    iOpts.Marginals(i_param).Name       = param_names{i_param};
+end
+
+input = uq_createInput(iOpts); % create probability functions
+X = uq_getSample(input,n_runs,'LHS');  % training dataset
+disp('Parameter space created.')
 
 %% Compiling data 
 
@@ -36,6 +59,7 @@ qsg_all = qsg_glaciers(tgt_period,:);
 taxis_qsg = time_glaciers(tgt_period);
 clear qsg_glaciers time_glaciers tgt_period % bit of tidying up
 disp('Data compiling done.')
+
 %% Preparing the model runs
 n_fjords = size(meta_table,1);
 
@@ -44,8 +68,7 @@ fjord_model(n_fjords) = struct("p",[],"a",[],"f",[],"t",[],"m",[],"c",[]);
 for i_fjord=1:n_fjords
     if ~isnan(meta_table.Length_km_(i_fjord)) % we only want fjords for which we have all geometry data
 
-        % time axis for the run
-        t = 0:model_dt:365*n_years; % 4 years (we want to repeat the yearly data 4 times)
+        t = 0:model_dt:365*n_years; % time axis for the run: 4 years (we want to repeat the yearly data 4 times)
 
         % compile metadata and default parameters
         m.ID   = meta_table.Var1(i_fjord);
@@ -63,7 +86,7 @@ for i_fjord=1:n_fjords
         ctd.salt  = ctd_data.Sdata{i_yr,i_fjord};
         ctd.depth = ctd_data.zdata{i_yr,i_fjord};
         
-        % fjord geometry - from Tom's data
+        % fjord geometry - from Cowton et al. (2023)
         p.L         = 1e3.*meta_table.Length_km_(i_fjord);
         p.W         = 1e3.*meta_table.Width_km_(i_fjord);
         p.silldepth = -1.* meta_table.SillDepth_m_(i_fjord);
@@ -106,7 +129,6 @@ for i_fjord=1:n_fjords
 
 
         % initial conditions
-        % H_clim = double(get_fjord_boxes_from_density(f.Ts',f.Ss',f.zs,p)); % negative values, top to bottom
         H_clim = ones([p.N],1).*p.H/p.N;
         [T_clim,S_clim] = bin_ocean_profiles(mean(f.Ts,1),mean(f.Ss,1),f.zs,H_clim);
         a.H0 = H_clim;
@@ -128,25 +150,10 @@ for i_fjord=1:n_fjords
         f.Qsg = f.Qsg(1:length(t));
         clear taxis_qsg_julian taxis_qsg_num taxis_qsg_num_dtmodel qsg_dtmodel % bit of tidying up
 
-        % no icebergs
-        % p.M0=0; 
-        % f.zi = -800:10:0;
-        % f.zi = f.zi';
-        % f.D  = zeros(1,length(t));
-        % f.xi = (p.nu0/abs(p.zgl))*exp(p.nu0*f.zi/abs(p.zgl))/(1-exp(-p.nu0));
-        % a.I0 = 0*f.zi;
-
         % idealised icebergs
         p.icestatic=1; % icebergs do not evolve in MITgcm
         f.D = zeros(size(t)); % only consider the initial iceberg concentration in the fjord, and no discharge afterwards
         a.I0 = p.A0*p.if(p.nu0, abs(p.zgl), -cumsum(a.H0)+a.H0/2);
-        
-        % obtain iceberg data
-        % runtime_axis = datasets.opts.time_start:model_dt:datasets.opts.time_end;
-        % [f.zi,ice_d,f.xi,a.I0] = get_total_iceberg_discharge(datasets,fjords_compilation(fjord_ids(i_fjord)).glaciers,runtime_axis',p);
-        % % we need to repeat the 1-year discharge for 10 years like with Qsg
-        % f.D = repmat(ice_d,1,n_years+1);
-        % f.D = f.D(1:length(t));
 
         fjord_model(i_fjord).t = t;
         fjord_model(i_fjord).m = m;
@@ -196,27 +203,8 @@ idx = arrayfun(fun,fjord_model);
 fjord_model(idx)=[]; % remove the empty elements
 disp('Model inputs processing done.')
 
-
-%% Define parameter space
-n_fjord_runs = length(fjord_model);
-param_names = {'C0','P0','K0','A0'};
-range_params = {[1e2,1e5],...    % C0 
-                [01,40],...      % P0 no crashes with [1,40]
-                [1e-4,1e-3],...  % K0
-                [0,3e8]};        % A0
-
-dims_ensemble = n_fjord_runs;
-n_combinations = 1;%n_fjord_runs;
-for i=1:length(range_params)
-    dims_ensemble = [dims_ensemble length(range_params{i})];
-    n_combinations = n_combinations.*length(range_params{i});
-end
-
-disp('Parameter space created.')
-%% Run the model
-
-% Creating empty struct with desired fields of the size according to how
-% many variables we have
+%% Running the model
+dims_ensemble = size(X);
 ensemble_fields = {'p','t','m','s'}; % 'a','f','c','s'};
 ensemble_fields{2,1} = cell(dims_ensemble);
 ensemble = struct(ensemble_fields{:});
@@ -230,29 +218,23 @@ fjords_crashed = {};
 run_counter=0;
 for i_fjord=1:n_fjord_runs
 tic
-for i1=1:dims_ensemble(2)
-for i2=1:dims_ensemble(3)
-for i3=1:dims_ensemble(4)
-for i4=1:dims_ensemble(5)
+for i_run=1:n_runs
     run_counter = run_counter+1;
     cur_fjord = fjord_model(i_fjord);
     
-    cur_fjord.p.(param_names{1}) = range_params{1}(i1);
-    cur_fjord.p.(param_names{2}) = range_params{2}(i2);
-    cur_fjord.p.(param_names{3}) = range_params{3}(i3);
-    cur_fjord.p.(param_names{4}) = range_params{4}(i4);
-
-    cur_fjord.p.icestatic=1;
-    cur_fjord.f.D = zeros(size(cur_fjord.t)); % only consider the initial iceberg concentration in the fjord, and no discharge afterwards
+    for i_param=1:size(X,2)
+        cur_fjord.p.(param_names{i_param}) = X(i_run,i_param);
+    end
     cur_fjord.a.I0 = cur_fjord.p.A0*cur_fjord.p.if(cur_fjord.p.nu0, abs(cur_fjord.p.zgl), -cumsum(cur_fjord.a.H0)+cur_fjord.a.H0/2);
+    
     % cur_fjord.p.plot_runtime=1;
         try
             cur_fjord.s = zmodel(cur_fjord.p, cur_fjord.t, cur_fjord.f, cur_fjord.a);
             fprintf('run %d complete. ',run_counter)
     
-            ensemble(i_fjord,i1,i2,i3,i4).p = cur_fjord.p;
-            ensemble(i_fjord,i1,i2,i3,i4).t = cur_fjord.t;
-            ensemble(i_fjord,i1,i2,i3,i4).m = cur_fjord.m;
+            ensemble(i_fjord,i_run).p = cur_fjord.p;
+            ensemble(i_fjord,i_run).t = cur_fjord.t;
+            ensemble(i_fjord,i_run).m = cur_fjord.m;
             Tfinal=NaN([cur_fjord.p.N,length(tgt_days)]);
             Sfinal=NaN(size(Tfinal));
             Hfinal=NaN(size(Tfinal));
@@ -263,9 +245,9 @@ for i4=1:dims_ensemble(5)
                 Sfinal(:,i_day) = mean(cur_fjord.s.S(:,(tgt_day-5:tgt_day+5)),2);
                 Hfinal(:,i_day) = mean(cur_fjord.s.H(:,(tgt_day-5:tgt_day+5)),2);
             end
-            ensemble(i_fjord,i1,i2,i3,i4).s.Tfinal = Tfinal;
-            ensemble(i_fjord,i1,i2,i3,i4).s.Sfinal = Sfinal;
-            ensemble(i_fjord,i1,i2,i3,i4).s.Hfinal = Hfinal;
+            ensemble(i_fjord,i_run).s.Tfinal = Tfinal;
+            ensemble(i_fjord,i_run).s.Sfinal = Sfinal;
+            ensemble(i_fjord,i_run).s.Hfinal = Hfinal;
 
             zf_obs = cur_fjord.c.zf;
             Tregular=NaN([length(zf_obs),length(cur_fjord.s.t)]);
@@ -280,13 +262,13 @@ for i4=1:dims_ensemble(5)
             range_inter = zf_obs > 50 & zf_obs < 250;
             range_lower = zf_obs > 250 & zf_obs < 500;
             
-            ensemble(i_fjord,i1,i2,i3,i4).s.Tupper = mean(Tregular(range_upper,:),1,'omitnan'); % avg temp of the upper 50 m
-            ensemble(i_fjord,i1,i2,i3,i4).s.Tinter = mean(Tregular(range_inter,:),1,'omitnan'); % avg temp of the 50 - 250 m layer
-            ensemble(i_fjord,i1,i2,i3,i4).s.Tlower = mean(Tregular(range_lower,:),1,'omitnan'); % avg temp of the 250 - 500 m layer
+            ensemble(i_fjord,i_run).s.Tupper = mean(Tregular(range_upper,:),1,'omitnan'); % avg temp of the upper 50 m
+            ensemble(i_fjord,i_run).s.Tinter = mean(Tregular(range_inter,:),1,'omitnan'); % avg temp of the 50 - 250 m layer
+            ensemble(i_fjord,i_run).s.Tlower = mean(Tregular(range_lower,:),1,'omitnan'); % avg temp of the 250 - 500 m layer
 
-            ensemble(i_fjord,i1,i2,i3,i4).s.Supper = mean(Sregular(range_upper,:),1,'omitnan'); % avg temp of the upper 50 m
-            ensemble(i_fjord,i1,i2,i3,i4).s.Sinter = mean(Sregular(range_inter,:),1,'omitnan'); % avg temp of the 50 - 250 m layer
-            ensemble(i_fjord,i1,i2,i3,i4).s.Slower = mean(Sregular(range_lower,:),1,'omitnan'); % avg temp of the 250 - 500 m layer
+            ensemble(i_fjord,i_run).s.Supper = mean(Sregular(range_upper,:),1,'omitnan'); % avg temp of the upper 50 m
+            ensemble(i_fjord,i_run).s.Sinter = mean(Sregular(range_inter,:),1,'omitnan'); % avg temp of the 50 - 250 m layer
+            ensemble(i_fjord,i_run).s.Slower = mean(Sregular(range_lower,:),1,'omitnan'); % avg temp of the 250 - 500 m layer
             fprintf('Output interpolation complete. ')
         catch ME
             fprintf('run %d failed: %s. ',run_counter,ME.message)
@@ -295,22 +277,19 @@ for i4=1:dims_ensemble(5)
             fjords_crashed{end+1} = cur_fjord;
         end
         fprintf('\n')
-end % for i4
-end % for i3
-end % for i2
 end % for i1
 fprintf('Done with fjord %d. ',i_fjord)
 toc
 fprintf('\n')
 end % for i_fjord
-file_out = [outs_path,'boxmodel_runs_NWfjords_n',num2str(n_combinations),'_',num2str(2015+i_yr),'_',num2str(cur_fjord.p.N),'layers_dt',num2str(dt_in_h),'h'];
+file_out = [outs_path,'rpm_NWfjords_n',num2str(n_runs),'_',num2str(2015+i_yr),'_',num2str(cur_fjord.p.N),'layers_dt',num2str(dt_in_h),'h'];
 save(file_out,'-v7.3','ensemble','fjord_model');
 if ~isempty(fjords_crashed)
     save([file_out,'_crashed'],'-v7.3','fjords_crashed');
 end
 disp('Outputs saved.')
-% load(file_out);
-%% post-processing to make things 1:1 comparable
+
+%% Post-processing
 
 if exist('res_obs',"var"),       clear res_obs; end
 res_obs(size(ensemble)) = struct("tf",[],"sf",[],"zf",[]);
@@ -322,53 +301,46 @@ for i_fjord=1:size(ensemble,1)
     sf_obs = fjord_model(i_fjord).c.sf;
     n_completed = 0; % completed runs for that fjord
 
-    % n_layers = ensemble(i,1,1).p.N+ensemble(i,1,1).p.sill;
-    tf_box_comp = NaN([length(zf_obs),dims_ensemble(2:end),length(tgt_days)]);
+    tf_box_comp = NaN([length(zf_obs),n_runs,length(tgt_days)]);
     sf_box_comp = NaN(size(tf_box_comp));
-    rmse_tf = NaN([dims_ensemble(2:end),length(tgt_days)]);
-    rmse_sf = NaN([dims_ensemble(2:end),length(tgt_days)]);
-    tupper_box_comp = NaN([length(cur_fjord.s.t),dims_ensemble(2:end)]);
+    rmse_tf = NaN([n_runs,length(tgt_days)]);
+    rmse_sf = NaN([n_runs,length(tgt_days)]);
+    tupper_box_comp = NaN([length(cur_fjord.s.t),n_runs]);
     tinter_box_comp = NaN(size(tupper_box_comp));
     tlower_box_comp = NaN(size(tupper_box_comp));
     supper_box_comp = NaN(size(tupper_box_comp));
     sinter_box_comp = NaN(size(tupper_box_comp));
     slower_box_comp = NaN(size(tupper_box_comp));
 
-    for i1=1:size(ensemble,2)
-    for i2=1:size(ensemble,3)
-    for i3=1:size(ensemble,4)
-    for i4=1:size(ensemble,5)
-        if ~isempty(ensemble(i_fjord,i1,i2,i3,i4).s) & ~isnan(ensemble(i_fjord,i1,i2,i3,i4).s.Hfinal(1))
+    for i_run=1:n_runs
+        if ~isempty(ensemble(i_fjord,i_run).s) & ~isnan(ensemble(i_fjord,i_run).s.Hfinal(1))
             for i_day=1:length(tgt_days) % we repeat the whole thing for each of our target days
-                ints=[0; cumsum(ensemble(i_fjord,i1,i2,i3,i4).s.Hfinal(:,i_day))];
+                ints=[0; cumsum(ensemble(i_fjord,i_run).s.Hfinal(:,i_day))];
                 z_box = (ints(1:end-1)+ints(2:end))/2;
-                tf_box = ensemble(i_fjord,i1,i2,i3,i4).s.Tfinal(:,i_day); 
-                sf_box = ensemble(i_fjord,i1,i2,i3,i4).s.Sfinal(:,i_day);
+                tf_box = ensemble(i_fjord,i_run).s.Tfinal(:,i_day); 
+                sf_box = ensemble(i_fjord,i_run).s.Sfinal(:,i_day);
                 
-                tf_box_comp(:,i1,i2,i3,i4,i_day) = interp1(z_box,tf_box,zf_obs,'nearest','extrap');
-                sf_box_comp(:,i1,i2,i3,i4,i_day) = interp1(z_box,sf_box,zf_obs,'nearest','extrap');
+                tf_box_comp(:,i_run,i_day) = interp1(z_box,tf_box,zf_obs,'nearest','extrap');
+                sf_box_comp(:,i_run,i_day) = interp1(z_box,sf_box,zf_obs,'nearest','extrap');
             end
 
-            tupper_box_comp(:,i1,i2,i3,i4) = ensemble(i_fjord,i1,i2,i3,i4).s.Tupper;
-            tinter_box_comp(:,i1,i2,i3,i4) = ensemble(i_fjord,i1,i2,i3,i4).s.Tinter;
-            tlower_box_comp(:,i1,i2,i3,i4) = ensemble(i_fjord,i1,i2,i3,i4).s.Tlower;
+            tupper_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Tupper;
+            tinter_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Tinter;
+            tlower_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Tlower;
 
-            supper_box_comp(:,i1,i2,i3,i4) = ensemble(i_fjord,i1,i2,i3,i4).s.Supper;
-            sinter_box_comp(:,i1,i2,i3,i4) = ensemble(i_fjord,i1,i2,i3,i4).s.Sinter;
-            slower_box_comp(:,i1,i2,i3,i4) = ensemble(i_fjord,i1,i2,i3,i4).s.Slower;
+            supper_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Supper;
+            sinter_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Sinter;
+            slower_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Slower;
 
             min_depth_rmse = 0;
             depths_rmse = zf_obs > min_depth_rmse;
             for i_day = 1:length(tgt_days)
-                rmse_tf(i1,i2,i3,i4,i_day) = rmse(tf_box_comp(depths_rmse,i1,i2,i3,i4,i_day),tf_obs(depths_rmse)','omitnan')./mean(tf_obs(depths_rmse),'omitnan');
-                rmse_sf(i1,i2,i3,i4,i_day) = rmse(sf_box_comp(depths_rmse,i1,i2,i3,i4,i_day),sf_obs(depths_rmse)','omitnan')./mean(sf_obs(depths_rmse),'omitnan');
+                rmse_tf(i_run,i_day) = rmse(tf_box_comp(depths_rmse,i_run,i_day),tf_obs(depths_rmse)','omitnan')./mean(tf_obs(depths_rmse),'omitnan');
+                rmse_sf(i_run,i_day) = rmse(sf_box_comp(depths_rmse,i_run,i_day),sf_obs(depths_rmse)','omitnan')./mean(sf_obs(depths_rmse),'omitnan');
             end
             n_completed = n_completed+1;
         end
-    end % i4
-    end % i3
-    end % i2
-    end % i1
+    end % i_run
     res_obs(i_fjord).zf = zf_obs;
     res_obs(i_fjord).tf = tf_obs;
     res_obs(i_fjord).sf = sf_obs;
@@ -379,29 +351,29 @@ for i_fjord=1:size(ensemble,1)
 
     res_box(i_fjord).t  = t(2:end); % ensemble(i,1,1,1,1).t(2:end); % need to come up with a good way to avoid a crashed run with no time variable
     res_box(i_fjord).zf = z_box;
-    res_box(i_fjord).tf = mean(tf_box_comp,[2,3,4,5],'omitnan');
-    res_box(i_fjord).tfmin = min(tf_box_comp,[],[2,3,4,5],'omitnan');
-    res_box(i_fjord).tfmax = max(tf_box_comp,[],[2,3,4,5],'omitnan');
-    res_box(i_fjord).sf = mean(sf_box_comp,[2,3,4,5],'omitnan');
-    res_box(i_fjord).sfmin = min(sf_box_comp,[],[2,3,4,5],'omitnan');
-    res_box(i_fjord).sfmax = max(sf_box_comp,[],[2,3,4,5],'omitnan');
+    res_box(i_fjord).tf = mean(tf_box_comp,2,'omitnan');
+    res_box(i_fjord).tfmin = min(tf_box_comp,[],2,'omitnan');
+    res_box(i_fjord).tfmax = max(tf_box_comp,[],2,'omitnan');
+    res_box(i_fjord).sf = mean(sf_box_comp,2,'omitnan');
+    res_box(i_fjord).sfmin = min(sf_box_comp,[],2,'omitnan');
+    res_box(i_fjord).sfmax = max(sf_box_comp,[],2,'omitnan');
 
 
-    res_box(i_fjord).Tupper = mean(tupper_box_comp,[2,3,4,5],'omitnan');
-    res_box(i_fjord).Tupper_min = min(tupper_box_comp,[],[2,3,4,5],'omitnan');
-    res_box(i_fjord).Tupper_max = max(tupper_box_comp,[],[2,3,4,5],'omitnan');
+    res_box(i_fjord).Tupper = mean(tupper_box_comp,2,'omitnan');
+    res_box(i_fjord).Tupper_min = min(tupper_box_comp,[],2,'omitnan');
+    res_box(i_fjord).Tupper_max = max(tupper_box_comp,[],2,'omitnan');
 
-    res_box(i_fjord).Tinter = mean(tinter_box_comp,[2,3,4,5],'omitnan');
-    res_box(i_fjord).Tinter_min = min(tinter_box_comp,[],[2,3,4,5],'omitnan');
-    res_box(i_fjord).Tinter_max = max(tinter_box_comp,[],[2,3,4,5],'omitnan');
+    res_box(i_fjord).Tinter = mean(tinter_box_comp,2,'omitnan');
+    res_box(i_fjord).Tinter_min = min(tinter_box_comp,[],2,'omitnan');
+    res_box(i_fjord).Tinter_max = max(tinter_box_comp,[],2,'omitnan');
 
-    res_box(i_fjord).Tlower = mean(tlower_box_comp,[2,3,4,5],'omitnan');
-    res_box(i_fjord).Tlower_min = min(tlower_box_comp,[],[2,3,4,5],'omitnan');
-    res_box(i_fjord).Tlower_max = max(tlower_box_comp,[],[2,3,4,5],'omitnan');
+    res_box(i_fjord).Tlower = mean(tlower_box_comp,2,'omitnan');
+    res_box(i_fjord).Tlower_min = min(tlower_box_comp,[],2,'omitnan');
+    res_box(i_fjord).Tlower_max = max(tlower_box_comp,[],2,'omitnan');
 
-    res_box(i_fjord).Supper = mean(supper_box_comp,[2,3,4,5],'omitnan');
-    res_box(i_fjord).Sinter = mean(sinter_box_comp,[2,3,4,5],'omitnan');
-    res_box(i_fjord).Slower = mean(slower_box_comp,[2,3,4,5],'omitnan');
+    res_box(i_fjord).Supper = mean(supper_box_comp,2,'omitnan');
+    res_box(i_fjord).Sinter = mean(sinter_box_comp,2,'omitnan');
+    res_box(i_fjord).Slower = mean(slower_box_comp,2,'omitnan');
 
     res_box(i_fjord).ensemble_tf = tf_box_comp;
     res_box(i_fjord).ensemble_sf = sf_box_comp;
@@ -413,17 +385,3 @@ for i_fjord=1:size(ensemble,1)
     res_box(i_fjord).n = n_completed;
 end
 disp('Postprocessing done.')
-
-%% Plotting results
-
-% plot_multiday_ensemble(fjord_model,res_box,res_obs,dims_ensemble,param_names,range_params,tgt_days,name_days);
-plot_multiday_ensemble(fjord_model,res_box,res_obs,dims_ensemble,param_names,range_params,tgt_days(2),name_days(2),2);
-% exportgraphics(gcf,[figs_path,'profiles_temp_',num2str(2015+i_yr),'_n',num2str(n_combinations),'.png'],'Resolution',300)
-
-plot_best_params(fjord_model,res_box,dims_ensemble,param_names,range_params,tgt_days(2),name_days(2));
-% exportgraphics(gcf,[figs_path,'best_parameters_',num2str(2015+i_yr),'_n',num2str(n_combinations),'.png'],'Resolution',300)
-
-plot_sensitivity_to_param(res_box,res_obs,fjord_model,param_names,range_params,2);
-
-% figure(hf_profiles); 
-% figure(hf_series); exportgraphics(gcf,[figs_path,'temp_series_',num2str(2015+i_yr),'_n',num2str(n_C0*n_P0*n_M0*n_gamma),'.png'],'Resolution',300)
