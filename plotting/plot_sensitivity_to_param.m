@@ -1,6 +1,21 @@
-function [hf_t,hf_s] = plot_sensitivity_to_param(res_box,res_obs,fjord_model,param_names,param_ranges)
+function [hf_t,hf_s] = plot_sensitivity_to_param(res_box,res_obs,fjord_model,param_names,param_ranges,i_day)
 
+if nargin < 6, i_day=1; end
 
+%% Getting how many indices the ensemble has
+% the section below should yield something like 'i1,i2,i3,i4,i5'
+n_indices=length(param_names);
+indices=[];
+for i_dim=1:n_indices-1
+    indices=[indices,'i',num2str(i_dim),','];
+end
+indices=[indices,'i',num2str(i_dim+1)];
+indices_split=strsplit(indices,',');
+for i_dim=1:length(indices_split)
+    eval(sprintf("%s=ceil(length(param_ranges(%d))/2.);",indices_split{i_dim},i_dim));
+end
+
+%% Preparing the figures
 hf_t = figure('Name','Temperature sensitivity','Position',[40 40 900 250*length(param_names)]);
 ht_t = tiledlayout('flow');
 hf_s = figure('Name','Salinity sensitivity','Position',[40 40 900 250*length(param_names)]);
@@ -11,6 +26,14 @@ lcolor = lines(length(res_box));
 lbl_fjords = cell([1,length(res_box)]);
 for i_param=1:length(param_names)
 
+    %% Finding the indices of the matrix for plotting that parameter
+    indices_tgt=indices_split;
+    indices_tgt{i_param}=':';
+    indices_to_eval='';
+    for i_e=1:length(indices_tgt)
+        indices_to_eval = [indices_to_eval,',',indices_tgt{i_e}];
+    end
+    
     %% Plotting temperature
     figure(hf_t)
     nexttile; hold on; box on
@@ -19,13 +42,13 @@ for i_param=1:length(param_names)
         if isempty(ensemble_tf), continue; end % we skip any empty entries
 
         % set up an array with only the OTHER parameter-related dimensions, which will be averaged
-        dims_to_avg = [];
-        for i_dim=2:length(size(ensemble_tf))
-            if i_dim~=i_param+1, dims_to_avg = [dims_to_avg, i_dim]; end
-        end
-    
-        % average the ensemble over the other dimensions
-        tf = squeeze(mean(ensemble_tf,dims_to_avg,'omitnan'));
+        % dims_to_avg = [];
+        % for i_dim=2:length(size(ensemble_tf))
+        %     if i_dim~=i_param+1, dims_to_avg = [dims_to_avg, i_dim]; end
+        % end
+        % tf = squeeze(mean(ensemble_tf,dims_to_avg,'omitnan')); % average the ensemble over the other dimensions
+        
+        eval(['tf = squeeze(ensemble_tf(:',indices_to_eval,'));']);
         tfmean = mean(tf,2,'omitnan');
         tfmin = min(tf,[],2,'omitnan');
         tfmax = max(tf,[],2,'omitnan');
@@ -66,13 +89,14 @@ for i_param=1:length(param_names)
         if isempty(ensemble_sf), continue; end % we skip any empty entries
 
         % set up an array with only the OTHER parameter-related dimensions, which will be averaged
-        dims_to_avg = [];
-        for i_dim=2:length(size(ensemble_sf))
-            if i_dim~=i_param+1, dims_to_avg = [dims_to_avg, i_dim]; end
-        end
+        % dims_to_avg = [];
+        % for i_dim=2:length(size(ensemble_sf))
+        %     if i_dim~=i_param+1, dims_to_avg = [dims_to_avg, i_dim]; end
+        % end
     
         % average the ensemble over the other dimensions
-        sf = squeeze(mean(ensemble_sf,dims_to_avg,'omitnan'));
+        % sf = squeeze(mean(ensemble_sf,dims_to_avg,'omitnan'));
+        eval(['sf = squeeze(ensemble_sf(:',indices_to_eval,'));']);
         sfmean = mean(sf,2,'omitnan');
         sfmin = min(sf,[],2,'omitnan');
         sfmax = max(sf,[],2,'omitnan');

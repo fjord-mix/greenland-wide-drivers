@@ -15,19 +15,19 @@ function [hf_t,hf_s] = plot_ensemble_results(tgt_day,res_box,res_obs,fjord_model
         [~,i_min_rmse_tf] = min(res_box(i).rmse_tf,[],'all','omitnan');
         [~,i_min_rmse_sf] = min(res_box(i).rmse_sf,[],'all','omitnan');
         [~,i_min_rmse]    = min(rmse_both,[],'all','omitnan');
-        [i1_best_tf,i2_best_tf,i3_best_tf,i4_best_tf,i5_best_tf] = ind2sub(dims_ensemble(2:end),i_min_rmse_tf);
-        [i1_best_sf,i2_best_sf,i3_best_sf,i4_best_sf,i5_best_sf] = ind2sub(dims_ensemble(2:end),i_min_rmse_sf);
-        [i1_best,i2_best,i3_best,i4_best,i5_best] = ind2sub(dims_ensemble(2:end),i_min_rmse);
+        [i1_best_tf,i2_best_tf,i3_best_tf,i4_best_tf,i5_best_tf,i6_best_tf,i7_best_tf] = ind2sub(dims_ensemble(2:end),i_min_rmse_tf);
+        [i1_best_sf,i2_best_sf,i3_best_sf,i4_best_sf,i5_best_sf,i6_best_sf,i7_best_sf] = ind2sub(dims_ensemble(2:end),i_min_rmse_sf);
+        [i1_best,i2_best,i3_best,i4_best,i5_best,i6_best,i7_best] = ind2sub(dims_ensemble(2:end),i_min_rmse);
     
-        tf_best = res_box(i).ensemble_tf(:,i1_best_tf,i2_best_tf,i3_best_tf,i4_best_tf,i5_best_tf);
-        sf_best = res_box(i).ensemble_sf(:,i1_best_sf,i2_best_sf,i3_best_sf,i4_best_sf,i5_best_sf);
+        tf_best = res_box(i).ensemble_tf(:,i1_best_tf,i2_best_tf,i3_best_tf,i4_best_tf,i5_best_tf,i6_best_tf,i7_best_tf);
+        sf_best = res_box(i).ensemble_sf(:,i1_best_sf,i2_best_sf,i3_best_sf,i4_best_sf,i5_best_sf,i6_best_sf,i7_best_sf);
 
-        tf_best2 = res_box(i).ensemble_tf(:,i1_best,i2_best,i3_best,i4_best,i5_best);
-        sf_best2 = res_box(i).ensemble_sf(:,i1_best,i2_best,i3_best,i4_best,i5_best);
+        tf_best2 = res_box(i).ensemble_tf(:,i1_best,i2_best,i3_best,i4_best,i5_best,i6_best,i7_best);
+        sf_best2 = res_box(i).ensemble_sf(:,i1_best,i2_best,i3_best,i4_best,i5_best,i6_best,i7_best);
 
-        inds_best_tf = [i1_best_tf,i2_best_tf,i3_best_tf,i4_best_tf,i5_best_tf];
-        inds_best_sf = [i1_best_sf,i2_best_sf,i3_best_sf,i4_best_sf,i5_best_sf];
-        inds_best2   = [i1_best,i2_best,i3_best,i4_best,i5_best];
+        inds_best_tf = [i1_best_tf,i2_best_tf,i3_best_tf,i4_best_tf,i5_best_tf,i6_best_tf,i7_best_tf];
+        inds_best_sf = [i1_best_sf,i2_best_sf,i3_best_sf,i4_best_sf,i5_best_sf,i6_best_sf,i7_best_sf];
+        inds_best2   = [i1_best,i2_best,i3_best,i4_best,i5_best,i6_best,i7_best];
         fprintf("Best parametres for (%s) %s: \n",res_box(i).id,res_box(i).name)
         fprintf("Param\t Temperature\t Salinity\t Both\n")
         for i_param=1:length(param_names)
