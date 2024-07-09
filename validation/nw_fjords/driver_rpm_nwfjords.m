@@ -2,13 +2,12 @@
 
 %% Configuring paths
 run setup_paths
-fun = @(s) all(structfun(@isempty,s)); % tiny function to get rid of empty entries in array
 
 %% Initialise all needed variables
 
 n_runs     = 10;              % number of runs per fjord
 input_dt   = 30;              % time step of model input (in days)
-dt_in_h    = 2.;              % time step in hours
+dt_in_h    = 3.;              % time step in hours
 model_dt   = dt_in_h/24.;     % time step in days (2h/24 ~ 0.083 days)
 n_years    = 4;               % how many years we want to run
 tgt_days   = [935,1010,1150]; % which days of the run we want to compare: year 3 peak-melt and post-melt, following pre-melt
@@ -25,11 +24,15 @@ fjord_names = {'Qeqertaarsuusarsuup','Nuussuup','Tuttulikassaap','Nunatakassaap'
                'Salliarsutsip','Umiammakku','Kangilliup','Kangerlussuup','SermeqSilarleq','SermeqKujalleq'} ;
 
 
+fun = @(s) all(structfun(@isempty,s));              % tiny function to get rid of empty entries in array
+iceberg_fun = @(NU, H, Z) (NU/H)*exp(NU*Z/H)/(1-exp(-NU)); % functional form of idealised iceberg depth profile
+
 %% Define parameter space
-param_names = {'C0','P0','K0','A0'};
-range_params = {[1e2,1e5],...    % C0 
-                [01,75],...      % P0 no crashes with [1,40]
-                [1e-4,1e-3],...  % K0
+param_names = {'C0','wp','K0','A0'};
+
+range_params = {[1e2,1e4],...    % C0 
+                [10,400],...     % P0 no crashes with [10,400]
+                [1e-4,1e-3],...  % K0 or do we stick to [1e4,1e-3]?
                 [0,3e8]};        % A0
 
 rng('default') % set the seed for reproducibility
@@ -47,7 +50,9 @@ disp('Parameter space created.')
 
 %% Compiling data 
 
-run compile_process_fjords % Read compilation of all fjords around Greenland (requires data-compilation repository)
+% Read compilation of all fjords around Greenland (requires data-compilation repository)
+% only needed if not using fjord geometries from Cowton et al.
+% run compile_process_fjords 
 
 % These are the IDs of the corresponding fjords above in the "fjords_processed" data structure
 fjord_ids = [4,9,17,20,22,23,24,25,28,29,30,31,24,37];
@@ -68,18 +73,16 @@ fjord_model(n_fjords) = struct("p",[],"a",[],"f",[],"t",[],"m",[],"c",[]);
 for i_fjord=1:n_fjords
     if ~isnan(meta_table.Length_km_(i_fjord)) % we only want fjords for which we have all geometry data
 
-        t = 0:model_dt:365*n_years; % time axis for the run: 4 years (we want to repeat the yearly data 4 times)
-
         % compile metadata and default parameters
-        m.ID   = meta_table.Var1(i_fjord);
-        m.name = meta_table.GreenlandicName(i_fjord);
-        m.lon  = meta_table.Longitude__E_(i_fjord);
-        m.lat  = meta_table.Latitude__N_(i_fjord);
-        [p,~]  = get_model_default_parameters();
-        p.fixedthickness=1;
-        p.N=60;
-        p.dt=model_dt;
-        p.t_save = t(1):1:t(end); % save at daily resolution
+        m.ID     = meta_table.Var1(i_fjord);
+        m.name   = meta_table.GreenlandicName(i_fjord);
+        m.lon    = meta_table.Longitude__E_(i_fjord);
+        m.lat    = meta_table.Latitude__N_(i_fjord);
+        p        = default_parameters();
+        p.N      = 60;
+        t        = 0:model_dt:365*n_years; % time axis for the run: 4 years (we want to repeat the yearly data 4 times)
+        p.t_save = t(1):1:t(end);          % save at daily resolution
+        p.dt     = model_dt;
         
         % obtain CTD data
         ctd.temp  = ctd_data.Tdata{i_yr,i_fjord};
@@ -89,8 +92,8 @@ for i_fjord=1:n_fjords
         % fjord geometry - from Cowton et al. (2023)
         p.L         = 1e3.*meta_table.Length_km_(i_fjord);
         p.W         = 1e3.*meta_table.Width_km_(i_fjord);
-        p.silldepth = -1.* meta_table.SillDepth_m_(i_fjord);
-        p.zgl       = -1.* meta_table.GroundingLineDepth_m_(i_fjord);
+        p.Hsill     = abs(meta_table.SillDepth_m_(i_fjord));
+        p.Hgl       = abs(meta_table.GroundingLineDepth_m_(i_fjord));
 
         % fjord geometry - our data compilation
         % zgs = NaN(size(fjords_compilation(fjord_ids(i_fjord)).glaciers));
@@ -100,14 +103,16 @@ for i_fjord=1:n_fjords
         % 
         % p.L         = fjords_compilation(fjord_ids(i_fjord)).length;
         % p.W         = fjords_compilation(fjord_ids(i_fjord)).width;
-        % p.silldepth = fjords_compilation(fjord_ids(i_fjord)).silldepth;
-        % p.zgl       = min(zgs);
+        % p.Hsill = fjords_compilation(fjord_ids(i_fjord)).silldepth;
+        % p.Hgl       = min(zgs);
 
         % fjord geometry - fjord depth based on GL/sill depths
-        if p.silldepth < p.zgl % if the GL sits above the sill
+        if p.Hsill > p.Hgl % if the GL sits above the sill
             p.sill=0; % there is no sill
+        else
+            p.sill=1;
         end
-        p.H = abs(p.zgl); % the fjord is always as deep as the GL
+        p.H = abs(p.Hgl); % the fjord is always as deep as the GL
         
 
         % ocean forcing
@@ -123,22 +128,22 @@ for i_fjord=1:n_fjords
             zs = new_zs;
             clear new_zs h_missing depth_range_missing % tidying up
         end
-        f.zs = zs;
-        f.Ts = repmat(ts,length(t),1);
-        f.Ss = repmat(ss,length(t),1);
+        f.zs = zs';
+        f.Ts = repmat(ts,length(t),1)';
+        f.Ss = repmat(ss,length(t),1)';
 
 
         % initial conditions
-        H_clim = ones([p.N],1).*p.H/p.N;
-        [T_clim,S_clim] = bin_ocean_profiles(mean(f.Ts,1),mean(f.Ss,1),f.zs,H_clim);
+        H_clim = ones([p.N,1]).*p.H/p.N;
+        [T_clim,S_clim] = bin_ocean_profiles(mean(f.Ts,2),mean(f.Ss,2),f.zs,H_clim);
         a.H0 = H_clim;
         a.T0 = T_clim;
         a.S0 = S_clim;
 
         % flipping the ocean forcing like the model wants it
-        f.zs = flip(f.zs);
-        f.Ts = flip(f.Ts,2)'; 
-        f.Ss = flip(f.Ss,2)';
+        % f.zs = flip(f.zs);
+        % f.Ts = flip(f.Ts,1); 
+        % f.Ss = flip(f.Ss,1);
         
         % obtain Qsg
         % interpolate from daily Qsg data to the model time axes
@@ -151,9 +156,10 @@ for i_fjord=1:n_fjords
         clear taxis_qsg_julian taxis_qsg_num taxis_qsg_num_dtmodel qsg_dtmodel % bit of tidying up
 
         % idealised icebergs
-        p.icestatic=1; % icebergs do not evolve in MITgcm
-        f.D = zeros(size(t)); % only consider the initial iceberg concentration in the fjord, and no discharge afterwards
-        a.I0 = p.A0*p.if(p.nu0, abs(p.zgl), -cumsum(a.H0)+a.H0/2);
+        p.nu0 = 25; % how fast iceberg area decays with depth
+        % p.icestatic=1; % icebergs do not evolve
+        % f.D = zeros(size(t)); % only consider the initial iceberg concentration in the fjord, and no discharge afterwards
+        % a.I0 = p.A0*iceberg_fun(p.nu0, abs(p.Hgl), -cumsum(a.H0)+a.H0/2);
 
         fjord_model(i_fjord).t = t;
         fjord_model(i_fjord).m = m;
@@ -177,8 +183,8 @@ for i_fjord=1:n_fjords
         % for j=1:size(ints,2)
         %     yline(ints(j));
         % end
-        % yline(p.zgl,'--k','linewidth',0.5)
-        % yline(p.silldepth,'--k','linewidth',0.5)
+        % yline(p.Hgl,'--k','linewidth',0.5)
+        % yline(p.Hsill,'--k','linewidth',0.5)
         % ylim([-p.H 0])
         % subplot(1,3,2); hold on; box on;
         % plot(f.Ss(:,1),f.zs);
@@ -186,8 +192,8 @@ for i_fjord=1:n_fjords
         % for j=1:size(ints,2)
         %     yline(ints(j));
         % end
-        % yline(p.zgl,'--k','linewidth',0.5)
-        % yline(p.silldepth,'--k','linewidth',0.5)
+        % yline(p.Hgl,'--k','linewidth',0.5)
+        % yline(p.Hsill,'--k','linewidth',0.5)
         % ylim([-p.H 0])
         % subplot(1,3,3); hold on; box on; grid on;
         % plot(t,f.Qsg);
@@ -204,7 +210,7 @@ fjord_model(idx)=[]; % remove the empty elements
 disp('Model inputs processing done.')
 
 %% Running the model
-dims_ensemble = size(X);
+dims_ensemble = [length(fjord_model),size(X,1)];
 ensemble_fields = {'p','t','m','s'}; % 'a','f','c','s'};
 ensemble_fields{2,1} = cell(dims_ensemble);
 ensemble = struct(ensemble_fields{:});
@@ -216,7 +222,7 @@ fjords_crashed = {};
 % But at least now it should be easier to spot where to add
 % them and what might be missing... TODO: replace these for loops for LHS
 run_counter=0;
-for i_fjord=1:n_fjord_runs
+for i_fjord=1:length(fjord_model)
 tic
 for i_run=1:n_runs
     run_counter = run_counter+1;
@@ -225,11 +231,11 @@ for i_run=1:n_runs
     for i_param=1:size(X,2)
         cur_fjord.p.(param_names{i_param}) = X(i_run,i_param);
     end
-    cur_fjord.a.I0 = cur_fjord.p.A0*cur_fjord.p.if(cur_fjord.p.nu0, abs(cur_fjord.p.zgl), -cumsum(cur_fjord.a.H0)+cur_fjord.a.H0/2);
+    cur_fjord.a.I0 = cur_fjord.p.A0*iceberg_fun(cur_fjord.p.nu0, abs(cur_fjord.p.Hgl), -cumsum(cur_fjord.a.H0)+cur_fjord.a.H0/2);
     
     % cur_fjord.p.plot_runtime=1;
         try
-            cur_fjord.s = zmodel(cur_fjord.p, cur_fjord.t, cur_fjord.f, cur_fjord.a);
+            cur_fjord.s = run_model(cur_fjord.p, cur_fjord.t, cur_fjord.f, cur_fjord.a);
             fprintf('run %d complete. ',run_counter)
     
             ensemble(i_fjord,i_run).p = cur_fjord.p;
@@ -243,18 +249,15 @@ for i_run=1:n_runs
                 tgt_day = tgt_days(i_day);
                 Tfinal(:,i_day) = mean(cur_fjord.s.T(:,(tgt_day-5:tgt_day+5)),2); 
                 Sfinal(:,i_day) = mean(cur_fjord.s.S(:,(tgt_day-5:tgt_day+5)),2);
-                Hfinal(:,i_day) = mean(cur_fjord.s.H(:,(tgt_day-5:tgt_day+5)),2);
             end
             ensemble(i_fjord,i_run).s.Tfinal = Tfinal;
             ensemble(i_fjord,i_run).s.Sfinal = Sfinal;
-            ensemble(i_fjord,i_run).s.Hfinal = Hfinal;
 
-            zf_obs = cur_fjord.c.zf;
+            zf_obs = cur_fjord.c.zf';
             Tregular=NaN([length(zf_obs),length(cur_fjord.s.t)]);
             Sregular=NaN(size(Tregular));
+            z_box = -cur_fjord.s.z;
             for k=1:length(cur_fjord.s.t)
-                ints=[0; cumsum(cur_fjord.s.H(:,k))];
-                z_box = (ints(1:end-1)+ints(2:end))/2;
                 Tregular(:,k) = interp1(z_box,cur_fjord.s.T(:,k),zf_obs,'nearest','extrap');
                 Sregular(:,k) = interp1(z_box,cur_fjord.s.S(:,k),zf_obs,'nearest','extrap');
             end
@@ -262,6 +265,7 @@ for i_run=1:n_runs
             range_inter = zf_obs > 50 & zf_obs < 250;
             range_lower = zf_obs > 250 & zf_obs < 500;
             
+            ensemble(i_fjord,i_run).s.z      = z_box;
             ensemble(i_fjord,i_run).s.Tupper = mean(Tregular(range_upper,:),1,'omitnan'); % avg temp of the upper 50 m
             ensemble(i_fjord,i_run).s.Tinter = mean(Tregular(range_inter,:),1,'omitnan'); % avg temp of the 50 - 250 m layer
             ensemble(i_fjord,i_run).s.Tlower = mean(Tregular(range_lower,:),1,'omitnan'); % avg temp of the 250 - 500 m layer
@@ -277,7 +281,7 @@ for i_run=1:n_runs
             fjords_crashed{end+1} = cur_fjord;
         end
         fprintf('\n')
-end % for i1
+end % for i_run
 fprintf('Done with fjord %d. ',i_fjord)
 toc
 fprintf('\n')
@@ -313,15 +317,17 @@ for i_fjord=1:size(ensemble,1)
     slower_box_comp = NaN(size(tupper_box_comp));
 
     for i_run=1:n_runs
-        if ~isempty(ensemble(i_fjord,i_run).s) & ~isnan(ensemble(i_fjord,i_run).s.Hfinal(1))
-            for i_day=1:length(tgt_days) % we repeat the whole thing for each of our target days
-                ints=[0; cumsum(ensemble(i_fjord,i_run).s.Hfinal(:,i_day))];
-                z_box = (ints(1:end-1)+ints(2:end))/2;
+        if ~isempty(ensemble(i_fjord,i_run).s) & ~isnan(ensemble(i_fjord,i_run).s.Tfinal(1))
+
+            % we get a profile for each of our target days - if something
+            % goes wrong here it's because of the sign/orientation of depth
+            % profiles
+            for i_day=1:length(tgt_days) 
                 tf_box = ensemble(i_fjord,i_run).s.Tfinal(:,i_day); 
                 sf_box = ensemble(i_fjord,i_run).s.Sfinal(:,i_day);
                 
-                tf_box_comp(:,i_run,i_day) = interp1(z_box,tf_box,zf_obs,'nearest','extrap');
-                sf_box_comp(:,i_run,i_day) = interp1(z_box,sf_box,zf_obs,'nearest','extrap');
+                tf_box_comp(:,i_run,i_day) = interp1(ensemble(i_fjord,i_run).s.z,tf_box,zf_obs,'nearest','extrap');
+                sf_box_comp(:,i_run,i_day) = interp1(ensemble(i_fjord,i_run).s.z,sf_box,zf_obs,'nearest','extrap');
             end
 
             tupper_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Tupper;
@@ -349,7 +355,7 @@ for i_fjord=1:size(ensemble,1)
     res_obs(i_fjord).ts = fjord_model(i_fjord).c.ts;
     res_obs(i_fjord).ss = fjord_model(i_fjord).c.ss;
 
-    res_box(i_fjord).t  = t(2:end); % ensemble(i,1,1,1,1).t(2:end); % need to come up with a good way to avoid a crashed run with no time variable
+    res_box(i_fjord).t  = cur_fjord.s.t;
     res_box(i_fjord).zf = z_box;
     res_box(i_fjord).tf = mean(tf_box_comp,2,'omitnan');
     res_box(i_fjord).tfmin = min(tf_box_comp,[],2,'omitnan');
@@ -357,7 +363,6 @@ for i_fjord=1:size(ensemble,1)
     res_box(i_fjord).sf = mean(sf_box_comp,2,'omitnan');
     res_box(i_fjord).sfmin = min(sf_box_comp,[],2,'omitnan');
     res_box(i_fjord).sfmax = max(sf_box_comp,[],2,'omitnan');
-
 
     res_box(i_fjord).Tupper = mean(tupper_box_comp,2,'omitnan');
     res_box(i_fjord).Tupper_min = min(tupper_box_comp,[],2,'omitnan');
@@ -382,6 +387,16 @@ for i_fjord=1:size(ensemble,1)
 
     res_box(i_fjord).id = fjord_model(i_fjord).m.ID{1};
     res_box(i_fjord).name = fjord_model(i_fjord).m.name{1};
-    res_box(i_fjord).n = n_completed;
+    res_box(i_fjord).n = n_completed./n_runs * 100;
 end
 disp('Postprocessing done.')
+
+%% Plotting
+
+plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2);
+% exportgraphics(gcf,[figs_path,'profiles_temp_',num2str(2015+i_yr),'_n',num2str(n_combinations),'.png'],'Resolution',300)
+
+plot_best_params(fjord_model,ensemble,res_box,param_names,range_params,2);
+% exportgraphics(gcf,[figs_path,'best_parameters_',num2str(2015+i_yr),'_n',num2str(n_combinations),'.png'],'Resolution',300)
+
+% plot_sensitivity_to_param(res_box,res_obs,fjord_model,param_names,range_params,2);

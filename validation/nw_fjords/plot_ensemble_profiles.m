@@ -1,4 +1,4 @@
-function [hf_profiles,hf_series] = plot_ensemble_profiles(fjord_model,res_box,res_obs,n_runs,param_names,range_params,tgt_days,name_days,i_tgt_day,plt_series,verbose)
+function [hf_profiles,hf_series] = plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days,name_days,i_tgt_day,plt_series,verbose)
 
 n_fjord_runs = length(fjord_model);
 w_rmse_t = 0.5; % how much we want to weight the temperature (n)RMSE versus salinity (0.5 = 50:50; 1 = only temperature)
@@ -52,9 +52,9 @@ for i_fjord=1:n_fjord_runs
         fprintf("Best parametres for (%s) %s: \n",res_box(i_fjord).id,res_box(i_fjord).name)
         fprintf("Param\t Temperature\t Salinity\t Both\n")
         for i_param=1:length(param_names)
-            fprintf("%s \t %.1e\t",param_names{i_param},fjord_model(inds_best_tf).p.(param_names{i_param}))
-            fprintf("%.1e\t\t",fjord_model(inds_best_sf).p.(param_names{i_param}))
-            fprintf("%.1e\n",fjord_model(inds_best2).p.(param_names{i_param}))
+            fprintf("%s \t %.1e\t",param_names{i_param},ensemble(i_fjord,inds_best_tf).p.(param_names{i_param}))
+            fprintf("%.1e\t\t",ensemble(i_fjord,inds_best_sf).p.(param_names{i_param}))
+            fprintf("%.1e\n",ensemble(i_fjord,inds_best2).p.(param_names{i_param}))
         end
         % fprintf("day \t %s\t\t%s\t\t%s\n",name_days{inds_best_tf(end)},name_days{inds_best_sf(end)},name_days{inds_best2(end)})
         disp("============================")
@@ -63,7 +63,7 @@ for i_fjord=1:n_fjord_runs
     figure(hf_profiles)
     nexttile; hold on; box on; grid on
     text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
-    text(0.02,0.02,sprintf("n=%d",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
+    text(0.02,0.02,sprintf("n=%d %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
 
     % figure; hold on
     % y2 = [res_obs(i).zf; flip(res_obs(i).zf)]';
@@ -82,8 +82,8 @@ for i_fjord=1:n_fjord_runs
     end
     % plot(res_box(i).tfmin,-res_obs(i).zf,'linewidth',1.5,'color',lcolor(3,:),'LineStyle','--');
     % plot(res_box(i).tfmax,-res_obs(i).zf,'linewidth',1.5,'color',lcolor(3,:),'LineStyle','--');
-    scatter(0,fjord_model(i_fjord).p.zgl,40,'v','filled','MarkerFaceColor','black')
-    plot([0 0],[-fjord_model(i_fjord).p.H fjord_model(i_fjord).p.silldepth],'-k','linewidth',2)
+    scatter(0,-fjord_model(i_fjord).p.Hgl,40,'v','filled','MarkerFaceColor','black')
+    plot([0 0],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
 
     if mod(i_fjord,2) > 0, ylabel('Depth (m)'); end
     if i_fjord>n_fjord_runs-2
