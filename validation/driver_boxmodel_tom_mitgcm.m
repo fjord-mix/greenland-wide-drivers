@@ -16,10 +16,10 @@ model_dt   = dt_in_h/24.; % time step in days (2h/24 ~ 0.083 days)
 tgt_day = 300; % which day of the 400-day run we want to compare
 
 flag_ice          = 'ideal'; %{'MIT'|'obs'|'ideal'|'no'} for choosing which iceberg treatment (MIT-derived, observation-derived, no icebergs)
-fjord_letters     = {'B','F','G','M'};
-fjords_files_list = {'NUU_80','KAK_10','NAA_20','SES_10'};
 fjord_ids_all_shp = [14,17,23,24,25,30,31,34,37];
 fjord_ids = [14,23,24,34];
+
+iceberg_fun = @(NU, H, Z) (NU/H)*exp(NU*Z/H)/(1-exp(-NU)); % functional form of idealised iceberg depth profile
 
 %% Compiling all "external" data used (Greenland fjord compilation and Cowton et al., 2023)
 run compile_process_fjords % requires data-compilation repository
@@ -33,10 +33,10 @@ run load_cowton2023_data
 % plot_fjords_summary(datasets,fjords_map,fjords_compilation); %plt_handles.cb1.Visible = 'off'; plt_handles.cb2.Visible = 'off'; plt_handles.cb3.Visible = 'off';
 
 % will look for matching letters in the table to find which fjords we want
-ids_cowton_fjords = zeros(size(fjord_letters));
+ids_cowton_fjords = zeros(size(fjord_ids_mitgcm));
 for i=1:height(meta_table)
-    for i1=1:length(fjord_letters)
-        if strcmp(meta_table.Var1(i),fjord_letters{i1}), ids_cowton_fjords(i1)=i;end
+    for i1=1:length(fjord_ids_mitgcm)
+        if strcmp(meta_table.Var1(i),fjord_ids_mitgcm{i1}), ids_cowton_fjords(i1)=i;end
     end
 end
 
@@ -49,61 +49,6 @@ qsg_all    = qsg_all(:,ids_cowton_fjords);
 meta_table = meta_table(ids_cowton_fjords,:);
 
 disp('Fjord selection for ensembles done.')
-%% Reading the MITgcm outputs
-
-if exist('mitgcm',"var"),       clear mitgcm; end
-mitgcm(length(fjords_files_list)) = struct('x',[],'y',[],'z',[],'t',[],'Tprofile',[],'Tupper',[],'Tinter',[],'Tlower',[],'Iprofile',[],'Ivolume',[]);
-for i=1:length(fjords_files_list)
-    mitgcm_out = load([inputs_path,'/MITgcm/',fjords_files_list{i}]);
-    icebergs_out = load([inputs_path,'/MITgcm/icebergArea_',fjords_files_list{i}]);
-    dx=400;
-    dy=250;
-    dz=10;
-
-    x_mitgcm=1:dx:size(mitgcm_out.T,1)*dx;
-    y_mitgcm=1:dy:size(mitgcm_out.T,2)*dy;
-    z_mitgcm=1:dz:size(mitgcm_out.T,3)*dz;
-    t_mitgcm=0:10:400;
-    j_fjord = 1:144;
-
-    % Using zero as _fillValue is not a good practice, but should not be an issue
-    mitgcm_out.T(mitgcm_out.S == 0) = NaN;
-    temp_out = squeeze(mean(mitgcm_out.T(j_fjord,:,:,:),[1,2],'omitnan'));
-    mitgcm_out.S(mitgcm_out.S == 0) = NaN;
-    salt_out = squeeze(mean(mitgcm_out.S(j_fjord,:,:,:),[1,2],'omitnan'));
-
-    mitgcm(i).x = x_mitgcm;
-    mitgcm(i).y = y_mitgcm;
-    mitgcm(i).z = z_mitgcm;
-    mitgcm(i).t = t_mitgcm;
-    mitgcm(i).Tprofile = temp_out(:,tgt_day/10);
-    mitgcm(i).Sprofile = salt_out(:,tgt_day/10);
-    mitgcm(i).Tseries = temp_out;
-    mitgcm(i).Sseries = salt_out;
-    mitgcm(i).Tupper = mean(temp_out(1:5,:),1,'omitnan');
-    mitgcm(i).Tinter = mean(temp_out(5:25,:),1,'omitnan');
-    mitgcm(i).Tlower = mean(temp_out(25:50,:),1,'omitnan');
-    mitgcm(i).Supper = mean(salt_out(1:5,:),1,'omitnan');
-    mitgcm(i).Sinter = mean(salt_out(5:25,:),1,'omitnan');
-    mitgcm(i).Slower = mean(salt_out(25:50,:),1,'omitnan');
-
-    % tetrahedral conversion of area to volume, assuming the average cuboid edge as the characteristic length scale:
-    % It makes no sense to use a tetrahedron here (as done in the box model itself). 
-    % The IceBerg module in MITgcm treats icebergs as being "rectangular in plan-view and have vertical sides". 
-    % Therefore, treating the volume-to-surface-area conversion as a cuboid makes more sense than a tetrahedron.
-    % were it a tetrahedron: mitgcm(i).Ivolume = mitgcm(i).a/(6.*sqrt(6)).*icebergs_out.icebergArea;
-    % Here we are using the formula for characteristic length a = Vbody/Asurf
-    % Alternatives for 'a': {(dx+dy+dz)./3 | (2*dx*dy + 2*dx*dz + 2*dy*dz)/dz | trapz(mitgcm(i).z,mitgcm(i).Iprofile)}
-    % mitgcm(i).Iprofile = squeeze(mean(icebergs_out.icebergArea,[1,2],'omitnan'))/(dx*dy*dz);
-    mitgcm(i).a = 60;%(dx+dy+dz)./3; %(dx*dy*dz)./(2*dx*dy + 2*dx*dz + 2*dy*dz);
-    mitgcm(i).Iarea = squeeze(sum(icebergs_out.icebergArea,[1,2],'omitnan'));
-    mitgcm(i).Ivolume = mitgcm(i).a/6.*icebergs_out.icebergArea; % A = 6/a*V --> V = A*a/6
-    mitgcm(i).Iprofile = squeeze(mean(mitgcm(i).Ivolume,[1,2],'omitnan'))./(dx*dy*dz);
-    
-
-    % clear i_fjord j_fjord temp_out icebergs_out t_mitgcm z_mitgcm y_mitgcm x_mitgcm dx dy dz% bit of tidying up
-end
-disp('MITgcm data read.')
 
 %% Preparing the model runs
 n_fjords = size(meta_table,1);
@@ -165,24 +110,7 @@ for i_fjord=1:n_fjords
 
 
     % initial conditions
-    % H_clim = double(get_fjord_boxes_from_density(f.Ts',f.Ss',f.zs,p)); % negative values, top to bottom
     H_clim = ones([p.N],1).*p.H/p.N;
-    % if p.sill==1
-    %     if p.fixedthickness==1
-    %         % If the layers are fixed thickness, make sure the sill height corresponds
-    %         % with a layer boundary.
-    %         [minValue, closestIndex] = min(abs(cumsum(H_clim)-abs(p.silldepth)));
-    %         H_clim(closestIndex) = H_clim(closestIndex) + minValue;
-    %         H_clim(closestIndex+1) = H_clim(closestIndex+1) - minValue;
-    %     else 
-    %         % If the layers are variable thickness, add an extra layer for the
-    %         % sill.
-    %         H_clim = [(abs(p.silldepth)/p.N)*ones(1,p.N),p.H-abs(p.silldepth)];
-    %     end    
-    % end
-    % z_layers = [0 -cumsum(H_clim)];
-    % z_layers = (z_layers(2:end)+z_layers(1:end-1))./2;
-
     [T_clim,S_clim] = bin_ocean_profiles(mean(f.Ts,1),mean(f.Ss,1),f.zs,H_clim);
     a.H0 = H_clim;
     a.T0 = T_clim;
@@ -222,7 +150,7 @@ for i_fjord=1:n_fjords
         f.D = ice_d(1:length(t)); % we need to interp/extrapolate the 1-year discharge for 400 days
     end
 
-    % MITgcm-based (hybrid: using f.xi and f.zi from here and f.D from obs)
+    % MITgcm-based
     if strcmp(flag_ice,'MIT')
         p.icestatic=1; % icebergs do not evolve in MITgcm
         f.xi = flip(mitgcm(i_fjord).Iprofile./trapz(mitgcm(i).z,mitgcm(i).Iprofile)); % get avg. iceberg concentration in each layer and make its integral equal 1
@@ -235,9 +163,7 @@ for i_fjord=1:n_fjords
     end
 
     if strcmp(flag_ice,'ideal')
-        p.icestatic=1; % icebergs do not evolve in MITgcm
         f.D = zeros(size(t)); % only consider the initial iceberg concentration in the fjord, and no discharge afterwards
-        a.I0 = p.A0*p.if(p.nu0, abs(p.zgl), -cumsum(a.H0)+a.H0/2);
     end
 
     fjord_model(i_fjord).t = t;
@@ -280,7 +206,7 @@ for i_fjord=1:n_fjords
     % yline(D0);
     % legend('Subglacial discharge','Solid-ice discharge');
     % %
-    % exportgraphics(gcf,[figs_path,'forcing_summary_MITice_fjord',fjord_letters{i_fjord},'.png'],'Resolution',300)IP
+    % exportgraphics(gcf,[figs_path,'forcing_summary_MITice_fjord',fjord_ids_mitgcm{i_fjord},'.png'],'Resolution',300)IP
     % 
 
     clear m p a f % bit of tidying up
