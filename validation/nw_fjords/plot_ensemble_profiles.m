@@ -1,11 +1,15 @@
-function [hf_profiles,hf_series] = plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days,name_days,i_tgt_day,plt_series,verbose)
+function [hf_profiles,hf_series] = plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days,name_days,i_tgt_day,mitgcm,plt_series,verbose)
 
 n_fjord_runs = length(fjord_model);
 w_rmse_t = 0.5; % how much we want to weight the temperature (n)RMSE versus salinity (0.5 = 50:50; 1 = only temperature)
 fsize=12;
 
-if nargin < 10 || isempty(plt_series),plt_series= 0; end
-if nargin < 11 || isempty(verbose),   verbose   = 0; end
+if nargin < 11 || isempty(plt_series),plt_series= 0; end
+if nargin < 12 || isempty(verbose),   verbose   = 0; end
+
+
+if exist('rmse',"var"),       clear res_obs; end
+rmse_table(size(fjord_model)) = struct("tf_rpm",[],"sf_rpm",[],"ts_rpm",[],"tf_gcm",[],"sf_gcm",[],"ts_gcm",[]);
 
 lcolor = lines(3+length(tgt_days));
 hf_profiles = figure('Name','Temperature profiles','Position',[40 40 1200 400*length(fjord_model)/2]);
@@ -14,14 +18,17 @@ if plt_series
     hf_series   = figure('Name','Temperature evolution','Position',[40 40 1200 400*length(fjord_model)/2]);
     tiledlayout(length(fjord_model)/2,2);
 end
+
+
 for i_fjord=1:n_fjord_runs
 
     % find run with the smallest RMSE
     if isempty(i_tgt_day)
         rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf + (1-w_rmse_t).*res_box(i_fjord).rmse_sf;
-        [~,i_min_rmse_tf] = min(res_box(i_fjord).rmse_tf,[],'all','omitnan');
-        [~,i_min_rmse_sf] = min(res_box(i_fjord).rmse_sf,[],'all','omitnan');
-        [~,i_min_rmse]    = min(rmse_both,[],'all','omitnan');
+        [rmse_table(i_fjord).tf_rpm,i_min_rmse_tf] = min(res_box(i_fjord).rmse_tf,[],'all','omitnan');
+        [rmse_table(i_fjord).sf_rpm,i_min_rmse_sf] = min(res_box(i_fjord).rmse_sf,[],'all','omitnan');
+        [rmse_table(i_fjord).ts_rpm,i_min_rmse]    = min(rmse_both,[],'all','omitnan');
+
         [irun_best_tf,id_best_tf] = ind2sub([n_runs,length(tgt_days)],i_min_rmse_tf);
         [irun_best_sf,id_best_sf] = ind2sub([n_runs,length(tgt_days)],i_min_rmse_sf);
         [irun_best,id_best] = ind2sub([n_runs,length(tgt_days)],i_min_rmse);
@@ -37,15 +44,26 @@ for i_fjord=1:n_fjord_runs
         inds_best2   = [irun_best,id_best];
     else
         rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf + (1-w_rmse_t).*res_box(i_fjord).rmse_sf;
-        [~,inds_best_tf] = min(squeeze(res_box(i_fjord).rmse_tf(:,i_tgt_day)),[],'all','omitnan');
-        [~,inds_best_sf] = min(squeeze(res_box(i_fjord).rmse_sf(:,i_tgt_day)),[],'all','omitnan');
-        [~,inds_best2]    = min(squeeze(rmse_both(:,i_tgt_day)),[],'all','omitnan');
+        [rmse_table(i_fjord).tf_rpm,inds_best_tf] = min(squeeze(res_box(i_fjord).rmse_tf(:,i_tgt_day)),[],'all','omitnan');
+        [rmse_table(i_fjord).sf_rpm,inds_best_sf] = min(squeeze(res_box(i_fjord).rmse_sf(:,i_tgt_day)),[],'all','omitnan');
+        [rmse_table(i_fjord).ts_rpm,inds_best2]   = min(squeeze(rmse_both(:,i_tgt_day)),[],'all','omitnan');
     
         tf_best = res_box(i_fjord).ensemble_tf(:,inds_best_tf);
         sf_best = res_box(i_fjord).ensemble_sf(:,inds_best_sf);
     
         tf_best2 = res_box(i_fjord).ensemble_tf(:,inds_best2);
         sf_best2 = res_box(i_fjord).ensemble_sf(:,inds_best2);
+    end
+
+    % compute RMSE for equivalent MITgcm runs
+    for i_gcm=1:length(mitgcm)
+        if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
+            tprofile_gcm = interp1(mitgcm(i_gcm).z,mitgcm(i_gcm).Tprofile,res_obs(i_fjord).zf,'linear','extrap');
+            sprofile_gcm = interp1(mitgcm(i_gcm).z,mitgcm(i_gcm).Sprofile,res_obs(i_fjord).zf,'linear','extrap');
+            rmse_table(i_fjord).tf_gcm = rmse(tprofile_gcm,res_obs(i_fjord).tf,'omitnan')./mean(res_obs(i_fjord).tf,'omitnan');
+            rmse_table(i_fjord).sf_gcm = rmse(sprofile_gcm,res_obs(i_fjord).sf,'omitnan')./mean(res_obs(i_fjord).sf,'omitnan');
+            rmse_table(i_fjord).ts_gcm = w_rmse_t.*rmse_table(i_fjord).tf_gcm + (1-w_rmse_t).*rmse_table(i_fjord).sf_gcm;
+        end
     end
 
     if verbose
@@ -63,12 +81,17 @@ for i_fjord=1:n_fjord_runs
     figure(hf_profiles)
     nexttile; hold on; box on; grid on
     text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
-    text(0.02,0.02,sprintf("n=%d %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
+    text(0.02,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
 
     % figure; hold on
     % y2 = [res_obs(i).zf; flip(res_obs(i).zf)]';
     % inBetween = [res_box(i).tfmin, flip(res_box(i).tfmax)];
     % hp = fill(flip(inBetween,1), flip(-y2,2), lcolor(3,:),'edgecolor','none','facealpha',0.2);
+    for i_gcm=1:length(mitgcm)
+        if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
+            hm = plot(mitgcm(i_gcm).Tprofile,-mitgcm(i_gcm).z,'-k','linewidth',1.5);
+        end
+    end
 
     hs = plot(res_obs(i_fjord).ts,-res_obs(i_fjord).zs,'linewidth',1.5,'color',lcolor(1,:));
     hf = plot(res_obs(i_fjord).tf,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(2,:));
@@ -99,7 +122,8 @@ for i_fjord=1:n_fjord_runs
         for i_day=1:length(tgt_days)
             string_legend{end+1} = sprintf("mean_{%s}",name_days{i_day});
         end
-        hl1 = legend([hs, hf, hbest, hbest2, hb],string_legend,'fontsize',fsize,'Location','Southeast'); 
+        string_legend{end+1} = 'MITgcm';
+        hl1 = legend([hs, hf, hbest, hbest2, hb, hm],string_legend,'fontsize',fsize,'Location','Southeast'); 
         % title(hl1,sprintf('Profiles at day %d\n(10-day avg.)',tgt_day))
         hl1.NumColumns=2;
     end
@@ -141,6 +165,20 @@ for i_fjord=1:n_fjord_runs
         end
     end
 end
+
+%% RMSE table
+fprintf('\n')
+fprintf("RMSE table\n")
+fprintf('Fjord | RPM_t  | RPM_s  | RPM_ts | GCM_t  | GCM_s  | GCM_ts |\n')
+fprintf('-------------------------------------------------------------------\n')
+for i_fjord=1:n_fjord_runs
+    fprintf("%s     | %.4f | %.4f | %.4f ",res_box(i_fjord).id,rmse_table(i_fjord).tf_rpm,rmse_table(i_fjord).sf_rpm,rmse_table(i_fjord).ts_rpm)
+    if ~isempty(rmse_table(i_fjord).tf_gcm)
+        fprintf('| %.4f | %.4f | %.4f ',rmse_table(i_fjord).tf_gcm,rmse_table(i_fjord).sf_gcm,rmse_table(i_fjord).ts_gcm)
+    end
+    fprintf('|\n')
+end
+fprintf('-------------------------------------------------------------------\n')
 
 
 

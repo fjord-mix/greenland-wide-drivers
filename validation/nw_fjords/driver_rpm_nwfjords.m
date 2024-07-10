@@ -1,16 +1,15 @@
 %% Driver file for simulating the 10 NW fjords
 
-%% Configuring paths
-run setup_paths
+run setup_paths % Configuring paths
 
 %% Initialise all needed variables
 
-n_runs     = 10;              % number of runs per fjord
+n_runs     = 400;              % number of runs per fjord
 input_dt   = 30;              % time step of model input (in days)
 dt_in_h    = 3.;              % time step in hours
-model_dt   = dt_in_h/24.;     % time step in days (2h/24 ~ 0.083 days)
+model_dt   = dt_in_h/24.;     % time step in days for the model (e.g., 2h/24 ~ 0.083 days)
 n_years    = 4;               % how many years we want to run
-tgt_days   = [935,1010,1150]; % which days of the run we want to compare: year 3 peak-melt and post-melt, following pre-melt
+tgt_days   = [935,1010,1150]; % which days of the run we want vertical profiles for: year 3 peak-melt and post-melt, following pre-melt
 name_days  = {'peak','post','winter'};
 
 i_yr       = 4; % {1,2,3,4} for {2016,2017,2018,2019}
@@ -23,15 +22,14 @@ fjord_names = {'Qeqertaarsuusarsuup','Nuussuup','Tuttulikassaap','Nunatakassaap'
                'Kakiffaat','Naajarsuit','Sermeq',...
                'Salliarsutsip','Umiammakku','Kangilliup','Kangerlussuup','SermeqSilarleq','SermeqKujalleq'} ;
 
-
 fun = @(s) all(structfun(@isempty,s));              % tiny function to get rid of empty entries in array
 iceberg_fun = @(NU, H, Z) (NU/H)*exp(NU*Z/H)/(1-exp(-NU)); % functional form of idealised iceberg depth profile
 
 %% Define parameter space
 param_names = {'C0','wp','K0','A0'};
 
-range_params = {[1e2,1e4],...    % C0 
-                [10,400],...     % P0 no crashes with [10,400]
+range_params = {[1e2,5e4],...    % C0 
+                [10,700],...     % P0 no crashes with [10,400]
                 [1e-4,1e-3],...  % K0 or do we stick to [1e4,1e-3]?
                 [0,3e8]};        % A0
 
@@ -53,9 +51,8 @@ disp('Parameter space created.')
 % Read compilation of all fjords around Greenland (requires data-compilation repository)
 % only needed if not using fjord geometries from Cowton et al.
 % run compile_process_fjords 
-
 % These are the IDs of the corresponding fjords above in the "fjords_processed" data structure
-fjord_ids = [4,9,17,20,22,23,24,25,28,29,30,31,24,37];
+% fjord_ids = [4,9,17,20,22,23,24,25,28,29,30,31,24,37];
 
 run load_cowton2023_data % Reading the data from Cowton et al. (2023)
 
@@ -286,7 +283,7 @@ fprintf('Done with fjord %d. ',i_fjord)
 toc
 fprintf('\n')
 end % for i_fjord
-file_out = [outs_path,'rpm_NWfjords_n',num2str(n_runs),'_',num2str(2015+i_yr),'_',num2str(cur_fjord.p.N),'layers_dt',num2str(dt_in_h),'h'];
+file_out = [outs_path,'rpm_NWfjords_n',num2str(n_runs),'_',num2str(2015+i_yr),'_',num2str(cur_fjord.p.N),'layers_dt',num2str(dt_in_h),'h_v2'];
 save(file_out,'-v7.3','ensemble','fjord_model');
 if ~isempty(fjords_crashed)
     save([file_out,'_crashed'],'-v7.3','fjords_crashed');
@@ -296,9 +293,9 @@ disp('Outputs saved.')
 %% Post-processing
 
 if exist('res_obs',"var"),       clear res_obs; end
-res_obs(size(ensemble)) = struct("tf",[],"sf",[],"zf",[]);
+res_obs(size(fjord_model)) = struct("tf",[],"sf",[],"zf",[]);
 if exist('res_box',"var"),       clear res_box; end
-res_box(size(ensemble)) = struct("tf",[],"sf",[],"zf",[],"ID",[],"name",[]);
+res_box(size(fjord_model)) = struct("tf",[],"sf",[],"zf",[],"id",[],"name",[]);
 for i_fjord=1:size(ensemble,1)
     zf_obs = fjord_model(i_fjord).c.zf;
     tf_obs = fjord_model(i_fjord).c.tf;
@@ -393,7 +390,7 @@ disp('Postprocessing done.')
 
 %% Plotting
 
-plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2);
+plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,mitgcm);
 % exportgraphics(gcf,[figs_path,'profiles_temp_',num2str(2015+i_yr),'_n',num2str(n_combinations),'.png'],'Resolution',300)
 
 plot_best_params(fjord_model,ensemble,res_box,param_names,range_params,2);
