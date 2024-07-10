@@ -8,7 +8,7 @@ if nargin < 11 || isempty(plt_series),plt_series= 0; end
 if nargin < 12 || isempty(verbose),   verbose   = 0; end
 
 
-if exist('rmse',"var"),       clear res_obs; end
+if exist('rmse_table',"var"),       clear res_obs; end
 rmse_table(size(fjord_model)) = struct("tf_rpm",[],"sf_rpm",[],"ts_rpm",[],"tf_gcm",[],"sf_gcm",[],"ts_gcm",[]);
 
 lcolor = lines(3+length(tgt_days));
@@ -119,8 +119,13 @@ for i_fjord=1:n_fjord_runs
     ylim([-fjord_model(i_fjord).p.H 0])
     if i_fjord==1 
         string_legend = {"Shelf","Fjord","Best_T","Best_{TS}"};
-        for i_day=1:length(tgt_days)
-            string_legend{end+1} = sprintf("mean_{%s}",name_days{i_day});
+
+        if length(tgt_days)==1
+            string_legend{end+1} = sprintf("mean_{%s}",name_days{i_tgt_day});
+        else
+            for i_day=1:length(tgt_days)
+                string_legend{end+1} = sprintf("mean_{%s}",name_days{i_day});
+            end
         end
         string_legend{end+1} = 'MITgcm';
         hl1 = legend([hs, hf, hbest, hbest2, hb, hm],string_legend,'fontsize',fsize,'Location','Southeast'); 
