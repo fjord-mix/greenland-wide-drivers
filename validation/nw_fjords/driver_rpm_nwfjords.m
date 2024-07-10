@@ -397,3 +397,4 @@ plot_best_params(fjord_model,ensemble,res_box,param_names,range_params,2);
 % exportgraphics(gcf,[figs_path,'best_parameters_',num2str(2015+i_yr),'_n',num2str(n_combinations),'.png'],'Resolution',300)
 
 % plot_sensitivity_to_param(res_box,res_obs,fjord_model,param_names,range_params,2);
+plot_sensitivity_profiles(X,ensemble,res_box,param_names,range_params,2)
