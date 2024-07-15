@@ -48,11 +48,11 @@ for i_fjord=1:n_fjord_runs
         [rmse_table(i_fjord).sf_rpm,inds_best_sf] = min(squeeze(res_box(i_fjord).rmse_sf(:,i_tgt_day)),[],'all','omitnan');
         [rmse_table(i_fjord).ts_rpm,inds_best2]   = min(squeeze(rmse_both(:,i_tgt_day)),[],'all','omitnan');
     
-        tf_best = res_box(i_fjord).ensemble_tf(:,inds_best_tf);
-        sf_best = res_box(i_fjord).ensemble_sf(:,inds_best_sf);
+        tf_best = res_box(i_fjord).ensemble_tf(:,inds_best_tf,i_tgt_day);
+        sf_best = res_box(i_fjord).ensemble_sf(:,inds_best_sf,i_tgt_day);
     
-        tf_best2 = res_box(i_fjord).ensemble_tf(:,inds_best2);
-        sf_best2 = res_box(i_fjord).ensemble_sf(:,inds_best2);
+        tf_best2 = res_box(i_fjord).ensemble_tf(:,inds_best2,i_tgt_day);
+        sf_best2 = res_box(i_fjord).ensemble_sf(:,inds_best2,i_tgt_day);
     end
 
     % compute RMSE for equivalent MITgcm runs
@@ -83,28 +83,30 @@ for i_fjord=1:n_fjord_runs
     text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
     text(0.02,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
 
-    % figure; hold on
-    % y2 = [res_obs(i).zf; flip(res_obs(i).zf)]';
-    % inBetween = [res_box(i).tfmin, flip(res_box(i).tfmax)];
-    % hp = fill(flip(inBetween,1), flip(-y2,2), lcolor(3,:),'edgecolor','none','facealpha',0.2);
-    for i_gcm=1:length(mitgcm)
-        if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
-            hm = plot(mitgcm(i_gcm).Tprofile,-mitgcm(i_gcm).z,'-k','linewidth',1.5);
-        end
-    end
-
+    % Observed shelf and fjord profiles
     hs = plot(res_obs(i_fjord).ts,-res_obs(i_fjord).zs,'linewidth',1.5,'color',lcolor(1,:));
     hf = plot(res_obs(i_fjord).tf,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(2,:));
     hbest = plot(tf_best,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3,:),'LineStyle','--');
     hbest2 = plot(tf_best2,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3,:));
     hb=[];
 
-    for i_day=1:length(tgt_days)
-        hb_d = plot(res_box(i_fjord).tf(:,i_day),-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3+i_day,:));
+    % RPM profile(s)
+    for i_day=1:length(i_tgt_day)
+        y2 = [-res_box(i_fjord).zf'; flip(-res_box(i_fjord).zf')];
+        inBetween = [res_box(i_fjord).tfmin(:,i_tgt_day(i_day)); flip(res_box(i_fjord).tfmax(:,i_tgt_day(i_day)))];
+        hfjd = fill(inBetween, y2, lcolor(3+i_day,:),'edgecolor','none','facealpha',0.1);
+
+        hb_d = plot(res_box(i_fjord).tf(:,i_tgt_day(i_day)),-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3+i_day,:));
         hb = [hb hb_d];
     end
-    % plot(res_box(i).tfmin,-res_obs(i).zf,'linewidth',1.5,'color',lcolor(3,:),'LineStyle','--');
-    % plot(res_box(i).tfmax,-res_obs(i).zf,'linewidth',1.5,'color',lcolor(3,:),'LineStyle','--');
+
+    % GCM profile (if exists for that fjord)
+    for i_gcm=1:length(mitgcm)
+        if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
+            hm = plot(mitgcm(i_gcm).Tprofile,-mitgcm(i_gcm).z,'-k','linewidth',1.5);
+        end
+    end
+
     scatter(0,-fjord_model(i_fjord).p.Hgl,40,'v','filled','MarkerFaceColor','black')
     plot([0 0],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
 
