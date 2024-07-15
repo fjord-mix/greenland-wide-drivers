@@ -38,13 +38,13 @@ for i_param=1:length(param_names)
     for i_fjord=1:n_fjord_runs
         h1 = scatter(i_fjord,best_fjord_params(i_fjord).best_t.(param_names{i_param}),150,lcolor(1,:),'filled','^','MarkerFaceAlpha',.5);
         h2 = scatter(i_fjord,best_fjord_params(i_fjord).best_s.(param_names{i_param}),150,lcolor(2,:),'filled','v','MarkerFaceAlpha',.5);
-        h3 = scatter(i_fjord,best_fjord_params(i_fjord).best_2.(param_names{i_param}),150,lcolor(3,:),'filled','o','MarkerFaceAlpha',.5);
+        % h3 = scatter(i_fjord,best_fjord_params(i_fjord).best_2.(param_names{i_param}),150,lcolor(3,:),'filled','o','MarkerFaceAlpha',.5);
         % fjord_names{i_fjord} = res_box(i_fjord).name;
         fjord_names{i_fjord} = res_box(i_fjord).id;
     end
     ylabel(param_names{i_param})
     xlim([0 n_fjord_runs+1])
-    ylim([0.9*min(range_params{i_param}) 1.1*max(range_params{i_param})])
+    ylim([0.5*min(range_params{i_param}) 1.1*max(range_params{i_param})])
     set(gca,'Xtick',0:1:n_fjord_runs+1)
     xlabels = get(gca,'XTickLabels');
     xlabels(2:end-1) = fjord_names;
@@ -56,8 +56,9 @@ for i_param=1:length(param_names)
         set(gca,'YScale','log')
         ylim([0.1*min(range_params{i_param}) 10*max(range_params{i_param})])
     end
-
+    hline(range_params{i_param},'--','color',[0.75 0.75 0.75])
     if i_param==1
-        legend([h1,h2,h3],{'RMSE_T','RMSE_S','RMSE_{both}'},'fontsize',fsize,'Location','Northwest');
+        % legend([h1,h2,h3],{'RMSE_T','RMSE_S','RMSE_{both}'},'fontsize',fsize,'Location','Northwest');
+        legend([h1,h2],{'RMSE_T','RMSE_S'},'fontsize',fsize,'Location','Northwest');
     end
 end
