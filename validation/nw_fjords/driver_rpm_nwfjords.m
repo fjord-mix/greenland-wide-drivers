@@ -28,7 +28,7 @@ iceberg_fun = @(NU, H, Z) (NU/H)*exp(NU*Z/H)/(1-exp(-NU)); % functional form of 
 %% Define parameter space
 param_names = {'C0','wp','K0','A0'};
 
-range_params = {[1e2,5e4],...    % C0 
+range_params = {[1e2,1e4],...    % C0 
                 [10,700],...     % P0 no crashes with [10,400]
                 [1e-4,1e-3],...  % K0 or do we stick to [1e4,1e-3]?
                 [0,3e8]};        % A0
@@ -50,9 +50,9 @@ disp('Parameter space created.')
 
 % Read compilation of all fjords around Greenland (requires data-compilation repository)
 % only needed if not using fjord geometries from Cowton et al.
-% run compile_process_fjords 
+run compile_process_fjords 
 % These are the IDs of the corresponding fjords above in the "fjords_processed" data structure
-% fjord_ids = [4,9,17,20,22,23,24,25,28,29,30,31,24,37];
+fjord_ids = [4,9,17,20,22,23,24,25,28,29,30,31,24,37];
 
 run load_cowton2023_data % Reading the data from Cowton et al. (2023)
 
@@ -87,21 +87,21 @@ for i_fjord=1:n_fjords
         ctd.depth = ctd_data.zdata{i_yr,i_fjord};
         
         % fjord geometry - from Cowton et al. (2023)
-        p.L         = 1e3.*meta_table.Length_km_(i_fjord);
-        p.W         = 1e3.*meta_table.Width_km_(i_fjord);
-        p.Hsill     = abs(meta_table.SillDepth_m_(i_fjord));
-        p.Hgl       = abs(meta_table.GroundingLineDepth_m_(i_fjord));
+        % p.L         = 1e3.*meta_table.Length_km_(i_fjord);
+        % p.W         = 1e3.*meta_table.Width_km_(i_fjord);
+        % p.Hsill     = abs(meta_table.SillDepth_m_(i_fjord));
+        % p.Hgl       = abs(meta_table.GroundingLineDepth_m_(i_fjord));
 
         % fjord geometry - our data compilation
-        % zgs = NaN(size(fjords_compilation(fjord_ids(i_fjord)).glaciers));
-        % for i_glacier=1:length(fjords_compilation(fjord_ids(i_fjord)).glaciers)
-        %     zgs(i_glacier) = fjords_compilation(fjord_ids(i_fjord)).glaciers(i_glacier).gldepth;
-        % end
-        % 
-        % p.L         = fjords_compilation(fjord_ids(i_fjord)).length;
-        % p.W         = fjords_compilation(fjord_ids(i_fjord)).width;
-        % p.Hsill = fjords_compilation(fjord_ids(i_fjord)).silldepth;
-        % p.Hgl       = min(zgs);
+        zgs = NaN(size(fjords_compilation(fjord_ids(i_fjord)).glaciers));
+        for i_glacier=1:length(fjords_compilation(fjord_ids(i_fjord)).glaciers)
+            zgs(i_glacier) = fjords_compilation(fjord_ids(i_fjord)).glaciers(i_glacier).gldepth;
+        end
+
+        p.L         = fjords_compilation(fjord_ids(i_fjord)).length;
+        p.W         = fjords_compilation(fjord_ids(i_fjord)).width;
+        p.Hsill     = abs(fjords_compilation(fjord_ids(i_fjord)).silldepth);
+        p.Hgl       = abs(min(zgs));
 
         % fjord geometry - fjord depth based on GL/sill depths
         if p.Hsill > p.Hgl % if the GL sits above the sill
@@ -126,21 +126,9 @@ for i_fjord=1:n_fjords
             clear new_zs h_missing depth_range_missing % tidying up
         end
         f.zs = zs';
-        f.Ts = repmat(ts,length(t),1)';
-        f.Ss = repmat(ss,length(t),1)';
-
-
-        % initial conditions
-        H_clim = ones([p.N,1]).*p.H/p.N;
-        [T_clim,S_clim] = bin_ocean_profiles(mean(f.Ts,2),mean(f.Ss,2),f.zs,H_clim);
-        a.H0 = H_clim;
-        a.T0 = T_clim;
-        a.S0 = S_clim;
-
-        % flipping the ocean forcing like the model wants it
-        % f.zs = flip(f.zs);
-        % f.Ts = flip(f.Ts,1); 
-        % f.Ss = flip(f.Ss,1);
+        f.ts = [t(1),t(end)];
+        f.Ts = repmat(ts,length(f.ts),1)';
+        f.Ss = repmat(ss,length(f.ts),1)';
         
         % obtain Qsg
         % interpolate from daily Qsg data to the model time axes
@@ -150,13 +138,19 @@ for i_fjord=1:n_fjords
         qsg_dtmodel = interp1(taxis_qsg_num,qsg_all(:,i_fjord),taxis_qsg_num_dtmodel);
         f.Qsg = repmat(qsg_dtmodel,1,11);
         f.Qsg = f.Qsg(1:length(t));
+        f.tsg = t;
         clear taxis_qsg_julian taxis_qsg_num taxis_qsg_num_dtmodel qsg_dtmodel % bit of tidying up
 
         % idealised icebergs
         p.nu0 = 25; % how fast iceberg area decays with depth
-        % p.icestatic=1; % icebergs do not evolve
-        % f.D = zeros(size(t)); % only consider the initial iceberg concentration in the fjord, and no discharge afterwards
-        % a.I0 = p.A0*iceberg_fun(p.nu0, abs(p.Hgl), -cumsum(a.H0)+a.H0/2);
+
+        % initial conditions
+        H_clim = ones([p.N,1]).*p.H/p.N;
+        % [T_clim,S_clim] = bin_ocean_profiles(mean(f.Ts,2),mean(f.Ss,2),f.zs,H_clim);
+        [T_clim, S_clim, ~] = bin_forcings(f, H_clim, t);
+        a.H0 = H_clim;
+        a.T0 = T_clim(:,1);
+        a.S0 = S_clim(:,1);
 
         fjord_model(i_fjord).t = t;
         fjord_model(i_fjord).m = m;
@@ -283,7 +277,7 @@ fprintf('Done with fjord %d. ',i_fjord)
 toc
 fprintf('\n')
 end % for i_fjord
-file_out = [outs_path,'rpm_NWfjords_n',num2str(n_runs),'_',num2str(2015+i_yr),'_',num2str(cur_fjord.p.N),'layers_dt',num2str(dt_in_h),'h_v2'];
+file_out = [outs_path,'rpm_NWfjords_datacomp_n',num2str(n_runs),'_',num2str(2015+i_yr),'_',num2str(cur_fjord.p.N),'layers_dt',num2str(dt_in_h),'h'];
 save(file_out,'-v7.3','ensemble','fjord_model');
 if ~isempty(fjords_crashed)
     save([file_out,'_crashed'],'-v7.3','fjords_crashed');
@@ -353,13 +347,13 @@ for i_fjord=1:size(ensemble,1)
     res_obs(i_fjord).ss = fjord_model(i_fjord).c.ss;
 
     res_box(i_fjord).t  = cur_fjord.s.t;
-    res_box(i_fjord).zf = z_box;
-    res_box(i_fjord).tf = mean(tf_box_comp,2,'omitnan');
-    res_box(i_fjord).tfmin = min(tf_box_comp,[],2,'omitnan');
-    res_box(i_fjord).tfmax = max(tf_box_comp,[],2,'omitnan');
-    res_box(i_fjord).sf = mean(sf_box_comp,2,'omitnan');
-    res_box(i_fjord).sfmin = min(sf_box_comp,[],2,'omitnan');
-    res_box(i_fjord).sfmax = max(sf_box_comp,[],2,'omitnan');
+    res_box(i_fjord).zf = zf_obs;
+    res_box(i_fjord).tf    = squeeze(mean(tf_box_comp,2,'omitnan'));
+    res_box(i_fjord).tfmin = squeeze(min(tf_box_comp,[],2,'omitnan'));
+    res_box(i_fjord).tfmax = squeeze(max(tf_box_comp,[],2,'omitnan'));
+    res_box(i_fjord).sf    = squeeze(mean(sf_box_comp,2,'omitnan'));
+    res_box(i_fjord).sfmin = squeeze(min(sf_box_comp,[],2,'omitnan'));
+    res_box(i_fjord).sfmax = squeeze(max(sf_box_comp,[],2,'omitnan'));
 
     res_box(i_fjord).Tupper = mean(tupper_box_comp,2,'omitnan');
     res_box(i_fjord).Tupper_min = min(tupper_box_comp,[],2,'omitnan');
@@ -391,10 +385,14 @@ disp('Postprocessing done.')
 %% Plotting
 
 plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,mitgcm);
-% exportgraphics(gcf,[figs_path,'profiles_temp_',num2str(2015+i_yr),'_n',num2str(n_combinations),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'profiles_temp_datacomp_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
 plot_best_params(fjord_model,ensemble,res_box,param_names,range_params,2);
-% exportgraphics(gcf,[figs_path,'best_parameters_',num2str(2015+i_yr),'_n',num2str(n_combinations),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'best_parameters_datacomp_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
-% plot_sensitivity_to_param(res_box,res_obs,fjord_model,param_names,range_params,2);
-plot_sensitivity_profiles(X,ensemble,res_box,param_names,range_params,2)
+% plot_sensitivity_profiles(X,ensemble,res_box,param_names,range_params,2);
+plot_sensitivity_profiles_v2(X,ensemble,res_box,param_names,range_params,2);
+% plot_sensitivity_profiles_v2(X,ensemble,res_box,param_names,range_params,2,figs_path,i_yr);
+% exportgraphics(gcf,[figs_path,'sensitivity_profiles_low_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'sensitivity_profiles_mid_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'sensitivity_profiles_high_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
