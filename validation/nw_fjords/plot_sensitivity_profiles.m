@@ -88,7 +88,7 @@ for i_param=1:length(param_names)
         % plot
         y2 = [depths; flip(depths)];
         inBetween = [tfmin; flip(tfmax)];
-        hfjd = patch(inBetween, y2, lcolor(i_fjord,:),'edgecolor','none','facealpha',0.1);
+        hfjd = patch(inBetween, y2, lcolor(i_fjord,:),'edgecolor',lcolor(i_fjord,:),'facealpha',0.1);
         plot(tfmean,depths,'linewidth',1.5,'color',lcolor(i_fjord,:));
         
         % add depictions of GL and sill depths
