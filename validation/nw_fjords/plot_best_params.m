@@ -3,7 +3,7 @@ function hf = plot_best_params(fjord_model,ensemble,res_box,param_names,range_pa
 if nargin < 6, i_tgt_day=1; end
 n_fjord_runs = length(fjord_model);
 w_rmse_t = 0.5; % how much we want to weight the temperature (n)RMSE versus salinity (0.5 = 50:50; 1 = only temperature)
-fsize=12;
+fsize=14;
 lcolor = lines(3);
 
 
@@ -36,21 +36,29 @@ fjord_names = cell(size(fjord_model));
 for i_param=1:length(param_names)
     nexttile; hold on; box on;
     for i_fjord=1:n_fjord_runs
-        h1 = scatter(i_fjord,best_fjord_params(i_fjord).best_t.(param_names{i_param}),150,lcolor(1,:),'filled','^','MarkerFaceAlpha',.5);
-        h2 = scatter(i_fjord,best_fjord_params(i_fjord).best_s.(param_names{i_param}),150,lcolor(2,:),'filled','v','MarkerFaceAlpha',.5);
-        % h3 = scatter(i_fjord,best_fjord_params(i_fjord).best_2.(param_names{i_param}),150,lcolor(3,:),'filled','o','MarkerFaceAlpha',.5);
+        x_var = i_fjord;
+        % x_var = ensemble(i_fjord,1).s.Qsg_max;
+        % x_var = ensemble(i_fjord,1).p.L.*1e-3;
+        h1 = scatter(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),250,lcolor(1,:),'filled','^','MarkerFaceAlpha',.5);
+        h2 = scatter(x_var,best_fjord_params(i_fjord).best_s.(param_names{i_param}),250,lcolor(2,:),'filled','v','MarkerFaceAlpha',.5);
+        
         % fjord_names{i_fjord} = res_box(i_fjord).name;
         fjord_names{i_fjord} = res_box(i_fjord).id;
     end
     ylabel(param_names{i_param})
-    xlim([0 n_fjord_runs+1])
     ylim([0.5*min(range_params{i_param}) 1.1*max(range_params{i_param})])
+
+    xlim([0 n_fjord_runs+1])
     set(gca,'Xtick',0:1:n_fjord_runs+1)
     xlabels = get(gca,'XTickLabels');
     xlabels(2:end-1) = fjord_names;
     xlabels{1} = ' '; xlabels{end} = ' ';
-    set(gca,'XtickLabels',xlabels,'fontsize',fsize);
-    % set(gca,'fontsize',fsize)
+    set(gca,'XtickLabels',xlabels);
+    % xlabel('Peak subglacial discharge (m^3s^{-1})','fontsize',fsize);
+    % xlabel('Fjord length (km)');
+    
+    
+    set(gca,'fontsize',fsize)
     % xtickangle(90);
     if (max(range_params{i_param}) - min(range_params{i_param}) > 1e3) || max(range_params{i_param}) - min(range_params{i_param}) < 1e-3
         set(gca,'YScale','log')
