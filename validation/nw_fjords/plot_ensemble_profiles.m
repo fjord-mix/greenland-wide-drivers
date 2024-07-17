@@ -1,11 +1,12 @@
-function [hf_profiles,hf_series] = plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days,name_days,i_tgt_day,mitgcm,plt_series,verbose)
+function [hf_profiles,hf_series] = plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days,name_days,i_tgt_day,mitgcm,plt_salt,plt_series,verbose)
 
 n_fjord_runs = length(fjord_model);
 w_rmse_t = 0.5; % how much we want to weight the temperature (n)RMSE versus salinity (0.5 = 50:50; 1 = only temperature)
-fsize=12;
+fsize=14;
 
-if nargin < 11 || isempty(plt_series),plt_series= 0; end
-if nargin < 12 || isempty(verbose),   verbose   = 0; end
+if nargin < 11 || isempty(plt_salt),  plt_salt   = 0; end
+if nargin < 12 || isempty(plt_series),plt_series = 0; end
+if nargin < 13 || isempty(verbose),   verbose    = 0; end
 
 
 if exist('rmse_table',"var"),       clear res_obs; end
@@ -13,10 +14,17 @@ rmse_table(size(fjord_model)) = struct("tf_rpm",[],"sf_rpm",[],"ts_rpm",[],"tf_g
 
 lcolor = lines(3+length(tgt_days));
 hf_profiles = figure('Name','Temperature profiles','Position',[40 40 1200 400*length(fjord_model)/2]);
-tiledlayout(length(fjord_model)/2,2);
+ht_temp = tiledlayout("flow");
+% tiledlayout(length(fjord_model)/2,2);
+
+if plt_salt
+    hfs_profiles = figure('Name','Salinity profiles','Position',[40 40 1200 400*length(fjord_model)/2]);
+    ht_salt = tiledlayout("flow");
+end
 if plt_series
     hf_series   = figure('Name','Temperature evolution','Position',[40 40 1200 400*length(fjord_model)/2]);
-    tiledlayout(length(fjord_model)/2,2);
+    % tiledlayout(length(fjord_model)/2,2);
+    tiledlayout("flow");
 end
 
 
@@ -77,7 +85,7 @@ for i_fjord=1:n_fjord_runs
         % fprintf("day \t %s\t\t%s\t\t%s\n",name_days{inds_best_tf(end)},name_days{inds_best_sf(end)},name_days{inds_best2(end)})
         disp("============================")
     end
-    %% Plotting
+    %% Plotting temperature
     figure(hf_profiles)
     nexttile; hold on; box on; grid on
     text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
@@ -110,12 +118,6 @@ for i_fjord=1:n_fjord_runs
     scatter(0,-fjord_model(i_fjord).p.Hgl,40,'v','filled','MarkerFaceColor','black')
     plot([0 0],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
 
-    if mod(i_fjord,2) > 0, ylabel('Depth (m)'); end
-    if i_fjord>n_fjord_runs-2
-        xlabel('Temperature (^oC)');  
-    else
-        set(gca,'xticklabels',[])
-    end
     set(gca,'fontsize',fsize)
     xlim([-2 6])
     ylim([-fjord_model(i_fjord).p.H 0])
@@ -132,9 +134,46 @@ for i_fjord=1:n_fjord_runs
         string_legend{end+1} = 'MITgcm';
         hl1 = legend([hs, hf, hbest, hbest2, hb, hm],string_legend,'fontsize',fsize,'Location','Southeast'); 
         % title(hl1,sprintf('Profiles at day %d\n(10-day avg.)',tgt_day))
-        hl1.NumColumns=2;
+        hl1.NumColumns=1;
     end
 
+    %% Plotting salinity
+    if plt_salt
+        figure(hfs_profiles)
+        nexttile; hold on; box on; grid on
+        text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
+        text(0.02,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
+    
+        % Observed shelf and fjord profiles
+        plot(res_obs(i_fjord).ss,-res_obs(i_fjord).zs,'linewidth',1.5,'color',lcolor(1,:));
+        plot(res_obs(i_fjord).sf,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(2,:));
+        plot(sf_best,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3,:),'LineStyle','--');
+        plot(sf_best2,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3,:));
+        
+    
+        % RPM profile(s)
+        for i_day=1:length(i_tgt_day)
+            y2 = [-res_box(i_fjord).zf'; flip(-res_box(i_fjord).zf')];
+            inBetween = [res_box(i_fjord).sfmin(:,i_tgt_day(i_day)); flip(res_box(i_fjord).sfmax(:,i_tgt_day(i_day)))];
+            fill(inBetween, y2, lcolor(3+i_day,:),'edgecolor','none','facealpha',0.1);
+            plot(res_box(i_fjord).sf(:,i_tgt_day(i_day)),-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3+i_day,:));
+        end
+    
+        % GCM profile (if exists for that fjord)
+        for i_gcm=1:length(mitgcm)
+            if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
+                plot(mitgcm(i_gcm).Sprofile,-mitgcm(i_gcm).z,'-k','linewidth',1.5);
+            end
+        end
+        scatter(33,-fjord_model(i_fjord).p.Hgl,40,'v','filled','MarkerFaceColor','black')
+        plot([33 33],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
+    
+        set(gca,'fontsize',fsize)
+        xlim([30.5 35])
+        ylim([-fjord_model(i_fjord).p.H 0])
+    end
+
+    %% Plotting series
     if plt_series
         figure(hf_series)
         nexttile; hold on; box on; grid on
@@ -145,13 +184,6 @@ for i_fjord=1:n_fjord_runs
             hu = plot(res_box(i_fjord).t,res_box(i_fjord).Tupper,'linewidth',1.5,'color',lcolor(1,:));
             hi = plot(res_box(i_fjord).t,res_box(i_fjord).Tinter,'linewidth',1.5,'color',lcolor(2,:));
             hl = plot(res_box(i_fjord).t,res_box(i_fjord).Tlower,'linewidth',1.5,'color',lcolor(3,:));
-        
-            % plot(res_box(i).t,res_box(i).Tupper_min,'linewidth',1.5,'color',lcolor(1,:),'LineStyle',':');
-            % plot(res_box(i).t,res_box(i).Tupper_max,'linewidth',1.5,'color',lcolor(1,:),'LineStyle',':');
-            % plot(res_box(i).t,res_box(i).Tinter_min,'linewidth',1.5,'color',lcolor(2,:),'LineStyle',':');
-            % plot(res_box(i).t,res_box(i).Tinter_max,'linewidth',1.5,'color',lcolor(2,:),'LineStyle',':');
-            % plot(res_box(i).t,res_box(i).Tlower_min,'linewidth',1.5,'color',lcolor(3,:),'LineStyle',':');
-            % plot(res_box(i).t,res_box(i).Tlower_max,'linewidth',1.5,'color',lcolor(3,:),'LineStyle',':');
            
             for i_day=1:length(tgt_days)
                 xline(tgt_days(i_day),'linestyle','--','color',lcolor(3+i_day,:),'linewidth',2)
@@ -172,6 +204,13 @@ for i_fjord=1:n_fjord_runs
         end
     end
 end
+
+if plt_salt
+    xlabel(ht_salt,'Salinity','fontsize',fsize);  
+    ylabel(ht_salt,'Depth (m)','fontsize',fsize);
+end
+xlabel(ht_temp,'Temperature (^oC)','fontsize',fsize);  
+ylabel(ht_temp,'Depth (m)','fontsize',fsize);
 
 %% RMSE table
 fprintf('\n')
