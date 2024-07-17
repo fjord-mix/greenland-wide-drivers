@@ -12,7 +12,7 @@ n_years    = 4;               % how many years we want to run
 tgt_days   = [935,1010,1150]; % which days of the run we want vertical profiles for: year 3 peak-melt and post-melt, following pre-melt
 name_days  = {'peak','post','winter'};
 
-i_yr       = 4; % {1,2,3,4} for {2016,2017,2018,2019}
+i_yr       = 3; % {1,2,3,4,5} for {2016,2017,2018,2019,2020}
 time_start = datetime(2015+i_yr,01,01);
 time_end   = datetime(2015+i_yr,12,31);
 
@@ -50,9 +50,8 @@ disp('Parameter space created.')
 
 % Read compilation of all fjords around Greenland (requires data-compilation repository)
 % only needed if not using fjord geometries from Cowton et al.
-run compile_process_fjords 
-% These are the IDs of the corresponding fjords above in the "fjords_processed" data structure
-fjord_ids = [4,9,17,20,22,23,24,25,28,29,30,31,24,37];
+% run compile_process_fjords 
+% fjord_ids = [4,9,17,20,22,23,24,25,28,29,30,31,24,37]; % These are the IDs of the corresponding fjords above in the "fjords_processed" data structure
 
 run load_cowton2023_data % Reading the data from Cowton et al. (2023)
 
@@ -68,7 +67,8 @@ n_fjords = size(meta_table,1);
 if exist('fjord_model',"var"),       clear fjord_model; end
 fjord_model(n_fjords) = struct("p",[],"a",[],"f",[],"t",[],"m",[],"c",[]);
 for i_fjord=1:n_fjords
-    if ~isnan(meta_table.Length_km_(i_fjord)) % we only want fjords for which we have all geometry data
+    % we only want fjords for which we have all geometry and CTD data
+    if ~isnan(meta_table.Length_km_(i_fjord)) && ~isempty(ctd_data.Tdata{i_yr,i_fjord}) 
 
         % compile metadata and default parameters
         m.ID     = meta_table.Var1(i_fjord);
@@ -87,21 +87,21 @@ for i_fjord=1:n_fjords
         ctd.depth = ctd_data.zdata{i_yr,i_fjord};
         
         % fjord geometry - from Cowton et al. (2023)
-        % p.L         = 1e3.*meta_table.Length_km_(i_fjord);
-        % p.W         = 1e3.*meta_table.Width_km_(i_fjord);
-        % p.Hsill     = abs(meta_table.SillDepth_m_(i_fjord));
-        % p.Hgl       = abs(meta_table.GroundingLineDepth_m_(i_fjord));
+        p.L         = 1e3.*meta_table.Length_km_(i_fjord);
+        p.W         = 1e3.*meta_table.Width_km_(i_fjord);
+        p.Hsill     = abs(meta_table.SillDepth_m_(i_fjord));
+        p.Hgl       = abs(meta_table.GroundingLineDepth_m_(i_fjord));
 
-        % fjord geometry - our data compilation
-        zgs = NaN(size(fjords_compilation(fjord_ids(i_fjord)).glaciers));
-        for i_glacier=1:length(fjords_compilation(fjord_ids(i_fjord)).glaciers)
-            zgs(i_glacier) = fjords_compilation(fjord_ids(i_fjord)).glaciers(i_glacier).gldepth;
-        end
-
-        p.L         = fjords_compilation(fjord_ids(i_fjord)).length;
-        p.W         = fjords_compilation(fjord_ids(i_fjord)).width;
-        p.Hsill     = abs(fjords_compilation(fjord_ids(i_fjord)).silldepth);
-        p.Hgl       = abs(min(zgs));
+        % fjord geometry - automated data compilation
+        % zgs = NaN(size(fjords_compilation(fjord_ids(i_fjord)).glaciers));
+        % for i_glacier=1:length(fjords_compilation(fjord_ids(i_fjord)).glaciers)
+        %     zgs(i_glacier) = fjords_compilation(fjord_ids(i_fjord)).glaciers(i_glacier).gldepth;
+        % end
+        % 
+        % p.L         = fjords_compilation(fjord_ids(i_fjord)).length;
+        % p.W         = fjords_compilation(fjord_ids(i_fjord)).width;
+        % p.Hsill     = abs(fjords_compilation(fjord_ids(i_fjord)).silldepth);
+        % p.Hgl       = abs(min(zgs));
 
         % fjord geometry - fjord depth based on GL/sill depths
         if p.Hsill > p.Hgl % if the GL sits above the sill
@@ -109,7 +109,7 @@ for i_fjord=1:n_fjords
         else
             p.sill=1;
         end
-        p.H = abs(p.Hgl); % the fjord is always as deep as the GL
+        p.H = abs(p.Hgl); % the fjord is always as deep as the GL. We add 10m to avoid crashes in case Hsill is too close to Hgl
         
 
         % ocean forcing
@@ -164,34 +164,9 @@ for i_fjord=1:n_fjords
         fjord_model(i_fjord).c.ss = ctd.salt.s;
         fjord_model(i_fjord).c.zs = ctd.depth.s;
 
-        % Sanity-check plot to make sure the boxes and binned T and S make sense
-        % % Sanity-check plot to make sure the boxes, T,S profiles, Qsg and D all make sense
-        % figure('Position',[100 100 800 500]);
-        % ints=[0,-cumsum(a.H0)];
-        % subplot(1,3,1); hold on; box on;
-        % plot(f.Ts(:,1),f.zs);
-        % scatter(a.T0,(ints(1:end-1)+ints(2:end))/2,'filled');
-        % for j=1:size(ints,2)
-        %     yline(ints(j));
-        % end
-        % yline(p.Hgl,'--k','linewidth',0.5)
-        % yline(p.Hsill,'--k','linewidth',0.5)
-        % ylim([-p.H 0])
-        % subplot(1,3,2); hold on; box on;
-        % plot(f.Ss(:,1),f.zs);
-        % scatter(a.S0,(ints(1:end-1)+ints(2:end))/2,'filled');
-        % for j=1:size(ints,2)
-        %     yline(ints(j));
-        % end
-        % yline(p.Hgl,'--k','linewidth',0.5)
-        % yline(p.Hsill,'--k','linewidth',0.5)
-        % ylim([-p.H 0])
-        % subplot(1,3,3); hold on; box on; grid on;
-        % plot(t,f.Qsg);
-        % plot(t,f.D);
-        % legend('Subglacial discharge','Solid-ice discharge');
-        % exportgraphics(gcf,[figs_path,'forcing_summary_c13_fjord_',letters{i_fjord},'_',num2str(2015+i_yr),'.png'],'Resolution',300)
-        % 
+        % Summary of model forcings
+        % plot_forcings(f,p,t);
+        % exportgraphics(gcf,[figs_path,'forcing_summary_fjord_',upper(letters{i_fjord}),'_',num2str(2015+i_yr),'.png'],'Resolution',300)
         clear m p a f % bit of tidying up
     end
 end
@@ -208,10 +183,6 @@ ensemble = struct(ensemble_fields{:});
 ensemble(dims_ensemble) = struct("p",[],"t",[],"m",[],"s",[]);
 fjords_crashed = {};
 
-% we still need to add additional 'for' statements and manually add extra
-% indices within the for loops for any new parameter to be added. 
-% But at least now it should be easier to spot where to add
-% them and what might be missing... TODO: replace these for loops for LHS
 run_counter=0;
 for i_fjord=1:length(fjord_model)
 tic
@@ -229,9 +200,11 @@ for i_run=1:n_runs
             cur_fjord.s = run_model(cur_fjord.p, cur_fjord.t, cur_fjord.f, cur_fjord.a);
             fprintf('run %d complete. ',run_counter)
     
-            ensemble(i_fjord,i_run).p = cur_fjord.p;
-            ensemble(i_fjord,i_run).t = cur_fjord.t;
-            ensemble(i_fjord,i_run).m = cur_fjord.m;
+            ensemble(i_fjord,i_run).p   = cur_fjord.p;
+            ensemble(i_fjord,i_run).t   = cur_fjord.t;
+            ensemble(i_fjord,i_run).m   = cur_fjord.m;
+            ensemble(i_fjord,i_run).s.t = cur_fjord.s.t;
+            ensemble(i_fjord,i_run).s.Qsg_max = max(cur_fjord.s.Qsg);
             Tfinal=NaN([cur_fjord.p.N,length(tgt_days)]);
             Sfinal=NaN(size(Tfinal));
             Hfinal=NaN(size(Tfinal));
@@ -248,10 +221,12 @@ for i_run=1:n_runs
             Tregular=NaN([length(zf_obs),length(cur_fjord.s.t)]);
             Sregular=NaN(size(Tregular));
             z_box = -cur_fjord.s.z;
-            for k=1:length(cur_fjord.s.t)
-                Tregular(:,k) = interp1(z_box,cur_fjord.s.T(:,k),zf_obs,'nearest','extrap');
-                Sregular(:,k) = interp1(z_box,cur_fjord.s.S(:,k),zf_obs,'nearest','extrap');
-            end
+            Tregular = interp1(z_box,cur_fjord.s.T,zf_obs,'nearest','extrap');
+            Sregular = interp1(z_box,cur_fjord.s.S,zf_obs,'nearest','extrap');
+            % for k=1:length(cur_fjord.s.t)
+            %     Tregular(:,k) = interp1(z_box,cur_fjord.s.T(:,k),zf_obs,'nearest','extrap');
+            %     Sregular(:,k) = interp1(z_box,cur_fjord.s.S(:,k),zf_obs,'nearest','extrap');
+            % end
             range_upper = zf_obs < 50;
             range_inter = zf_obs > 50 & zf_obs < 250;
             range_lower = zf_obs > 250 & zf_obs < 500;
@@ -277,7 +252,7 @@ fprintf('Done with fjord %d. ',i_fjord)
 toc
 fprintf('\n')
 end % for i_fjord
-file_out = [outs_path,'rpm_NWfjords_datacomp_n',num2str(n_runs),'_',num2str(2015+i_yr),'_',num2str(cur_fjord.p.N),'layers_dt',num2str(dt_in_h),'h'];
+file_out = [outs_path,'rpm_NWfjords_n',num2str(n_runs),'_',num2str(2015+i_yr),'_',num2str(cur_fjord.p.N),'layers_dt',num2str(dt_in_h),'h'];
 save(file_out,'-v7.3','ensemble','fjord_model');
 if ~isempty(fjords_crashed)
     save([file_out,'_crashed'],'-v7.3','fjords_crashed');
@@ -285,114 +260,24 @@ end
 disp('Outputs saved.')
 
 %% Post-processing
+% load(file_out);
 
-if exist('res_obs',"var"),       clear res_obs; end
-res_obs(size(fjord_model)) = struct("tf",[],"sf",[],"zf",[]);
-if exist('res_box',"var"),       clear res_box; end
-res_box(size(fjord_model)) = struct("tf",[],"sf",[],"zf",[],"id",[],"name",[]);
-for i_fjord=1:size(ensemble,1)
-    zf_obs = fjord_model(i_fjord).c.zf;
-    tf_obs = fjord_model(i_fjord).c.tf;
-    sf_obs = fjord_model(i_fjord).c.sf;
-    n_completed = 0; % completed runs for that fjord
-
-    tf_box_comp = NaN([length(zf_obs),n_runs,length(tgt_days)]);
-    sf_box_comp = NaN(size(tf_box_comp));
-    rmse_tf = NaN([n_runs,length(tgt_days)]);
-    rmse_sf = NaN([n_runs,length(tgt_days)]);
-    tupper_box_comp = NaN([length(cur_fjord.s.t),n_runs]);
-    tinter_box_comp = NaN(size(tupper_box_comp));
-    tlower_box_comp = NaN(size(tupper_box_comp));
-    supper_box_comp = NaN(size(tupper_box_comp));
-    sinter_box_comp = NaN(size(tupper_box_comp));
-    slower_box_comp = NaN(size(tupper_box_comp));
-
-    for i_run=1:n_runs
-        if ~isempty(ensemble(i_fjord,i_run).s) & ~isnan(ensemble(i_fjord,i_run).s.Tfinal(1))
-
-            % we get a profile for each of our target days - if something
-            % goes wrong here it's because of the sign/orientation of depth
-            % profiles
-            for i_day=1:length(tgt_days) 
-                tf_box = ensemble(i_fjord,i_run).s.Tfinal(:,i_day); 
-                sf_box = ensemble(i_fjord,i_run).s.Sfinal(:,i_day);
-                
-                tf_box_comp(:,i_run,i_day) = interp1(ensemble(i_fjord,i_run).s.z,tf_box,zf_obs,'nearest','extrap');
-                sf_box_comp(:,i_run,i_day) = interp1(ensemble(i_fjord,i_run).s.z,sf_box,zf_obs,'nearest','extrap');
-            end
-
-            tupper_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Tupper;
-            tinter_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Tinter;
-            tlower_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Tlower;
-
-            supper_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Supper;
-            sinter_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Sinter;
-            slower_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Slower;
-
-            min_depth_rmse = 0;
-            depths_rmse = zf_obs > min_depth_rmse;
-            for i_day = 1:length(tgt_days)
-                rmse_tf(i_run,i_day) = rmse(tf_box_comp(depths_rmse,i_run,i_day),tf_obs(depths_rmse)','omitnan')./mean(tf_obs(depths_rmse),'omitnan');
-                rmse_sf(i_run,i_day) = rmse(sf_box_comp(depths_rmse,i_run,i_day),sf_obs(depths_rmse)','omitnan')./mean(sf_obs(depths_rmse),'omitnan');
-            end
-            n_completed = n_completed+1;
-        end
-    end % i_run
-    res_obs(i_fjord).zf = zf_obs;
-    res_obs(i_fjord).tf = tf_obs;
-    res_obs(i_fjord).sf = sf_obs;
-    
-    res_obs(i_fjord).zs = fjord_model(i_fjord).c.zs;
-    res_obs(i_fjord).ts = fjord_model(i_fjord).c.ts;
-    res_obs(i_fjord).ss = fjord_model(i_fjord).c.ss;
-
-    res_box(i_fjord).t  = cur_fjord.s.t;
-    res_box(i_fjord).zf = zf_obs;
-    res_box(i_fjord).tf    = squeeze(mean(tf_box_comp,2,'omitnan'));
-    res_box(i_fjord).tfmin = squeeze(min(tf_box_comp,[],2,'omitnan'));
-    res_box(i_fjord).tfmax = squeeze(max(tf_box_comp,[],2,'omitnan'));
-    res_box(i_fjord).sf    = squeeze(mean(sf_box_comp,2,'omitnan'));
-    res_box(i_fjord).sfmin = squeeze(min(sf_box_comp,[],2,'omitnan'));
-    res_box(i_fjord).sfmax = squeeze(max(sf_box_comp,[],2,'omitnan'));
-
-    res_box(i_fjord).Tupper = mean(tupper_box_comp,2,'omitnan');
-    res_box(i_fjord).Tupper_min = min(tupper_box_comp,[],2,'omitnan');
-    res_box(i_fjord).Tupper_max = max(tupper_box_comp,[],2,'omitnan');
-
-    res_box(i_fjord).Tinter = mean(tinter_box_comp,2,'omitnan');
-    res_box(i_fjord).Tinter_min = min(tinter_box_comp,[],2,'omitnan');
-    res_box(i_fjord).Tinter_max = max(tinter_box_comp,[],2,'omitnan');
-
-    res_box(i_fjord).Tlower = mean(tlower_box_comp,2,'omitnan');
-    res_box(i_fjord).Tlower_min = min(tlower_box_comp,[],2,'omitnan');
-    res_box(i_fjord).Tlower_max = max(tlower_box_comp,[],2,'omitnan');
-
-    res_box(i_fjord).Supper = mean(supper_box_comp,2,'omitnan');
-    res_box(i_fjord).Sinter = mean(sinter_box_comp,2,'omitnan');
-    res_box(i_fjord).Slower = mean(slower_box_comp,2,'omitnan');
-
-    res_box(i_fjord).ensemble_tf = tf_box_comp;
-    res_box(i_fjord).ensemble_sf = sf_box_comp;
-    res_box(i_fjord).rmse_tf = rmse_tf;
-    res_box(i_fjord).rmse_sf = rmse_sf;
-
-    res_box(i_fjord).id = fjord_model(i_fjord).m.ID{1};
-    res_box(i_fjord).name = fjord_model(i_fjord).m.name{1};
-    res_box(i_fjord).n = n_completed./n_runs * 100;
-end
-disp('Postprocessing done.')
+[res_obs,res_box] = postprocess_ensemble(fjord_model,ensemble,tgt_days);
+disp('Postprocessing ensemble done.')
 
 %% Plotting
 
 plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,mitgcm);
-% exportgraphics(gcf,[figs_path,'profiles_temp_datacomp_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
-plot_best_params(fjord_model,ensemble,res_box,param_names,range_params,2);
-% exportgraphics(gcf,[figs_path,'best_parameters_datacomp_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'profiles_temp_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'profiles_salt_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
-% plot_sensitivity_profiles(X,ensemble,res_box,param_names,range_params,2);
-plot_sensitivity_profiles_v2(X,ensemble,res_box,param_names,range_params,2);
-% plot_sensitivity_profiles_v2(X,ensemble,res_box,param_names,range_params,2,figs_path,i_yr);
-% exportgraphics(gcf,[figs_path,'sensitivity_profiles_low_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
-% exportgraphics(gcf,[figs_path,'sensitivity_profiles_mid_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
-% exportgraphics(gcf,[figs_path,'sensitivity_profiles_high_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
+% plot_best_params(fjord_model,ensemble,res_box,param_names,range_params,2);
+% exportgraphics(gcf,[figs_path,'best_parameters_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
+
+% plot_sensitivity_profiles_v2(X,ensemble,res_box,param_names,2);
+% plot_sensitivity_profiles_v2(X,ensemble,res_box,param_names,2,1,figs_path,i_yr);
+
+% run loop_postprocess_batch.m
+% plot_best_params_time(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,2)
+% exportgraphics(gcf,[figs_path,'best_parameters_all_yrs','_n',num2str(n_runs),'.png'],'Resolution',300)
