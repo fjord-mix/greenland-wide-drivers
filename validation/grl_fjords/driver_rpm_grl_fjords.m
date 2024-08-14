@@ -6,13 +6,13 @@ letters = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n'};
 
 %% Initialise all needed variables
 
-which_year = 2020; % {2016,2017,2018,2019,2020}
+which_year = 2016; % {2016,2017,2018,2019,2020}
 time_start = datetime(which_year,01,01);
 time_end   = datetime(which_year,12,31);
 
 n_runs     = 400;          % number of runs per fjord
 input_dt   = 30;          % time step of model input (in days)
-dt_in_h    = 3.;          % time step in hours
+dt_in_h    = 2.;          % time step in hours
 model_dt   = dt_in_h/24.; % time step in days for the model (e.g., 2h/24 ~ 0.083 days)
 n_years    = 4;           % how many years we want to run
 % tgt_days   = [935,1010];  % which days of the run we want vertical profiles for
@@ -182,15 +182,18 @@ for i_fjord=1:height(fjord_matrix)
             fjord_model(i_fjord).c.tf = tf_nonans;
             fjord_model(i_fjord).c.sf = sf_nonans;
             fjord_model(i_fjord).c.zf = zf_nonans;
-            fjord_model(i_fjord).c.ts = t_shelf;
-            fjord_model(i_fjord).c.ss = s_shelf;
-            fjord_model(i_fjord).c.zs = z_shelf;
+            fjord_model(i_fjord).c.ts = Ts;
+            fjord_model(i_fjord).c.ss = Ss;
+            fjord_model(i_fjord).c.zs = zs;
+            fprintf('Done pre-processing fjord %d.\n',fjord_matrix.ID(i_fjord))
+            clear m p a f
         else
-            fprintf('Fjord %d has no shelf forcing data. Skipping...',i_fjord)
+            fprintf('Fjord %d has no shelf forcing data. Skipping...\n',fjord_matrix.ID(i_fjord))
         end
 
+    else
+        fprintf('No %d data for fjord %d.\n',which_year,fjord_matrix.ID(i_fjord))
     end
-    fprintf('Done pre-processing fjord %d.\n',i_fjord)
 end
 warning('on','all')
 idx = arrayfun(fun,fjord_model);
