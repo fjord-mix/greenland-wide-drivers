@@ -2,8 +2,9 @@ function [hf_profiles,hf_series] = plot_ensemble_profiles(fjord_model,ensemble,r
 
 n_fjord_runs = length(fjord_model);
 w_rmse_t = 0.5; % how much we want to weight the temperature (n)RMSE versus salinity (0.5 = 50:50; 1 = only temperature)
-fsize=14;
+fsize=10;
 
+if nargin < 10 || isempty(mitgcm),    plt_mitgcm = 0; else, plt_mitgcm=1; end
 if nargin < 11 || isempty(plt_salt),  plt_salt   = 0; end
 if nargin < 12 || isempty(plt_series),plt_series = 0; end
 if nargin < 13 || isempty(verbose),   verbose    = 0; end
@@ -13,16 +14,24 @@ if exist('rmse_table',"var"),       clear res_obs; end
 rmse_table(size(fjord_model)) = struct("tf_rpm",[],"sf_rpm",[],"ts_rpm",[],"tf_gcm",[],"sf_gcm",[],"ts_gcm",[]);
 
 lcolor = lines(3+length(tgt_days));
-hf_profiles = figure('Name','Temperature profiles','Position',[40 40 1200 400*length(fjord_model)/2]);
+if length(fjord_model) > 1
+    fig_width = 1500; 
+    fig_height = 400*length(fjord_model)/2;
+else
+    fig_width = 500; 
+    fig_height = 300;
+end
+
+hf_profiles = figure('Name','Temperature profiles','Position',[40 40 fig_width fig_height]);
 ht_temp = tiledlayout("flow");
 % tiledlayout(length(fjord_model)/2,2);
 
 if plt_salt
-    hfs_profiles = figure('Name','Salinity profiles','Position',[40 40 1200 400*length(fjord_model)/2]);
+    hfs_profiles = figure('Name','Salinity profiles','Position',[40 40 fig_width fig_height]);
     ht_salt = tiledlayout("flow");
 end
 if plt_series
-    hf_series   = figure('Name','Temperature evolution','Position',[40 40 1200 400*length(fjord_model)/2]);
+    hf_series   = figure('Name','Temperature evolution','Position',[40 40 fig_width fig_height]);
     % tiledlayout(length(fjord_model)/2,2);
     tiledlayout("flow");
 end
@@ -64,13 +73,15 @@ for i_fjord=1:n_fjord_runs
     end
 
     % compute RMSE for equivalent MITgcm runs
-    for i_gcm=1:length(mitgcm)
-        if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
-            tprofile_gcm = interp1(mitgcm(i_gcm).z,mitgcm(i_gcm).Tprofile,res_obs(i_fjord).zf,'linear','extrap');
-            sprofile_gcm = interp1(mitgcm(i_gcm).z,mitgcm(i_gcm).Sprofile,res_obs(i_fjord).zf,'linear','extrap');
-            rmse_table(i_fjord).tf_gcm = rmse(tprofile_gcm,res_obs(i_fjord).tf,'omitnan')./mean(res_obs(i_fjord).tf,'omitnan');
-            rmse_table(i_fjord).sf_gcm = rmse(sprofile_gcm,res_obs(i_fjord).sf,'omitnan')./mean(res_obs(i_fjord).sf,'omitnan');
-            rmse_table(i_fjord).ts_gcm = w_rmse_t.*rmse_table(i_fjord).tf_gcm + (1-w_rmse_t).*rmse_table(i_fjord).sf_gcm;
+    if plt_mitgcm
+        for i_gcm=1:length(mitgcm)
+            if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
+                tprofile_gcm = interp1(mitgcm(i_gcm).z,mitgcm(i_gcm).Tprofile,res_obs(i_fjord).zf,'linear','extrap');
+                sprofile_gcm = interp1(mitgcm(i_gcm).z,mitgcm(i_gcm).Sprofile,res_obs(i_fjord).zf,'linear','extrap');
+                rmse_table(i_fjord).tf_gcm = rmse(tprofile_gcm,res_obs(i_fjord).tf,'omitnan')./mean(res_obs(i_fjord).tf,'omitnan');
+                rmse_table(i_fjord).sf_gcm = rmse(sprofile_gcm,res_obs(i_fjord).sf,'omitnan')./mean(res_obs(i_fjord).sf,'omitnan');
+                rmse_table(i_fjord).ts_gcm = w_rmse_t.*rmse_table(i_fjord).tf_gcm + (1-w_rmse_t).*rmse_table(i_fjord).sf_gcm;
+            end
         end
     end
 
@@ -88,8 +99,8 @@ for i_fjord=1:n_fjord_runs
     %% Plotting temperature
     figure(hf_profiles)
     nexttile; hold on; box on; grid on
-    text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
-    text(0.02,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
+    text(0.02,1.02,sprintf("%s) %s (%.0f km)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize-2)
+    text(0.98,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','HorizontalAlignment','right','FontSize',fsize-2)
 
     % Observed shelf and fjord profiles
     hs = plot(res_obs(i_fjord).ts,-res_obs(i_fjord).zs,'linewidth',1.5,'color',lcolor(1,:));
@@ -100,19 +111,36 @@ for i_fjord=1:n_fjord_runs
 
     % RPM profile(s)
     for i_day=1:length(i_tgt_day)
-        y2 = [-res_box(i_fjord).zf'; flip(-res_box(i_fjord).zf')];
+        % res_box(i_fjord).zf = res_box(i_fjord).zf';
+        
+        y2 = [-res_box(i_fjord).zf; flip(-res_box(i_fjord).zf)];
         inBetween = [res_box(i_fjord).tfmin(:,i_tgt_day(i_day)); flip(res_box(i_fjord).tfmax(:,i_tgt_day(i_day)))];
-        hfjd = fill(inBetween, y2, lcolor(3+i_day,:),'edgecolor','none','facealpha',0.1);
-
+        try
+            hfjd = patch(inBetween, y2, lcolor(3+i_day,:),'edgecolor','none','facealpha',0.1);
+        catch
+            warning('Ensemble dimensions do not support shading')
+            hfjd = [];
+        end
+        try
+            inBetween = [res_box(i_fjord).tf1sl(:,i_tgt_day(i_day)); flip(res_box(i_fjord).tf1su(:,i_tgt_day(i_day)))];
+            fill(inBetween, y2, lcolor(3+i_day,:),'edgecolor','none','facealpha',0.1);
+        catch
+            warning('Ensemble dimensions do not support shading')
+            hfjd = [];
+        end
         hb_d = plot(res_box(i_fjord).tf(:,i_tgt_day(i_day)),-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3+i_day,:));
         hb = [hb hb_d];
     end
 
     % GCM profile (if exists for that fjord)
-    for i_gcm=1:length(mitgcm)
-        if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
-            hm = plot(mitgcm(i_gcm).Tprofile,-mitgcm(i_gcm).z,'-k','linewidth',1.5);
+    if plt_mitgcm
+        for i_gcm=1:length(mitgcm)
+            if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
+                hm = plot(mitgcm(i_gcm).Tprofile,-mitgcm(i_gcm).z,'-k','linewidth',1.5);
+            end
         end
+    else
+        hm = [];
     end
 
     scatter(0,-fjord_model(i_fjord).p.Hgl,40,'v','filled','MarkerFaceColor','black')
@@ -122,19 +150,25 @@ for i_fjord=1:n_fjord_runs
     xlim([-2 6])
     ylim([-fjord_model(i_fjord).p.H 0])
     if i_fjord==1 
-        string_legend = {"Shelf","Fjord","Best_T","Best_{TS}"};
+        % string_legend = {"Shelf","Fjord","Best_T","Best_{TS}"};
+        string_legend = {"Shelf","Fjord","Best"};
 
         if length(tgt_days)==1
-            string_legend{end+1} = sprintf("mean_{%s}",name_days{i_tgt_day});
+            % string_legend{end+1} = sprintf("mean_{%s}",name_days{i_tgt_day});
+            string_legend{end+1} = sprintf("Mean");
         else
             for i_day=1:length(tgt_days)
-                string_legend{end+1} = sprintf("mean_{%s}",name_days{i_day});
+                % string_legend{end+1} = sprintf("mean_{%s}",name_days{i_day});
+                string_legend{end+1} = sprintf("Mean");
             end
         end
         string_legend{end+1} = 'MITgcm';
-        hl1 = legend([hs, hf, hbest, hbest2, hb, hm],string_legend,'fontsize',fsize,'Location','Southeast'); 
+        % hl1 = legend([hs, hf, hbest, hbest2, hb, hm],string_legend,'fontsize',fsize,'Location','east'); 
+        hl1 = legend([hs, hf, hbest2, hb, hm],string_legend,'fontsize',fsize,'Location','east'); 
         % title(hl1,sprintf('Profiles at day %d\n(10-day avg.)',tgt_day))
         hl1.NumColumns=1;
+        % old_pos = hl1.Position;
+        % hl1.Position = old_pos+[0.2 0 0 0];
     end
 
     %% Plotting salinity
@@ -154,15 +188,24 @@ for i_fjord=1:n_fjord_runs
         % RPM profile(s)
         for i_day=1:length(i_tgt_day)
             y2 = [-res_box(i_fjord).zf'; flip(-res_box(i_fjord).zf')];
-            inBetween = [res_box(i_fjord).sfmin(:,i_tgt_day(i_day)); flip(res_box(i_fjord).sfmax(:,i_tgt_day(i_day)))];
-            fill(inBetween, y2, lcolor(3+i_day,:),'edgecolor','none','facealpha',0.1);
+            try
+                inBetween = [res_box(i_fjord).sfmin(:,i_tgt_day(i_day)); flip(res_box(i_fjord).sfmax(:,i_tgt_day(i_day)))];
+                fill(inBetween, y2, lcolor(3+i_day,:),'edgecolor','none','facealpha',0.1);
+                inBetween = [res_box(i_fjord).sf1sl(:,i_tgt_day(i_day)); flip(res_box(i_fjord).sf1su(:,i_tgt_day(i_day)))];
+                fill(inBetween, y2, lcolor(3+i_day,:),'edgecolor','none','facealpha',0.1);
+            catch
+                warning('Ensemble dimensions do not support shading')
+                hfjd = [];
+            end
             plot(res_box(i_fjord).sf(:,i_tgt_day(i_day)),-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3+i_day,:));
         end
     
         % GCM profile (if exists for that fjord)
-        for i_gcm=1:length(mitgcm)
-            if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
-                plot(mitgcm(i_gcm).Sprofile,-mitgcm(i_gcm).z,'-k','linewidth',1.5);
+        if plt_mitgcm
+            for i_gcm=1:length(mitgcm)
+                if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
+                    plot(mitgcm(i_gcm).Sprofile,-mitgcm(i_gcm).z,'-k','linewidth',1.5);
+                end
             end
         end
         scatter(33,-fjord_model(i_fjord).p.Hgl,40,'v','filled','MarkerFaceColor','black')
@@ -177,7 +220,7 @@ for i_fjord=1:n_fjord_runs
     if plt_series
         figure(hf_series)
         nexttile; hold on; box on; grid on
-        text(0.02,0.99,sprintf("(%s) %s (%.0f km long; n=%d)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3,res_box(i_fjord).n),'units','normalized','VerticalAlignment','top','fontsize',fsize)
+        text(0.02,0.99,sprintf("(%s) %s (%.0f km; n=%d)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3,res_box(i_fjord).n),'units','normalized','VerticalAlignment','top','fontsize',fsize)
         % text(0.02,0.02,sprintf("n=%d",res_box(i).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
         if length(res_box(i_fjord).t) == length(res_box(i_fjord).Tupper)
             
@@ -206,11 +249,11 @@ for i_fjord=1:n_fjord_runs
 end
 
 if plt_salt
-    xlabel(ht_salt,'Salinity','fontsize',fsize);  
-    ylabel(ht_salt,'Depth (m)','fontsize',fsize);
+    xlabel(ht_salt,'Salinity','fontsize',fsize+2);  
+    ylabel(ht_salt,'Depth (m)','fontsize',fsize+2);
 end
-xlabel(ht_temp,'Temperature (^oC)','fontsize',fsize);  
-ylabel(ht_temp,'Depth (m)','fontsize',fsize);
+xlabel(ht_temp,'Temperature (^oC)','fontsize',fsize+2);  
+ylabel(ht_temp,'Depth (m)','fontsize',fsize+2);
 
 %% RMSE table
 fprintf('\n')

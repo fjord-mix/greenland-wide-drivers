@@ -54,7 +54,7 @@ for i_yr=1:n_years
             % fjord_names{i_fjord} = res_box(i_fjord).name;
             % fjord_names{i_fjord} = res_box(i_fjord).id;
 
-            x_var = double(res_box(i_fjord).id) - 64; % converting the fjord ID ('A' to 'N') to an integer
+            x_var = int32(str2double(res_box(i_fjord).id));% - 64; % converting the fjord ID ('A' to 'N') to an integer
             % x_var = i_fjord;
             % x_var = ensemble(i_fjord,1).s.Qsg_max
             % x_var = ensemble(i_fjord,1).p.L.*1e-3;
@@ -69,18 +69,18 @@ for i_yr=1:n_years
         ylabel(param_names{i_param})
         ylim([0.5*min(range_params{i_param}) 1.1*max(range_params{i_param})])
     
-        if i_yr==1
-            xlim([0 n_fjords+1])
-            set(gca,'Xtick',0:1:n_fjords+1)
-            xlabels = get(gca,'XTickLabels');
-            xlabels(2:end-1) = fjord_names;
-            xlabels{1} = ' '; xlabels{end} = ' ';
-            set(gca,'XtickLabels',xlabels,'fontsize',fsize);text(0.02,0.95,sprintf("(%s)",letters(i_param)),'Units','normalized','fontsize',fsize);
-        end
+        % if i_yr==1
+        %     xlim([0 n_fjords+1])
+        %     set(gca,'Xtick',0:1:n_fjords+1)
+        %     xlabels = get(gca,'XTickLabels');
+        %     xlabels(2:end-1) = fjord_names;
+        %     xlabels{1} = ' '; xlabels{end} = ' ';
+        %     set(gca,'XtickLabels',xlabels,'fontsize',fsize);text(0.02,0.95,sprintf("(%s)",letters(i_param)),'Units','normalized','fontsize',fsize);
+        % end
         % xlabel('Fjord length (km)');
         % xlabel('Peak subglacial discharge (m^3s^{-1})');
         
-        % set(gca,'fontsize',fsize)
+        set(gca,'fontsize',fsize)
         % xtickangle(90);
         if (max(range_params{i_param}) - min(range_params{i_param}) > 1e3) || max(range_params{i_param}) - min(range_params{i_param}) < 1e-3
             set(gca,'YScale','log')

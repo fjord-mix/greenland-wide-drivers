@@ -17,7 +17,7 @@ for i_fjord=1:n_fjords
     sf_box_comp = NaN(size(tf_box_comp));
     rmse_tf = NaN([n_runs,length(tgt_days)]);
     rmse_sf = NaN([n_runs,length(tgt_days)]);
-    tupper_box_comp = NaN([length(ensemble(i_fjord,1).s.t),n_runs]);
+    tupper_box_comp = NaN([length(fjord_model(i_fjord).p.t_save),n_runs]);
     tinter_box_comp = NaN(size(tupper_box_comp));
     tlower_box_comp = NaN(size(tupper_box_comp));
     supper_box_comp = NaN(size(tupper_box_comp));
@@ -49,8 +49,8 @@ for i_fjord=1:n_fjords
             min_depth_rmse = 0;
             depths_rmse = zf_obs > min_depth_rmse;
             for i_day = 1:length(tgt_days)
-                rmse_tf(i_run,i_day) = rmse(tf_box_comp(depths_rmse,i_run,i_day),tf_obs(depths_rmse)','omitnan')./mean(tf_obs(depths_rmse),'omitnan');
-                rmse_sf(i_run,i_day) = rmse(sf_box_comp(depths_rmse,i_run,i_day),sf_obs(depths_rmse)','omitnan')./mean(sf_obs(depths_rmse),'omitnan');
+                rmse_tf(i_run,i_day) = rmse(tf_box_comp(depths_rmse,i_run,i_day),tf_obs(depths_rmse),'omitnan')./mean(tf_obs(depths_rmse),'omitnan');
+                rmse_sf(i_run,i_day) = rmse(sf_box_comp(depths_rmse,i_run,i_day),sf_obs(depths_rmse),'omitnan')./mean(sf_obs(depths_rmse),'omitnan');
             end
             n_completed = n_completed+1;
         end
@@ -63,14 +63,19 @@ for i_fjord=1:n_fjords
     res_obs(i_fjord).ts = fjord_model(i_fjord).c.ts;
     res_obs(i_fjord).ss = fjord_model(i_fjord).c.ss;
 
-    res_box(i_fjord).t  = ensemble(i_fjord,i_run).s.t; %cur_fjord.s.t;
+    res_box(i_fjord).t  = fjord_model(i_fjord).p.t_save;
     res_box(i_fjord).zf = zf_obs;
     res_box(i_fjord).tf    = squeeze(mean(tf_box_comp,2,'omitnan'));
     res_box(i_fjord).tfmin = squeeze(min(tf_box_comp,[],2,'omitnan'));
     res_box(i_fjord).tfmax = squeeze(max(tf_box_comp,[],2,'omitnan'));
+    res_box(i_fjord).tf1sl = res_box(i_fjord).tf - squeeze(std(tf_box_comp,[],2,'omitnan'));
+    res_box(i_fjord).tf1su = res_box(i_fjord).tf + squeeze(std(tf_box_comp,[],2,'omitnan'));
+
     res_box(i_fjord).sf    = squeeze(mean(sf_box_comp,2,'omitnan'));
     res_box(i_fjord).sfmin = squeeze(min(sf_box_comp,[],2,'omitnan'));
     res_box(i_fjord).sfmax = squeeze(max(sf_box_comp,[],2,'omitnan'));
+    res_box(i_fjord).sf1sl = res_box(i_fjord).sf - squeeze(std(sf_box_comp,[],2,'omitnan'));
+    res_box(i_fjord).sf1su = res_box(i_fjord).sf + squeeze(std(sf_box_comp,[],2,'omitnan'));
 
     res_box(i_fjord).Tupper = mean(tupper_box_comp,2,'omitnan');
     res_box(i_fjord).Tupper_min = min(tupper_box_comp,[],2,'omitnan');
@@ -93,7 +98,7 @@ for i_fjord=1:n_fjords
     res_box(i_fjord).rmse_tf = rmse_tf;
     res_box(i_fjord).rmse_sf = rmse_sf;
 
-    res_box(i_fjord).id = fjord_model(i_fjord).m.ID{1};
+    res_box(i_fjord).id = fjord_model(i_fjord).m.ID;
     res_box(i_fjord).name = fjord_model(i_fjord).m.name{1};
     res_box(i_fjord).n = n_completed./n_runs * 100;
 end
