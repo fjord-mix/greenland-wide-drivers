@@ -60,3 +60,23 @@ for i=1:length(fjords_files_list)
     clear i_fjord j_fjord cf_dist j_cf j_downstream temp_out icebergs_out t_mitgcm z_mitgcm y_mitgcm x_mitgcm dx dy dz% bit of tidying up
 end
 disp('MITgcm data read.')
+
+%% Plotting some basic stuff
+
+% v_plot = mitgcm_out.U;
+% v_plot(isnan(mitgcm_out.S)) = NaN;
+% v_plot = squeeze(v_plot(:,ceil(size(mitgcm_out.S,2)/2),:,tgt_day_mitgcm/10));
+% figure; hold on
+% hp = pcolor(1e-3.*x_mitgcm,z_mitgcm,v_plot');
+% set(hp,'EdgeColor','none')
+% clim([-max(abs(v_plot),[],[1,2],'omitnan') max(abs(v_plot),[],[1,2],'omitnan')])
+% colormap(cmocean('balance'))
+% xlim([20 80]); ylim([0 450])
+% hc = colorbar;
+% % contour(1e-3.*x_mitgcm,z_mitgcm,squeeze(mitgcm_out.S(:,ceil(size(mitgcm_out.S,2)/2),:,tgt_day_mitgcm/10))','-k')
+% ylabel(hc,'Along fjord velocity (ms^{-1})','fontsize',14);
+% xlabel('Along fjord distance (km)')
+% ylabel('Depth (m)')
+% box on
+% set(gca,'ydir','reverse','fontsize',14)
+% % exportgraphics(gcf,[figs_path,'mitgcm_example','.png'],'Resolution',300)
