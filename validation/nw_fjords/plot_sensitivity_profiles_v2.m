@@ -1,7 +1,7 @@
-function [hf_t,hf_s] = plot_sensitivity_profiles_v2(X,ensemble,res_box,param_names,i_day,plt_salt,figs_path,i_yr)
+function [hf_t,hf_s] = plot_sensitivity_profiles_v2(X,ensemble,res_box,res_obs,param_names,i_day,plt_salt,figs_path,i_yr)
 
-if nargin < 5, i_day=1; end
-if nargin < 6, plt_salt=0; end
+if nargin < 6, i_day=1; end
+if nargin < 7, plt_salt=0; end
 if size(X,2) ~=length(param_names), error('input parameter matrix must me [n_runs,n_params], and param_names must have entries for each param'); end
 n_runs = size(X,1);
 
@@ -65,6 +65,7 @@ for i_fjord=1:size(ensemble,1)
 
     figure(hf_t{i_bnd})
     nexttile(i_fjord); hold on; box on
+    % plot(res_obs(i_fjord).ts,-res_obs(i_fjord).zs,'color',[0 0 0])
     
     for i_param=1:length(param_names)    
         tf_ensemble = NaN([length(ensemble(i_fjord,1).s.z),size(ensemble,2)]);
@@ -182,7 +183,7 @@ if plt_salt
     ht_s{i_bnd}.Padding='compact';
 end
 
-if nargin > 7
+if nargin > 8
     figure(hf_t{i_bnd})
     exportgraphics(gcf,[figs_path,'sensitivity_profiles_temp_',key_param_bnd{i_bnd},'_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
