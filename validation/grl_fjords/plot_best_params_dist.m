@@ -1,7 +1,7 @@
 function hf = plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,i_tgt_day,which_dist)
 
-if nargin < 6, i_tgt_day=1; end
-if nargin < 7, which_dist='Normal'; end
+if nargin < 7, i_tgt_day=1; end
+if nargin < 8, which_dist='hist'; end
 w_rmse_t = 0.5; % how much we want to weight the temperature (n)RMSE versus salinity (0.5 = 50:50; 1 = only temperature)
 fsize    = 14;
 n_years  = length(fjord_model_yr);
@@ -55,11 +55,14 @@ for i_yr=1:n_years
         nexttile(i_param); hold on; box on;
         x_bnds = range_params{i_param};
         x_val = linspace(x_bnds(1),x_bnds(2),100);
-        if isempty(which_dist)
-            h1 = histogram(param_entry(:,i_param),10,'FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5);
+        if strcmp(which_dist,'hist') == 1
+            h1 = histogram(param_entry(:,i_param),10,'FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5); % if there are no distributions, we plot a histogram
         else
-            % kern_marginal = uq_KernelMarginals(param_entry(:,i_param),range_params{i_param});
-            kern_marginal= fitdist(param_entry(:,i_param),which_dist);
+            if iscell(which_dist)
+                kern_marginal= fitdist(param_entry(:,i_param),which_dist{i_param}); % in case we want different distributions for each variable
+            else
+                kern_marginal= fitdist(param_entry(:,i_param),which_dist); % otherwise it is all the same
+            end
             h1 = plot(x_val,pdf(kern_marginal,x_val),'linewidth',2,'color',lcolor(i_yr,:));
         end
         
