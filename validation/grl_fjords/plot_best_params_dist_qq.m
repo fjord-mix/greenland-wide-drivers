@@ -62,19 +62,22 @@ for i_yr=1:n_years
             kern_marginal= fitdist(param_entry(:,i_param),which_dist);
             % h1 = plot(x_val,pdf(kern_marginal,x_val),'linewidth',2,'color',lcolor(i_yr,:));
             h1 = qqplot(x_val,kern_marginal);%,'color',lcolor(i_yr,:));
+            text(max(h1(1).XData),max(h1(1).YData),num2str(2015+i_yr),'fontsize',fsize-2,'HorizontalAlignment','left','VerticalAlignment','bottom');
         end
         
         % xtickangle(90);
-        if (max(range_params{i_param}) - min(range_params{i_param}) > 1e3) || max(range_params{i_param}) - min(range_params{i_param}) < 1e-3
+        if ((max(range_params{i_param}) - min(range_params{i_param}) > 1e3) ...
+          || max(range_params{i_param}) - min(range_params{i_param}) < 1e-3) ...
+          && strcmp(param_names{i_param},'K0') == 0
             set(gca,'XScale','log')
-            xlim([0.1*min(range_params{i_param}) 10*max(range_params{i_param})])
+            % xlim([0.1*min(range_params{i_param}) 10*max(range_params{i_param})])
         end
         if i_yr==n_years
             xlabel(param_names{i_param})
             set(gca,'fontsize',fsize)
             % xlim(range_params{i_param})
             % vline(range_params{i_param},'--','color',[0.25 0.25 0.25])
-            xlim(range_params{i_param});
+            % xlim(range_params{i_param});
         end
     end
     h_yr = [h_yr h1];
@@ -84,5 +87,5 @@ end
 % TODO: add legend pertaining to different years
 % legend([h1,h2,h3],{'RMSE_T','RMSE_S','RMSE_{both}'},'fontsize',fsize,'Location','Northwest');
 % legend([h1,h2],{'RMSE_T','RMSE_S'},'fontsize',fsize,'Location','Northwest');
-legend(h_yr,lbl_years,'fontsize',fsize,'Location','northwest');
+% legend(h_yr,lbl_years,'fontsize',fsize,'Location','northwest');
 
