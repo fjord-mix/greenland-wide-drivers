@@ -6,13 +6,13 @@ letters = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n'};
 
 %% Initialise all needed variables
 
-which_year = 2016; % {2016,2017,2018,2019,2020}
+which_year = 2020; % {2016,2017,2018,2019,2020}
 time_start = datetime(which_year,01,01);
 time_end   = datetime(which_year,12,31);
 
 n_runs     = 400;          % number of runs per fjord
 input_dt   = 30;          % time step of model input (in days)
-dt_in_h    = 2.;          % time step in hours
+dt_in_h    = 3.;          % time step in hours
 model_dt   = dt_in_h/24.; % time step in days for the model (e.g., 2h/24 ~ 0.083 days)
 n_years    = 4;           % how many years we want to run
 % tgt_days   = [935,1010];  % which days of the run we want vertical profiles for
@@ -80,9 +80,27 @@ for i_fjord=1:height(fjord_matrix)
         p.dt=model_dt;
         p.t_save = t(1):1:t(end); % save at daily resolution
 
+        % find the ocean forcing and fjord profile
+        omg_data_shelf = dir([folder_ctd_casts,'/*',id_cast_shelf,'*.nc']);
+        omg_data_fjord = dir([folder_ctd_casts,'/*',id_cast_fjord,'*.nc']);
+
         % get the metadata
         m.ID = num2str(fjord_matrix.ID(i_fjord));
         m.name = fjord_matrix.name(i_fjord);
+        m.lon=ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'lon');
+        m.lat=ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'lon');
+
+        % fjord obervations for reference and model fitting
+        tf = ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'temperature');
+        sf = ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'salinity');
+        zf = ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'depth');
+        tf_nonans = tf(~isnan(tf) & ~isnan(sf));
+        sf_nonans = sf(~isnan(tf) & ~isnan(sf));
+        zf_nonans = zf(~isnan(tf) & ~isnan(sf));
+        if isempty(tf_nonans) || isempty(sf_nonans) % we disregard this fjord because we actually do not have the data
+            fprintf('Fjord %s has only NaNs in temperature or salinity!\n',m.ID)
+            continue
+        end
         
         % get geometry
         p.L = fjords_centreline(digitised_id).length.*1e3;
@@ -90,6 +108,13 @@ for i_fjord=1:height(fjord_matrix)
         p.Hsill = fjord_matrix.sill_depth(i_fjord);
         p.Hgl   = fjord_matrix.gl_depth(i_fjord);
         p.H = abs(p.Hgl);
+        if p.H-p.Hsill < 10
+            p.Hsill = p.Hsill-(10-p.H-p.Hsill); % workaround so the layer division below the sill works
+        end
+        if max(zf) > p.H % if the cast inside the fjord goes deeper than what we set as current depth, then the fjord is as deep as the cast
+            p.H = ceil(max(zf));
+            p.Hgl = p.H; % since we take the fjord profiles to be as close as possible to the glacier front, this assumption is reasonable for most cases
+        end
         if p.Hsill > p.Hgl || p.Hsill == -999 % if the GL sits above the sill or if the fjord has no sill
             p.sill=0;        % we ignore the sill
             p.Hsill = p.Hgl; % just so the RPM initial checks won't fail
@@ -99,14 +124,6 @@ for i_fjord=1:height(fjord_matrix)
 
         % get subglacial discharge (separate file for better readability
         run set_subglacial_discharge.m
-
-        % find the ocean forcing and fjord profile
-        omg_data_shelf = dir([folder_ctd_casts,'/*',id_cast_shelf,'*.nc']);
-        omg_data_fjord = dir([folder_ctd_casts,'/*',id_cast_fjord,'*.nc']);
-        
-        % add rough coordinates
-        m.lon=ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'lon');
-        m.lat=ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'lon');
         
         % get the shelf-profile forcing
         z_shelf = smoothdata(ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'depth'));
@@ -126,7 +143,7 @@ for i_fjord=1:height(fjord_matrix)
             [~,i_bottom] = max(z_shelf_nonans);
             if max(z_shelf_nonans) < p.H 
                 dz_missing = p.H - max(z_shelf_nonans);
-                zs = [z_shelf; max(z_shelf_nonans)+dz_missing];
+                zs = [z_shelf_nonans; max(z_shelf_nonans)+dz_missing];
                 Ts = interp1(z_shelf_nonans,t_shelf_nonans,zs,'nearest','extrap');
                 Ss = interp1(z_shelf_nonans,s_shelf_nonans,zs,'nearest','extrap');
             else
@@ -135,14 +152,13 @@ for i_fjord=1:height(fjord_matrix)
                 Ss = s_shelf_nonans;
             end
 
-            % check if we need to extend the profiles upwards
-            if min(zs) > 5
-                zs_with_surf = [5; zs];
+            % check if we need to extend the profiles upwards (up to 1m depth)
+            if min(zs) > 1
+                zs_with_surf = [1; zs];
                 Ts = interp1(zs,Ts,zs_with_surf,'nearest','extrap');
                 Ss = interp1(zs,Ss,zs_with_surf,'nearest','extrap');
                 zs = zs_with_surf;
             end
-
         
             zs = flip(zs);
             Ts = flip(Ts);
@@ -163,14 +179,6 @@ for i_fjord=1:height(fjord_matrix)
             [T_clim, S_clim, ~] = bin_forcings(f, a.H0, t);
             a.T0 = T_clim(:,1);
             a.S0 = S_clim(:,1);
-    
-            % obervations for reference and model fitting
-            tf = ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'temperature');
-            sf = ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'salinity');
-            zf = ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'depth');
-            tf_nonans = tf(~isnan(tf) & ~isnan(sf));
-            sf_nonans = sf(~isnan(tf) & ~isnan(sf));
-            zf_nonans = zf(~isnan(tf) & ~isnan(sf));
     
     
             % create the model structure
@@ -284,10 +292,24 @@ if ~isempty(fjords_crashed)
 end
 disp('Outputs saved.')
 
-% run postprocess_plot_ensembles.m
 %% Sanity-check post processing and plot
 % load(file_out);
 
 % [res_obs,res_box] = postprocess_ensemble(fjord_model,ensemble,tgt_days);
 % disp('Postprocessing ensemble done.')
 % plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2);
+
+
+%% Checking how results compare from year to year
+
+% plot_best_params_dist_qq(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,2,'poisson');
+% plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,2);
+% param_distributions = {'hn','hn','wbl','hn'};
+% plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,2,param_distributions);
+% K0 could be ev, gamma, gp, hn, logistic
+% inversegaussian and halfnormal cannot fit the highest values
+% weibull, doc rician, rayleigh, normal, nakagami, lognormal, and logistic cannot fit both extremes, but look really good in the middle
+
+%% Batch processing all years together
+
+% run postprocess_plot_ensembles.m
