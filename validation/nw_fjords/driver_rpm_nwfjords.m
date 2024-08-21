@@ -4,6 +4,10 @@ run setup_paths % Configuring paths
 
 %% Initialise all needed variables
 
+i_yr       = 1; % {1,2,3,4,5} for {2016,2017,2018,2019,2020}
+time_start = datetime(2015+i_yr,01,01);
+time_end   = datetime(2015+i_yr,12,31);
+
 n_runs     = 400;              % number of runs per fjord
 input_dt   = 30;              % time step of model input (in days)
 dt_in_h    = 3.;              % time step in hours
@@ -11,10 +15,6 @@ model_dt   = dt_in_h/24.;     % time step in days for the model (e.g., 2h/24 ~ 0
 n_years    = 4;               % how many years we want to run
 tgt_days   = [935,1010,1150]; % which days of the run we want vertical profiles for: year 3 peak-melt and post-melt, following pre-melt
 name_days  = {'peak','post','winter'};
-
-i_yr       = 3; % {1,2,3,4,5} for {2016,2017,2018,2019,2020}
-time_start = datetime(2015+i_yr,01,01);
-time_end   = datetime(2015+i_yr,12,31);
 
 letters = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n'};
 
@@ -268,15 +268,14 @@ disp('Postprocessing ensemble done.')
 %% Plotting
 
 plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,mitgcm);
-
 % exportgraphics(gcf,[figs_path,'profiles_temp_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
 % exportgraphics(gcf,[figs_path,'profiles_salt_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
 % plot_best_params(fjord_model,ensemble,res_box,param_names,range_params,2);
 % exportgraphics(gcf,[figs_path,'best_parameters_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
-% plot_sensitivity_profiles_v2(X,ensemble,res_box,param_names,2);
-% plot_sensitivity_profiles_v2(X,ensemble,res_box,param_names,2,1,figs_path,i_yr);
+% plot_sensitivity_profiles_v2(X,ensemble,res_box,res_obs,param_names,2);
+% plot_sensitivity_profiles_v2(X,ensemble,res_box,res_obs,param_names,2,1,figs_path,i_yr);
 
 % run loop_postprocess_batch.m
 % plot_best_params_time(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,2)
