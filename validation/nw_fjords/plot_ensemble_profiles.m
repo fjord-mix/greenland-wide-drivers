@@ -40,7 +40,9 @@ end
 for i_fjord=1:n_fjord_runs
 
     % find run with the smallest RMSE
-    if isempty(i_tgt_day)
+    if isempty(res_box(i_fjord).rmse_tf)
+        continue
+    elseif isempty(i_tgt_day)
         rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf + (1-w_rmse_t).*res_box(i_fjord).rmse_sf;
         [rmse_table(i_fjord).tf_rpm,i_min_rmse_tf] = min(res_box(i_fjord).rmse_tf,[],'all','omitnan');
         [rmse_table(i_fjord).sf_rpm,i_min_rmse_sf] = min(res_box(i_fjord).rmse_sf,[],'all','omitnan');
@@ -105,8 +107,8 @@ for i_fjord=1:n_fjord_runs
     % Observed shelf and fjord profiles
     hs = plot(res_obs(i_fjord).ts,-res_obs(i_fjord).zs,'linewidth',1.5,'color',lcolor(1,:));
     hf = plot(res_obs(i_fjord).tf,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(2,:));
-    hbest = plot(tf_best,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3,:),'LineStyle','--');
-    hbest2 = plot(tf_best2,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3,:));
+    hbest = plot(tf_best,-res_box(i_fjord).zf,'linewidth',1.5,'color',lcolor(3,:),'LineStyle','--');
+    hbest2 = plot(tf_best2,-res_box(i_fjord).zf,'linewidth',1.5,'color',lcolor(3,:));
     hb=[];
 
     % RPM profile(s)
@@ -128,7 +130,7 @@ for i_fjord=1:n_fjord_runs
             warning('Ensemble dimensions do not support shading')
             hfjd = [];
         end
-        hb_d = plot(res_box(i_fjord).tf(:,i_tgt_day(i_day)),-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3+i_day,:));
+        hb_d = plot(res_box(i_fjord).tf(:,i_tgt_day(i_day)),-res_box(i_fjord).zf,'linewidth',1.5,'color',lcolor(3+i_day,:));
         hb = [hb hb_d];
     end
 
@@ -147,7 +149,7 @@ for i_fjord=1:n_fjord_runs
     plot([0 0],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
 
     set(gca,'fontsize',fsize)
-    xlim([-2 6])
+    xlim([-2.5 9])
     ylim([-fjord_model(i_fjord).p.H 0])
     if i_fjord==1 
         % string_legend = {"Shelf","Fjord","Best_T","Best_{TS}"};
