@@ -4,7 +4,7 @@ run setup_paths % Configuring paths
 
 %% Initialise all needed variables
 
-i_yr       = 1; % {1,2,3,4,5} for {2016,2017,2018,2019,2020}
+i_yr       = 4; % {1,2,3,4,5} for {2016,2017,2018,2019,2020}
 time_start = datetime(2015+i_yr,01,01);
 time_end   = datetime(2015+i_yr,12,31);
 
@@ -157,9 +157,9 @@ for i_fjord=1:n_fjords
         fjord_model(i_fjord).p = p;
         fjord_model(i_fjord).a = a;
         fjord_model(i_fjord).f = f;
-        fjord_model(i_fjord).c.tf = ctd.temp.f;
-        fjord_model(i_fjord).c.sf = ctd.salt.f;
-        fjord_model(i_fjord).c.zf = ctd.depth.f;
+        fjord_model(i_fjord).c.tf = ctd.temp.f';
+        fjord_model(i_fjord).c.sf = ctd.salt.f';
+        fjord_model(i_fjord).c.zf = ctd.depth.f';
         fjord_model(i_fjord).c.ts = ctd.temp.s;
         fjord_model(i_fjord).c.ss = ctd.salt.s;
         fjord_model(i_fjord).c.zs = ctd.depth.s;
@@ -260,7 +260,8 @@ end
 disp('Outputs saved.')
 
 %% Post-processing
-% load(file_out);
+file_in = [outs_path,'rpm_NWfjords_n',num2str(n_runs),'_',num2str(2015+i_yr),'_',num2str(60),'layers_dt',num2str(dt_in_h),'h'];
+load(file_in);
 
 [res_obs,res_box] = postprocess_ensemble(fjord_model,ensemble,tgt_days);
 disp('Postprocessing ensemble done.')
@@ -280,3 +281,13 @@ plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,t
 % run loop_postprocess_batch.m
 % plot_best_params_time(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,2)
 % exportgraphics(gcf,[figs_path,'best_parameters_all_yrs','_n',num2str(n_runs),'.png'],'Resolution',300)
+
+%% Plotting - reduced information version
+which_fjords = {'B','D','F','M'};
+plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],i_yr,which_fjords);
+% exportgraphics(gcf,[figs_path,'sensitivity_profiles_temp_simple_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
+plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,mitgcm,0,0,0,which_fjords);
+% exportgraphics(gcf,[figs_path,'profiles_temp_simple_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
+
+plot_best_params(fjord_model,ensemble,res_box,param_names,range_params,2);
+% exportgraphics(gcf,[figs_path,'best_parameters_simple_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)

@@ -105,7 +105,7 @@ for i_fjord=1:size(ensemble,1)
         end
         if i_param==1
             % text(0.02,0.05,sprintf("%s = [%.1e,%.1e]",param_names{i_param},param_bnds(i_bnd,i_param),param_bnds(i_bnd+1,i_param)),'units','normalized','fontsize',14)
-            text(0.02,0.09,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','fontsize',14)
+            text(0.02,0.09,sprintf("(%s) %s",res_box(i_fjord).id{1},res_box(i_fjord).name),'units','normalized','fontsize',14)
         end
     end
     if i_fjord==1

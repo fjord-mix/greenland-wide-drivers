@@ -1,8 +1,8 @@
-function [hf_profiles,hf_series] = plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days,name_days,i_tgt_day,mitgcm,plt_salt,plt_series,verbose)
+function [hf_profiles,hf_series] = plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days,name_days,i_tgt_day,mitgcm,plt_salt,plt_series,verbose,which_fjords)
 
 n_fjord_runs = length(fjord_model);
 w_rmse_t = 0.5; % how much we want to weight the temperature (n)RMSE versus salinity (0.5 = 50:50; 1 = only temperature)
-fsize=10;
+fsize=14;
 
 if nargin < 10 || isempty(mitgcm),    plt_mitgcm = 0; else, plt_mitgcm=1; end
 if nargin < 11 || isempty(plt_salt),  plt_salt   = 0; end
@@ -77,7 +77,7 @@ for i_fjord=1:n_fjord_runs
     % compute RMSE for equivalent MITgcm runs
     if plt_mitgcm
         for i_gcm=1:length(mitgcm)
-            if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
+            if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id{1})
                 tprofile_gcm = interp1(mitgcm(i_gcm).z,mitgcm(i_gcm).Tprofile,res_obs(i_fjord).zf,'linear','extrap');
                 sprofile_gcm = interp1(mitgcm(i_gcm).z,mitgcm(i_gcm).Sprofile,res_obs(i_fjord).zf,'linear','extrap');
                 rmse_table(i_fjord).tf_gcm = rmse(tprofile_gcm,res_obs(i_fjord).tf,'omitnan')./mean(res_obs(i_fjord).tf,'omitnan');
@@ -88,7 +88,7 @@ for i_fjord=1:n_fjord_runs
     end
 
     if verbose
-        fprintf("Best parametres for (%s) %s: \n",res_box(i_fjord).id,res_box(i_fjord).name)
+        fprintf("Best parametres for (%s) %s: \n",res_box(i_fjord).id{1},res_box(i_fjord).name)
         fprintf("Param\t Temperature\t Salinity\t Both\n")
         for i_param=1:length(param_names)
             fprintf("%s \t %.1e\t",param_names{i_param},ensemble(i_fjord,inds_best_tf).p.(param_names{i_param}))
@@ -99,10 +99,21 @@ for i_fjord=1:n_fjord_runs
         disp("============================")
     end
     %% Plotting temperature
+    if nargin == 14
+        for i_tgt_fjords=1:length(which_fjords)
+            if strcmp(which_fjords{i_tgt_fjords},res_box(i_fjord).id{1}) == 1
+                plot_fjord=1;
+                break
+            else
+                plot_fjord=0;
+            end
+        end
+        if ~plot_fjord, continue; end
+    end
     figure(hf_profiles)
     nexttile; hold on; box on; grid on
-    text(0.02,1.02,sprintf("%s) %s (%.0f km)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize-2)
-    text(0.98,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','HorizontalAlignment','right','FontSize',fsize-2)
+    text(0.02,1.02,sprintf("%s) %s (%.0f km)",res_box(i_fjord).id{1},res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
+    % text(0.98,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','HorizontalAlignment','right','FontSize',fsize-2)
 
     % Observed shelf and fjord profiles
     hs = plot(res_obs(i_fjord).ts,-res_obs(i_fjord).zs,'linewidth',1.5,'color',lcolor(1,:));
@@ -137,7 +148,7 @@ for i_fjord=1:n_fjord_runs
     % GCM profile (if exists for that fjord)
     if plt_mitgcm
         for i_gcm=1:length(mitgcm)
-            if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
+            if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id{1})
                 hm = plot(mitgcm(i_gcm).Tprofile,-mitgcm(i_gcm).z,'-k','linewidth',1.5);
             end
         end
@@ -149,19 +160,20 @@ for i_fjord=1:n_fjord_runs
     plot([0 0],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
 
     set(gca,'fontsize',fsize)
-    xlim([-2.5 9])
+    % xlim([-2.5 9])
+    xlim([-2 7.5])
     ylim([-fjord_model(i_fjord).p.H 0])
     if i_fjord==1 
         % string_legend = {"Shelf","Fjord","Best_T","Best_{TS}"};
-        string_legend = {"Shelf","Fjord","Best"};
+        string_legend = {"Shelf","Fjord","FjordRPM_{best}"};
 
         if length(tgt_days)==1
             % string_legend{end+1} = sprintf("mean_{%s}",name_days{i_tgt_day});
-            string_legend{end+1} = sprintf("Mean");
+            string_legend{end+1} = sprintf("FjordRPM_{mean}");
         else
             for i_day=1:length(tgt_days)
                 % string_legend{end+1} = sprintf("mean_{%s}",name_days{i_day});
-                string_legend{end+1} = sprintf("Mean");
+                string_legend{end+1} = sprintf("FjordRPM_{mean}");
             end
         end
         string_legend{end+1} = 'MITgcm';
@@ -177,8 +189,8 @@ for i_fjord=1:n_fjord_runs
     if plt_salt
         figure(hfs_profiles)
         nexttile; hold on; box on; grid on
-        text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
-        text(0.02,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
+        text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i_fjord).id{1},res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
+        % text(0.02,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
     
         % Observed shelf and fjord profiles
         plot(res_obs(i_fjord).ss,-res_obs(i_fjord).zs,'linewidth',1.5,'color',lcolor(1,:));
@@ -205,7 +217,7 @@ for i_fjord=1:n_fjord_runs
         % GCM profile (if exists for that fjord)
         if plt_mitgcm
             for i_gcm=1:length(mitgcm)
-                if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id)
+                if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id{1})
                     plot(mitgcm(i_gcm).Sprofile,-mitgcm(i_gcm).z,'-k','linewidth',1.5);
                 end
             end
@@ -222,7 +234,7 @@ for i_fjord=1:n_fjord_runs
     if plt_series
         figure(hf_series)
         nexttile; hold on; box on; grid on
-        text(0.02,0.99,sprintf("(%s) %s (%.0f km; n=%d)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3,res_box(i_fjord).n),'units','normalized','VerticalAlignment','top','fontsize',fsize)
+        text(0.02,0.99,sprintf("(%s) %s (%.0f km; n=%d)",res_box(i_fjord).id{1},res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3,res_box(i_fjord).n),'units','normalized','VerticalAlignment','top','fontsize',fsize)
         % text(0.02,0.02,sprintf("n=%d",res_box(i).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
         if length(res_box(i_fjord).t) == length(res_box(i_fjord).Tupper)
             
@@ -263,7 +275,7 @@ fprintf("RMSE table\n")
 fprintf('Fjord | RPM_t  | RPM_s  | RPM_ts | GCM_t  | GCM_s  | GCM_ts |\n')
 fprintf('-------------------------------------------------------------------\n')
 for i_fjord=1:n_fjord_runs
-    fprintf("%s     | %.4f | %.4f | %.4f ",res_box(i_fjord).id,rmse_table(i_fjord).tf_rpm,rmse_table(i_fjord).sf_rpm,rmse_table(i_fjord).ts_rpm)
+    fprintf("%s     | %.4f | %.4f | %.4f ",res_box(i_fjord).id{1},rmse_table(i_fjord).tf_rpm,rmse_table(i_fjord).sf_rpm,rmse_table(i_fjord).ts_rpm)
     if ~isempty(rmse_table(i_fjord).tf_gcm)
         fprintf('| %.4f | %.4f | %.4f ',rmse_table(i_fjord).tf_gcm,rmse_table(i_fjord).sf_gcm,rmse_table(i_fjord).ts_gcm)
     end

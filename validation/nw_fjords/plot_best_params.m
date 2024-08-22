@@ -40,10 +40,10 @@ for i_param=1:length(param_names)
         % x_var = ensemble(i_fjord,1).s.Qsg_max;
         % x_var = ensemble(i_fjord,1).p.L.*1e-3;
         h1 = scatter(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),250,lcolor(1,:),'filled','^','MarkerFaceAlpha',.5);
-        h2 = scatter(x_var,best_fjord_params(i_fjord).best_s.(param_names{i_param}),250,lcolor(2,:),'filled','v','MarkerFaceAlpha',.5);
+        % h2 = scatter(x_var,best_fjord_params(i_fjord).best_s.(param_names{i_param}),250,lcolor(2,:),'filled','v','MarkerFaceAlpha',.5);
         
         % fjord_names{i_fjord} = res_box(i_fjord).name;
-        fjord_names{i_fjord} = res_box(i_fjord).id;
+        fjord_names{i_fjord} = res_box(i_fjord).id{1};
     end
     ylabel(param_names{i_param})
     ylim([0.5*min(range_params{i_param}) 1.1*max(range_params{i_param})])
@@ -67,6 +67,6 @@ for i_param=1:length(param_names)
     hline(range_params{i_param},'--','color',[0.75 0.75 0.75])
     if i_param==1
         % legend([h1,h2,h3],{'RMSE_T','RMSE_S','RMSE_{both}'},'fontsize',fsize,'Location','Northwest');
-        legend([h1,h2],{'RMSE_T','RMSE_S'},'fontsize',fsize,'Location','Northwest');
+        % legend([h1,h2],{'RMSE_T','RMSE_S'},'fontsize',fsize,'Location','Northwest');
     end
 end
