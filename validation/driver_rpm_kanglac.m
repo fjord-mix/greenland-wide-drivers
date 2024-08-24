@@ -13,14 +13,14 @@ tgt_days   = [935,1010,1150]; % which days of the run we want vertical profiles 
 name_days  = {'peak','post','winter'};
 
 dir_data   = '/Volumes/leg/work/scientific_work_areas/ctd/BASproc';
-file_shelf = 'SD041_ctd_042.2db'; % might want to choose a different one later
-file_fjord = 'SD041_ctd_027.2db'; % might want to choose a different one later
+file_shelf = 'SD041_ctd_034.2db'; % might want to choose a different one later (42 or 34 or 39)
+file_fjord = 'SD041_ctd_035.2db'; % might want to choose a different one later (27 or 31 or 35)
 
 %% Define parameter space
 param_names = {'C0','wp','K0','A0'};
 
 range_params = {[1e1,1e4],...    % C0 
-                [10,750],...     % P0 no crashes with [10,400]
+                [5,750],...     % P0 no crashes with [10,750]
                 [1e-4,1e-3],...  % K0 or do we stick to [1e4,1e-3]?
                 [0,3e8]};        % A0
 
@@ -73,8 +73,8 @@ ctd.depth = fjord.press;
 p.L     = 31e3;
 p.W     = 3e3;
 p.H     = 250;
-p.Hsill = 170;
-p.Hgl   = 130;
+p.Hsill = 175;
+p.Hgl   = 130; % tried (100?), 130,160,190
 p.sill  = 1;
 
 % ocean forcing
@@ -112,7 +112,7 @@ seconds_in_month = eomday(cal_runoff.Year,cal_runoff.Month)*86400;
 time_runoff = juliandate(cal_runoff)' - juliandate(start_date);
 f.tsg = time_runoff';
 f.Qsg = [repmat(total_runoff,n_years,1); 0]';
-f.Qsg = f.Qsg./seconds_in_month;
+f.Qsg = 6.*f.Qsg./seconds_in_month;
 
 % initial conditions
 a.H0 = ones([p.N],1).*p.H/p.N;
@@ -214,7 +214,7 @@ end % for i_run
 end % for i_fjord
 toc
 fprintf('\n')
-file_out = [outs_path,'rpm_Ryberg_n',num2str(n_runs),'_',num2str(cur_fjord.p.N),'layers_dt',num2str(dt_in_h),'h_flipped'];
+file_out = [outs_path,'rpm_Ryberg_n',num2str(n_runs),'_',num2str(cur_fjord.p.N),'layers_dt',num2str(dt_in_h),'h_flipped_qsg6x'];
 save(file_out,'-v7.3','ensemble','fjord_model');
 if ~isempty(fjords_crashed)
     save([file_out,'_crashed'],'-v7.3','fjords_crashed');
