@@ -26,12 +26,16 @@ fun = @(s) all(structfun(@isempty,s));              % tiny function to get rid o
 iceberg_fun = @(NU, H, Z) (NU/H)*exp(NU*Z/H)/(1-exp(-NU)); % functional form of idealised iceberg depth profile
 
 %% Define parameter space
-param_names = {'C0','wp','K0','A0'};
-
-range_params = {[1e2,1e4],...    % C0 
-                [10,700],...     % P0 no crashes with [10,400]
-                [1e-4,1e-3],...  % K0 or do we stick to [1e4,1e-3]?
-                [0,3e8]};        % A0
+% param_names = {'C0','wp','K0','A0'};
+% range_params = {[1e2,1e4],...    % C0 
+%                 [10,700],...     % wp no crashes with [10,400]
+%                 [1e-4,1e-3],...  % K0 or do we stick to [1e4,1e-3]?
+%                 [0,3e8]};        % A0
+param_names = {'A0','wp','C0','K0'};
+range_params = {[0,3e8],...    % A0 
+                [10,700],...   % wp
+                [1e2,1e4],...  % C0
+                [1e-4,1e-3]};  % K0
 
 rng('default') % set the seed for reproducibility
 uqlab
@@ -283,11 +287,12 @@ plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,t
 % exportgraphics(gcf,[figs_path,'best_parameters_all_yrs','_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Plotting - reduced information version
-which_fjords = {'B','D','F','M'};
+which_fjords = {'F','M'};
 plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],i_yr,which_fjords);
 % exportgraphics(gcf,[figs_path,'sensitivity_profiles_temp_simple_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
 plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,mitgcm,0,0,0,which_fjords);
 % exportgraphics(gcf,[figs_path,'profiles_temp_simple_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'rmse_comparison',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
 plot_best_params(fjord_model,ensemble,res_box,param_names,range_params,2);
 % exportgraphics(gcf,[figs_path,'best_parameters_simple_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
