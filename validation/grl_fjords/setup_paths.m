@@ -6,7 +6,7 @@ addpath(genpath(uqlab_path))
 addpath(genpath('./'))
 
 inputs_path = [data_path,'/greenland/Cowton2023GRL/'];                % where the input data is stored
-outs_path   = [data_path,'/greenland/FjordMIX/boxmodel/cowton2023/']; % where the model output files will be saved
-figs_path   = [project_path,'/figs/1_NW_fjords/'];                     % where the figures and animations will be saved
+outs_path   = [data_path,'/greenland/FjordMIX/rpm/']; % where the model output files will be saved
+figs_path   = [project_path,'/figs/GRL_wide/'];                     % where the figures and animations will be saved
 
 fun = @(s) all(structfun(@isempty,s)); % tiny function to get rid of empty entries in array
