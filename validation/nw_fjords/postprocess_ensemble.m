@@ -11,9 +11,10 @@ for i_fjord=1:n_fjords
     zf_obs = fjord_model(i_fjord).c.zf;
     tf_obs = fjord_model(i_fjord).c.tf;
     sf_obs = fjord_model(i_fjord).c.sf;
-    zs_obs = fjord_model(i_fjord).c.zs;
-    ts_obs = fjord_model(i_fjord).c.ts;
-    ss_obs = fjord_model(i_fjord).c.ss;
+    zs_obs = flip(fjord_model(i_fjord).c.zs);
+    ts_obs = interp1(zs_obs,flip(fjord_model(i_fjord).c.ts),zf_obs,'nearest','extrap');
+    ss_obs = interp1(zs_obs,flip(fjord_model(i_fjord).c.ss),zf_obs,'nearest','extrap');
+
     n_completed = 0; % completed runs for that fjord
     if isempty(tf_obs) || isempty(sf_obs) % we disregard this fjord because we actually do not have the data
         continue
@@ -56,19 +57,15 @@ for i_fjord=1:n_fjords
 
             min_depth_rmse = 0;
             depths_rmse = (zf_obs > min_depth_rmse) & (zf_obs < ensemble(i_fjord,i_run).p.Hgl);
-            depths_rmse_shelf = (zs_obs > min_depth_rmse) & (zs_obs < ensemble(i_fjord,i_run).p.Hgl);
             for i_day = 1:length(tgt_days)
                 if size(tf_obs(depths_rmse),1) ~= size(tf_box_comp(depths_rmse,i_run,i_day),1)
                     tf_obs_ref = tf_obs(depths_rmse)';
                     sf_obs_ref = sf_obs(depths_rmse)';
-                    ts_obs_ref = ts_obs(depths_rmse_shelf)';
-                    ss_obs_ref = ss_obs(depths_rmse_shelf)';
                 else
                     tf_obs_ref = tf_obs(depths_rmse);
                     sf_obs_ref = sf_obs(depths_rmse);
-                    ts_obs_ref = ts_obs(depths_rmse_shelf);
-                    ss_obs_ref = ss_obs(depths_rmse_shelf);
                 end
+
                 rmse_tf(i_run,i_day) = rmse(tf_box_comp(depths_rmse,i_run,i_day),tf_obs_ref,'omitnan')./mean(tf_obs(depths_rmse),'omitnan');
                 rmse_sf(i_run,i_day) = rmse(sf_box_comp(depths_rmse,i_run,i_day),sf_obs_ref,'omitnan')./mean(sf_obs(depths_rmse),'omitnan');
                 % rmse_tf(i_run,i_day) = rmse(tf_box_comp(depths_rmse,i_run,i_day),tf_obs(depths_rmse),'omitnan')./std(tf_obs(depths_rmse),'omitnan');
@@ -80,6 +77,14 @@ for i_fjord=1:n_fjords
             zf_box = ensemble(i_fjord,i_run).s.z;
         end
     end % i_run
+    if size(ts_obs(depths_rmse),1) ~= size(tf_obs_ref,1)
+        ts_obs_ref = ts_obs(depths_rmse)';
+        ss_obs_ref = ss_obs(depths_rmse)';
+    else
+        ts_obs_ref = ts_obs(depths_rmse);
+        ss_obs_ref = ss_obs(depths_rmse);
+    end
+
     res_obs(i_fjord).zf = zf_obs;
     res_obs(i_fjord).tf = tf_obs;
     res_obs(i_fjord).sf = sf_obs;
