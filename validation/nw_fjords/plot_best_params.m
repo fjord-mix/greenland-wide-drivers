@@ -43,7 +43,7 @@ for i_param=1:length(param_names)
         % h2 = scatter(x_var,best_fjord_params(i_fjord).best_s.(param_names{i_param}),250,lcolor(2,:),'filled','v','MarkerFaceAlpha',.5);
         
         % fjord_names{i_fjord} = res_box(i_fjord).name;
-        fjord_names{i_fjord} = res_box(i_fjord).id{1};
+        fjord_names{i_fjord} = res_box(i_fjord).id;
     end
     ylabel(param_names{i_param})
     ylim([0.5*min(range_params{i_param}) 1.1*max(range_params{i_param})])
