@@ -13,7 +13,7 @@ fjord_names = cell([1,length(fjord_IDs)]);
 for i=1:length(fjord_names), fjord_names{i} = fjord_IDs(i); end
 
 hf = figure('Name','Best parameters','Position',[40 40 1200 1000]);
-tiledlayout('flow');
+ht = tiledlayout('flow');
 
 
 h_yr = [];
@@ -70,6 +70,7 @@ for i_yr=1:n_years
           || max(range_params{i_param}) - min(range_params{i_param}) < 1e-3) ...
           && strcmp(param_names{i_param},'K0') == 0
             set(gca,'XScale','log')
+            % set(gca,'YScale','log')
             % xlim([0.1*min(range_params{i_param}) 10*max(range_params{i_param})])
         end
         if i_yr==n_years
@@ -83,6 +84,7 @@ for i_yr=1:n_years
     h_yr = [h_yr h1];
     lbl_years{i_yr} = sprintf('%d (n=%d)',2015+i_yr,n_fjords);
 end
+title(ht,which_dist)
 
 % TODO: add legend pertaining to different years
 % legend([h1,h2,h3],{'RMSE_T','RMSE_S','RMSE_{both}'},'fontsize',fsize,'Location','Northwest');
