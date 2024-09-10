@@ -99,7 +99,7 @@ for i_fjord=1:n_fjord_runs
         disp("============================")
     end
     %% Plotting temperature
-    if nargin == 14
+    if nargin > 13
         for i_tgt_fjords=1:length(which_fjords)
             if strcmp(which_fjords{i_tgt_fjords},res_box(i_fjord).id{1}) == 1
                 plot_fjord=1;
@@ -112,8 +112,8 @@ for i_fjord=1:n_fjord_runs
     end
     figure(hf_profiles)
     nexttile; hold on; box on; grid on
-    text(0.02,1.02,sprintf("%s) %s (%.0f km)",res_box(i_fjord).id{1},res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
-    % text(0.98,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','HorizontalAlignment','right','FontSize',fsize-2)
+    text(0.02,1.02,sprintf("%s) %s (%.0f km)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
+    text(0.98,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','HorizontalAlignment','right','FontSize',fsize-2)
 
     % Observed shelf and fjord profiles
     hs = plot(res_obs(i_fjord).ts,-res_obs(i_fjord).zs,'linewidth',2.5,'color',lcolor(1,:));
@@ -178,7 +178,7 @@ for i_fjord=1:n_fjord_runs
         end
         string_legend{end+1} = 'MITgcm';
         % hl1 = legend([hs, hf, hbest, hbest2, hb, hm],string_legend,'fontsize',fsize,'Location','east'); 
-        hl1 = legend([hs, hf, hbest2, hb, hm],string_legend,'fontsize',fsize,'Location','east'); 
+        hl1 = legend([hs, hf, hbest, hb, hm],string_legend,'fontsize',fsize,'Location','best'); 
         % title(hl1,sprintf('Profiles at day %d\n(10-day avg.)',tgt_day))
         hl1.NumColumns=1;
         % old_pos = hl1.Position;
@@ -255,7 +255,7 @@ for i_fjord=1:n_fjord_runs
        end
         set(gca,'fontsize',fsize)
         if i_fjord==1%n_fjords
-            hl2 = legend([hu,hi,hl],{"0-50 m","50-250 m","250-500 m"},'fontsize',fsize,'Location','Northeast'); 
+            hl2 = legend([hu,hi,hl],{"0-50 m","50-250 m","250-500 m"},'fontsize',fsize,'Location','best'); 
             % title(hl2,'Time series')
             hl2.NumColumns=1;
         end
@@ -275,7 +275,7 @@ fprintf("RMSE table\n")
 fprintf('Fjord | RPM_t  | RPM_s  | RPM_ts | GCM_t  | GCM_s  | GCM_ts |\n')
 fprintf('-------------------------------------------------------------------\n')
 for i_fjord=1:n_fjord_runs
-    fprintf("%s     | %.4f | %.4f | %.4f ",res_box(i_fjord).id{1},rmse_table(i_fjord).tf_rpm,rmse_table(i_fjord).sf_rpm,rmse_table(i_fjord).ts_rpm)
+    fprintf("%s     | %.4f | %.4f | %.4f ",res_box(i_fjord).id,rmse_table(i_fjord).tf_rpm,rmse_table(i_fjord).sf_rpm,rmse_table(i_fjord).ts_rpm)
     if ~isempty(rmse_table(i_fjord).tf_gcm)
         fprintf('| %.4f | %.4f | %.4f ',rmse_table(i_fjord).tf_gcm,rmse_table(i_fjord).sf_gcm,rmse_table(i_fjord).ts_gcm)
     end
@@ -285,28 +285,28 @@ fprintf('-------------------------------------------------------------------\n')
 
 %% RMSE scatter plot
 
-if nargin > 15 && plt_rmse
+if nargin > 14 && plt_rmse
     mk_sz=100;
     fjord_names = cell(size(fjord_model));
     figure; hold on; box on;
-    h_tf = scatter(-1,0,mk_sz,'^','MarkerEdgeColor',[0 0 0]);
+    % h_tf = scatter(-1,0,mk_sz,'^','MarkerEdgeColor',[0 0 0]);
     % h_sf = scatter(-1,0,mk_sz,'v','MarkerEdgeColor',[0 0 0]);
-    h_ts = scatter(-1,0,mk_sz,'square','MarkerEdgeColor',[0 0 0]);
+    % h_ts = scatter(-1,0,mk_sz,'square','MarkerEdgeColor',[0 0 0]);
     h_rpm = scatter(-1,0,mk_sz,'filled','o','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.95); 
     h_gcm = scatter(-1,0,mk_sz,'filled','o','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none');
     for i_fjord=1:n_fjord_runs
-        scatter(i_fjord,rmse_table(i_fjord).tf_rpm,mk_sz,'^','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.95);
+        scatter(i_fjord,rmse_table(i_fjord).tf_rpm,mk_sz,'o','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.95);
         % scatter(i_fjord,rmse_table(i_fjord).sf_rpm,mk_sz,'v','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.95);
-        scatter(i_fjord,rmse_table(i_fjord).ts_rpm,mk_sz,'square','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.95);
+        % scatter(i_fjord,rmse_table(i_fjord).ts_rpm,mk_sz,'square','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.95);
         if ~isempty(rmse_table(i_fjord).tf_gcm)
-            scatter(i_fjord,rmse_table(i_fjord).tf_gcm,mk_sz,'^','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none');
+            scatter(i_fjord,rmse_table(i_fjord).tf_gcm,mk_sz,'o','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none');
             % scatter(i_fjord,rmse_table(i_fjord).sf_gcm,mk_sz,'v','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none');
-            scatter(i_fjord,rmse_table(i_fjord).ts_gcm,mk_sz,'square','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none');
+            % scatter(i_fjord,rmse_table(i_fjord).ts_gcm,mk_sz,'square','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none');
         end
         fjord_names{i_fjord} = res_box(i_fjord).id{1};
     end
     
-    ylim([0 1])
+    ylim([0 1.2])
     xlim([0 n_fjord_runs+1])
     set(gca,'Xtick',0:1:n_fjord_runs+1)
     xlabels = get(gca,'XTickLabels');
@@ -315,6 +315,6 @@ if nargin > 15 && plt_rmse
     set(gca,'XtickLabels',xlabels,'FontSize',14);
     ylabel('RMSE');
     xlabel('Fjord')
-    legend([h_rpm,h_gcm,h_tf,h_ts],{'RPM','GCM','RMSE_{T}','RMSE_{TS}'});
+    legend([h_rpm,h_gcm],{'FjordRPM','MITgcm'},'Location','best');
 end
 end

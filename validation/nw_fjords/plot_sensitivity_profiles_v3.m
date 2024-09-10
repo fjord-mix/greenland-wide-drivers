@@ -2,9 +2,14 @@ function [hf_t,hf_s] = plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,p
 
 if nargin < 6, i_day=1; end
 if nargin < 7, plt_salt=0; end
+if nargin > 9
+    n_fjords = length(which_fjords);
+else
+    n_fjords = size(ensemble,1);
+end
 if size(X,2) ~=length(param_names), error('input parameter matrix must me [n_runs,n_params], and param_names must have entries for each param'); end
 n_runs = size(X,1);
-
+no_legend = 1;
 
 %% Finding the low/mid/high ranges for the different parameters
 key_param_bnd = {'low ','mid ','high '};
@@ -47,16 +52,16 @@ lbl_fjords = cell([1,length(param_names)]);
 
 
 hf_t = figure('Name','Temperature sensitivity','Position',[40 40 800 600]);
-ht_t = tiledlayout('flow');
+ht_t = tiledlayout(n_fjords,length(param_names));
 
 if plt_salt
     hf_s = figure('Name','Salinity sensitivity','Position',[40 40 900 250*length(param_names)]);
-    ht_s = tiledlayout('flow');
+    ht_s = tiledlayout(n_fjords,length(param_names));
 end
 for i_fjord=1:size(ensemble,1)
-    if nargin == 10
-        for i_tgt_fjords=1:length(which_fjords)
-            if strcmp(which_fjords{i_tgt_fjords},res_box(i_fjord).id{1}) == 1
+    if nargin > 9
+        for i_tgt_fjords=1:n_fjords
+            if strcmp(which_fjords{i_tgt_fjords},res_box(i_fjord).id) == 1
                 plot_fjord=1;
                 break
             else
@@ -73,17 +78,23 @@ for i_fjord=1:size(ensemble,1)
     for i_param=1:length(param_names)    
         nexttile; hold on; box on
         for i_bnd=1:length(key_param_bnd)
-            tf_ensemble = NaN([length(ensemble(i_fjord,1).s.z),size(ensemble,2)]);
+            % tf_ensemble = NaN([length(ensemble(i_fjord,1).s.z),size(ensemble,2)]);
+            tf_ensemble = NaN([length(res_box(i_fjord).zf),size(ensemble,2)]);
             % find profiles that fit into that interval for that cast
             for i_run=1:size(ensemble,2)
                 if isempty(ensemble(i_fjord,i_run).s), continue; end % we skip any empty entries
                 if mask_bnds(i_fjord,i_run).(param_names{i_param}) == i_bnd
                     tf_ensemble(:,i_run) = ensemble(i_fjord,i_run).s.Tfinal(:,i_day);
                 end
+                Hsill = ensemble(i_fjord,i_run).p.Hsill;
+                Hgl   = ensemble(i_fjord,i_run).p.Hgl;
+                H     = ensemble(i_fjord,i_run).p.H;
+                has_sill = ensemble(i_fjord,i_run).p.sill;
             end
             
             % take mean and min/max for that subset
-            depths = -ensemble(i_fjord,1).s.z;
+            % depths = -ensemble(i_fjord,1).s.z;
+            depths = -res_box(i_fjord).zf;
             tfmean = mean(tf_ensemble,2,'omitnan');
             % tfmin  = min(tf_ensemble,[],2,'omitnan');
             % tfmax  = max(tf_ensemble,[],2,'omitnan');
@@ -100,25 +111,26 @@ for i_fjord=1:size(ensemble,1)
         end
         % add depictions of GL and sill depths
         base_gl_and_sill_t = 0;
-        scatter(base_gl_and_sill_t,-ensemble(i_fjord,1).p.Hgl,40,'v','filled','MarkerFaceColor',[0 0 0])
-        if ensemble(i_fjord,1).p.sill
-            plot([base_gl_and_sill_t base_gl_and_sill_t],[-ensemble(i_fjord,1).p.H -ensemble(i_fjord,1).p.Hsill],'-','linewidth',2,'color',[0 0 0])
+        scatter(base_gl_and_sill_t,-Hgl,40,'v','filled','MarkerFaceColor',[0 0 0])
+        if has_sill
+            plot([base_gl_and_sill_t base_gl_and_sill_t],[-H -Hsill],'-','linewidth',2,'color',[0 0 0])
         end
         set(gca,'fontsize',14)
         % xlim([-2 5])
-        ylim([-ensemble(i_fjord,1).p.H 0])
-        if i_fjord==1
+        ylim([-H 0])
+        if no_legend==1
             handle_fjords = [handle_fjords hp];
             lbl_fjords{i_fjord} = param_names{i_param};%res_box(i_fjord).id;
         end
         if i_param==1
             % text(0.02,0.05,sprintf("%s = [%.1e,%.1e]",param_names{i_param},param_bnds(i_bnd,i_param),param_bnds(i_bnd+1,i_param)),'units','normalized','fontsize',14)
-            text(0.02,1.075,sprintf("(%s) %s",res_box(i_fjord).id{1},res_box(i_fjord).name),'units','normalized','fontsize',12)
+            text(0.02,1.075,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','fontsize',12)
         end
     end
-    if i_fjord==1
-        legend(gca,handle_fjords,param_names,'fontsize',12,'Location','West');
+    if no_legend==1
+        legend(gca,handle_fjords,param_names,'fontsize',12,'Location','best');
         % hl{i_bnd}.NumColumns=2;
+        no_legend = 0;
     end
 
     %% Plotting salinity
@@ -138,7 +150,7 @@ for i_fjord=1:size(ensemble,1)
                 end
                 
                 % take mean and min/max for that subset
-                depths = -ensemble(i_fjord,1).s.z;
+                depths = -res_box(i_fjord).zf;
                 sfmean = mean(sf_ensemble,2,'omitnan');
                 % sfmin  = min(sf_ensemble,[],2,'omitnan');
                 % sfmax  = max(sf_ensemble,[],2,'omitnan');
@@ -155,20 +167,20 @@ for i_fjord=1:size(ensemble,1)
             end
             % add depictions of GL and sill depths
             base_gl_and_sill_s = 33;
-            scatter(base_gl_and_sill_s,-ensemble(i_fjord,1).p.Hgl,40,'v','filled','MarkerFaceColor',[0 0 0])
-            if ensemble(i_fjord,1).p.sill
-                plot([base_gl_and_sill_s base_gl_and_sill_s],[-ensemble(i_fjord,1).p.H -ensemble(i_fjord,1).p.Hsill],'-','linewidth',2,'color',[0 0 0])
+            scatter(base_gl_and_sill_s,-Hgl,40,'v','filled','MarkerFaceColor',[0 0 0])
+            if has_sill
+                plot([base_gl_and_sill_s base_gl_and_sill_s],[-H -Hsill],'-','linewidth',2,'color',[0 0 0])
             end
             set(gca,'fontsize',14)
             xlim([30.5 35])
-            ylim([-ensemble(i_fjord,1).p.H 0])
+            ylim([-H 0])
             % if i_fjord==1
             %     handle_fjords = [handle_fjords hfjd];
             %     lbl_fjords{i_fjord} = param_names{i_param};%res_box(i_fjord).id;
             % end
             if i_param==1
                 % text(0.02,0.05,sprintf("%s = [%.1e,%.1e]",param_names{i_param},param_bnds(i_bnd,i_param),param_bnds(i_bnd+1,i_param)),'units','normalized','fontsize',14)
-                text(0.02,0.09,sprintf("(%s) %s",res_box(i_fjord).id{1},res_box(i_fjord).name),'units','normalized','fontsize',12)
+                text(0.02,0.09,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','fontsize',12)
             end
         end
         if i_fjord==1
@@ -195,7 +207,7 @@ if plt_salt
     ht_s.Padding='compact';
 end
 
-if nargin > 8
+if nargin > 8 && ~isempty(figs_path)
     figure(hf_t)
     exportgraphics(gcf,[figs_path,'sensitivity_profiles_temp_simple_',num2str(2015+i_yr),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
