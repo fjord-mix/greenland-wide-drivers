@@ -87,8 +87,12 @@ for i_fjord=1:n_fjord_runs
         end
     end
 
+    % adds Shelf-fjord RMSE to the table
+    rmse_table(i_fjord).rmse_ts = res_box(i_fjord).rmse_ts;
+    rmse_table(i_fjord).rmse_ss = res_box(i_fjord).rmse_ss;
+
     if verbose
-        fprintf("Best parametres for (%s) %s: \n",res_box(i_fjord).id{1},res_box(i_fjord).name)
+        fprintf("Best parametres for (%s) %s: \n",res_box(i_fjord).id,res_box(i_fjord).name)
         fprintf("Param\t Temperature\t Salinity\t Both\n")
         for i_param=1:length(param_names)
             fprintf("%s \t %.1e\t",param_names{i_param},ensemble(i_fjord,inds_best_tf).p.(param_names{i_param}))
@@ -100,6 +104,7 @@ for i_fjord=1:n_fjord_runs
     end
     %% Plotting temperature
     if nargin > 13
+        plot_fjord=1;
         for i_tgt_fjords=1:length(which_fjords)
             if strcmp(which_fjords{i_tgt_fjords},res_box(i_fjord).id{1}) == 1
                 plot_fjord=1;
@@ -293,28 +298,41 @@ if nargin > 14 && plt_rmse
     % h_sf = scatter(-1,0,mk_sz,'v','MarkerEdgeColor',[0 0 0]);
     % h_ts = scatter(-1,0,mk_sz,'square','MarkerEdgeColor',[0 0 0]);
     h_rpm = scatter(-1,0,mk_sz,'filled','o','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.95); 
-    h_gcm = scatter(-1,0,mk_sz,'filled','o','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none');
+    h_shf = scatter(-1,0,mk_sz,'filled','o','MarkerFaceColor',lcolor(1,:),'MarkerEdgeColor','none');
+    if plt_mitgcm
+        h_gcm = scatter(-1,0,mk_sz,'filled','o','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none');
+    end
+    
     for i_fjord=1:n_fjord_runs
-        scatter(i_fjord,rmse_table(i_fjord).tf_rpm,mk_sz,'o','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.95);
+        scatter(i_fjord,rmse_table(i_fjord).tf_rpm,mk_sz,'o','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.75);
         % scatter(i_fjord,rmse_table(i_fjord).sf_rpm,mk_sz,'v','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.95);
         % scatter(i_fjord,rmse_table(i_fjord).ts_rpm,mk_sz,'square','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.95);
-        if ~isempty(rmse_table(i_fjord).tf_gcm)
+        scatter(i_fjord,rmse_table(i_fjord).rmse_ts,mk_sz,'o','MarkerFaceColor',lcolor(1,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.75);
+        if ~isempty(rmse_table(i_fjord).tf_gcm) && plt_mitgcm
             scatter(i_fjord,rmse_table(i_fjord).tf_gcm,mk_sz,'o','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none');
             % scatter(i_fjord,rmse_table(i_fjord).sf_gcm,mk_sz,'v','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none');
             % scatter(i_fjord,rmse_table(i_fjord).ts_gcm,mk_sz,'square','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none');
         end
-        fjord_names{i_fjord} = res_box(i_fjord).id{1};
+        fjord_names{i_fjord} = res_box(i_fjord).id;
     end
     
-    ylim([0 1.2])
+    % ylim([-6 6])
     xlim([0 n_fjord_runs+1])
+    hline(0,'color',[0.5 0.5 0.5],'linestyle','--')
     set(gca,'Xtick',0:1:n_fjord_runs+1)
     xlabels = get(gca,'XTickLabels');
     xlabels(2:end-1) = fjord_names;
     xlabels{1} = ' '; xlabels{end} = ' ';
     set(gca,'XtickLabels',xlabels,'FontSize',14);
-    ylabel('RMSE');
+    ylabel('RMSE rel. fjord cast');
     xlabel('Fjord')
-    legend([h_rpm,h_gcm],{'FjordRPM','MITgcm'},'Location','best');
+    if plt_mitgcm
+        leg_handles = [h_rpm,h_gcm,h_shf];
+        leg_labels  = {'FjordRPM','MITgcm','shelf'};
+    else
+        leg_handles = [h_rpm,h_shf];
+        leg_labels  = {'FjordRPM','shelf'};
+    end
+    legend(leg_handles,leg_labels,'Location','best');
 end
 end
