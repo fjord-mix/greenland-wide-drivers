@@ -10,7 +10,7 @@ which_year = 2020; % {2016,2017,2018,2019,2020}
 time_start = datetime(which_year,01,01);
 time_end   = datetime(which_year,12,31);
 
-n_runs     = 400;          % number of runs per fjord
+n_runs     = 50;         % number of runs per fjord
 input_dt   = 30;          % time step of model input (in days)
 dt_in_h    = 3.;          % time step in hours
 model_dt   = dt_in_h/24.; % time step in days for the model (e.g., 2h/24 ~ 0.083 days)
@@ -25,12 +25,12 @@ fun = @(s) all(structfun(@isempty,s));              % tiny function to get rid o
 iceberg_fun = @(NU, H, Z) (NU/H)*exp(NU*Z/H)/(1-exp(-NU)); % functional form of idealised iceberg depth profile
 
 %% Define parameter space
-param_names = {'C0','wp','K0','A0'};
+param_names = {'A0','wp','C0','K0'};
 
-range_params = {[1e2,1e4],...    % C0 
-                [10,700],...     % P0 no crashes with [10,400]
-                [1e-4,1e-3],...  % K0 or do we stick to [1e4,1e-3]?
-                [0,3e8]};        % A0
+range_params = {[0,3e8],...    % A0
+                [10,700],...   % wp no crashes with [10,400]
+                [1e2,5e4],...  % C0
+                [1e-4,1e-3]};  % K0 or do we stick to [1e4,1e-3]?
 
 rng('default') % set the seed for reproducibility
 uqlab
@@ -51,7 +51,7 @@ disp('Parameter space created.')
 % only needed if not using fjord geometries from Cowton et al.
 % run compile_process_fjords 
 % fjord_ids = [4,9,17,20,22,23,24,25,28,29,30,31,24,37]; % These are the IDs of the corresponding fjords above in the "fjords_processed" data structure
-file_fjords_compiled = [data_path,'/greenland/FjordMIX/fjords_digitisation/fjords_gl_sill_depths.xlsx'];
+file_fjords_compiled = [data_path,'/greenland/FjordMIX/fjords_digitisation/fjords_gl_sill_depths_reduced.xlsx'];
 folder_ctd_casts     = [data_path,'/greenland/obs/OMG_all_casts'];
 file_lengths = [data_path,'/greenland/FjordMIX/fjords_digitisation/fjords_centreline.shp'];
 file_fjords = [data_path,'/greenland/FjordMIX/fjords_digitisation/fjords_grl.shp'];
@@ -91,12 +91,21 @@ for i_fjord=1:height(fjord_matrix)
         m.lat=ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'lon');
 
         % fjord obervations for reference and model fitting
-        tf = ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'temperature');
-        sf = ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'salinity');
+        tf = movmean(ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'temperature'),5);
+        sf = movmean(ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'salinity'),5);
         zf = ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'depth');
-        tf_nonans = tf(~isnan(tf) & ~isnan(sf));
-        sf_nonans = sf(~isnan(tf) & ~isnan(sf));
-        zf_nonans = zf(~isnan(tf) & ~isnan(sf));
+        is_downcast = zeros(size(zf));
+        max_depth=0;
+        for k=1:length(is_downcast)
+            if zf(k) > max_depth 
+                is_downcast(k) = 1;
+                max_depth = zf(k);
+            end
+        end
+
+        tf_nonans = tf(~isnan(tf) & ~isnan(sf) & is_downcast);
+        sf_nonans = sf(~isnan(tf) & ~isnan(sf) & is_downcast);
+        zf_nonans = zf(~isnan(tf) & ~isnan(sf) & is_downcast);
         if isempty(tf_nonans) || isempty(sf_nonans) % we disregard this fjord because we actually do not have the data
             fprintf('Fjord %s has only NaNs in temperature or salinity!\n',m.ID)
             continue
@@ -105,31 +114,43 @@ for i_fjord=1:height(fjord_matrix)
         % get geometry
         p.L = fjords_centreline(digitised_id).length.*1e3;
         p.W = fjords_digitised(digitised_id).area/p.L;
-        p.Hsill = fjord_matrix.sill_depth(i_fjord);
-        p.Hgl   = fjord_matrix.gl_depth(i_fjord);
-        p.H = abs(p.Hgl);
-        if p.H-p.Hsill < 10
-            p.Hsill = p.Hsill-(10-p.H-p.Hsill); % workaround so the layer division below the sill works
-        end
-        if max(zf) > p.H % if the cast inside the fjord goes deeper than what we set as current depth, then the fjord is as deep as the cast
-            p.H = ceil(max(zf));
-            p.Hgl = p.H; % since we take the fjord profiles to be as close as possible to the glacier front, this assumption is reasonable for most cases
-        end
-        if p.Hsill > p.Hgl || p.Hsill == -999 % if the GL sits above the sill or if the fjord has no sill
+        p.Hsill = abs(fjord_matrix.sill_depth(i_fjord));
+        p.Hgl   = abs(fjord_matrix.gl_depth(i_fjord));
+
+        if p.Hsill == -999 % if the fjord has no sill
             p.sill=0;        % we ignore the sill
             p.Hsill = p.Hgl; % just so the RPM initial checks won't fail
         else
             p.sill=1;
         end
+        p.H = max(p.Hgl,p.Hsill);
+        if p.H == p.Hsill,p.sill=0; end % if we made the fjord as deep as the sill, it essentially has no sill
+
+        if p.H-p.Hsill < 10
+            p.Hsill = p.Hsill-(10-p.H-p.Hsill); % workaround so the layer division below the sill works
+        end
+        if max(zf) > p.H % if the cast inside the fjord goes deeper than what we set as current depth, then the fjord is as deep as the cast
+            p.H = ceil(max(zf));
+            % p.Hgl = p.H; % since we take the fjord profiles to be as close as possible to the glacier front, this assumption is reasonable for most cases
+        end
+        
 
         % get subglacial discharge (separate file for better readability
         run set_subglacial_discharge.m
         
         % get the shelf-profile forcing
-        z_shelf = smoothdata(ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'depth'));
-        t_shelf = smoothdata(ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'temperature'));
-        s_shelf = smoothdata(ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'salinity'));
-        is_downcast = [1; diff(z_shelf) > 0]; % removes upcast, if it exists
+        z_shelf = ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'depth');
+        t_shelf = movmean(ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'temperature'),5);
+        s_shelf = movmean(ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'salinity'),5);
+        % removes upcast and fluctuations at subsurface (e.g., rosette bobbing up and down with the swell)
+        is_downcast = zeros(size(z_shelf));
+        max_depth=0;
+        for k=1:length(is_downcast)
+            if z_shelf(k) > max_depth 
+                is_downcast(k) = 1;
+                max_depth = z_shelf(k);
+            end
+        end
         
         % remove NaNs from cast
         z_shelf_nonans = z_shelf(~isnan(t_shelf) & ~isnan(s_shelf) & is_downcast);
@@ -154,6 +175,10 @@ for i_fjord=1:height(fjord_matrix)
 
             % check if we need to extend the profiles upwards (up to 1m depth)
             if min(zs) > 1
+                if min(zs) > 50 % however, we do not want to excessively interpolate data
+                    fprintf('Fjord %s has no data until %.2f m. Skipping...\n',m.ID,min(zs))
+                    continue
+                end
                 zs_with_surf = [1; zs];
                 Ts = interp1(zs,Ts,zs_with_surf,'nearest','extrap');
                 Ss = interp1(zs,Ss,zs_with_surf,'nearest','extrap');
@@ -295,10 +320,21 @@ disp('Outputs saved.')
 %% Sanity-check post processing and plot
 % load(file_out);
 
-% [res_obs,res_box] = postprocess_ensemble(fjord_model,ensemble,tgt_days);
-% disp('Postprocessing ensemble done.')
-% plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2);
+which_fj_sens = {{'12','17','30','108'};
+                {'14','28','30','108'};
+                {'17','24','70','108'};
+                {'8','14','17','30'};
+                {'10','24','30','79'}};
 
+[res_obs,res_box] = postprocess_ensemble(fjord_model,ensemble,tgt_days);
+disp('Postprocessing ensemble done.')
+plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2);
+% plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,[],0,0,0);
+exportgraphics(gcf,[figs_path,'profiles_GRL_temp_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
+
+plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],which_year-2015);%, which_fj_sens{which_year-2015});
+% plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],which_year-2015, which_fj_sens{which_year-2015});
+exportgraphics(gcf,[figs_path,'sensitivity_profiles_temp_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
 %% Checking how results compare from year to year
 
