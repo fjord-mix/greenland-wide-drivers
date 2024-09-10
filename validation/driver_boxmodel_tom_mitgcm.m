@@ -406,7 +406,8 @@ for i_fjord=1:size(ensemble,1)
             slower_box_comp(:,i1,i2,i3,i4) = ensemble(i_fjord,i1,i2,i3,i4).s.Slower;
 
             min_depth_rmse = 0;
-            depths_rmse = zf_obs > min_depth_rmse;
+            % depths_rmse = zf_obs > min_depth_rmse;
+            depths_rmse = (zf_obs > min_depth_rmse) && (zf_obs < ensemble(i_fjord,i1,i2,i3,i4).p.Hgl);
             rmse_tf(i1,i2,i3,i4) = rmse(tf_box_comp(depths_rmse,i1,i2,i3,i4),tf_obs(depths_rmse)','omitnan')./mean(tf_obs(depths_rmse),'omitnan');
             rmse_sf(i1,i2,i3,i4) = rmse(sf_box_comp(depths_rmse,i1,i2,i3,i4),sf_obs(depths_rmse)','omitnan')./mean(sf_obs(depths_rmse),'omitnan');
 
