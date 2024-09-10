@@ -52,11 +52,11 @@ for i_yr=1:n_years
     %% Plotting
     
     for i_param=1:n_params
-        nexttile(i_param); hold on; box on;
+        nexttile(i_param); box on; hold on; 
         x_bnds = range_params{i_param};
         x_val = linspace(x_bnds(1),x_bnds(2),100);
         if strcmp(which_dist,'hist') == 1
-            h1 = histogram(param_entry(:,i_param),10,'FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5); % if there are no distributions, we plot a histogram
+            h1 = histogram(param_entry(:,i_param),20,'FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5); % if there are no distributions, we plot a histogram
         else
             if iscell(which_dist)
                 kern_marginal= fitdist(param_entry(:,i_param),which_dist{i_param}); % in case we want different distributions for each variable
@@ -86,5 +86,5 @@ end
 % TODO: add legend pertaining to different years
 % legend([h1,h2,h3],{'RMSE_T','RMSE_S','RMSE_{both}'},'fontsize',fsize,'Location','Northwest');
 % legend([h1,h2],{'RMSE_T','RMSE_S'},'fontsize',fsize,'Location','Northwest');
-legend(h_yr,lbl_years,'fontsize',fsize,'Location','northwest');
+legend(h_yr,lbl_years,'fontsize',fsize,'Location','best');
 
