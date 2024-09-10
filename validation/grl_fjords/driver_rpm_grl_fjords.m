@@ -336,6 +336,9 @@ plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],which
 % plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],which_year-2015, which_fj_sens{which_year-2015});
 exportgraphics(gcf,[figs_path,'sensitivity_profiles_temp_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
+
+% plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,[],0,0,1);
+% exportgraphics(gcf,[figs_path,'rmse_temp_rpm_shelf_GRL_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
 %% Checking how results compare from year to year
 
 % plot_best_params_dist_qq(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,2,'poisson');
