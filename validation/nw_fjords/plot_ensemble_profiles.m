@@ -43,7 +43,8 @@ for i_fjord=1:n_fjord_runs
     if isempty(res_box(i_fjord).rmse_tf)
         continue
     elseif isempty(i_tgt_day)
-        rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf + (1-w_rmse_t).*res_box(i_fjord).rmse_sf;
+        rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf./mean(res_box(i_fjord).tf,'omitnan') + (1-w_rmse_t).*res_box(i_fjord).rmse_sf./mean(res_box(i_fjord).sf,'omitnan');
+
         [rmse_table(i_fjord).tf_rpm,i_min_rmse_tf] = min(res_box(i_fjord).rmse_tf,[],'all','omitnan');
         [rmse_table(i_fjord).sf_rpm,i_min_rmse_sf] = min(res_box(i_fjord).rmse_sf,[],'all','omitnan');
         [rmse_table(i_fjord).ts_rpm,i_min_rmse]    = min(rmse_both,[],'all','omitnan');
@@ -62,7 +63,8 @@ for i_fjord=1:n_fjord_runs
         inds_best_sf = [irun_best_sf,id_best_sf];
         inds_best2   = [irun_best,id_best];
     else
-        rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf + (1-w_rmse_t).*res_box(i_fjord).rmse_sf;
+        rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf./mean(res_box(i_fjord).tf,1,'omitnan') + (1-w_rmse_t).*res_box(i_fjord).rmse_sf./mean(res_box(i_fjord).sf,1,'omitnan');
+
         [rmse_table(i_fjord).tf_rpm,inds_best_tf] = min(squeeze(res_box(i_fjord).rmse_tf(:,i_tgt_day)),[],'all','omitnan');
         [rmse_table(i_fjord).sf_rpm,inds_best_sf] = min(squeeze(res_box(i_fjord).rmse_sf(:,i_tgt_day)),[],'all','omitnan');
         [rmse_table(i_fjord).ts_rpm,inds_best2]   = min(squeeze(rmse_both(:,i_tgt_day)),[],'all','omitnan');
@@ -80,9 +82,9 @@ for i_fjord=1:n_fjord_runs
             if strcmp(mitgcm(i_gcm).id,res_box(i_fjord).id{1})
                 tprofile_gcm = interp1(mitgcm(i_gcm).z,mitgcm(i_gcm).Tprofile,res_obs(i_fjord).zf,'linear','extrap');
                 sprofile_gcm = interp1(mitgcm(i_gcm).z,mitgcm(i_gcm).Sprofile,res_obs(i_fjord).zf,'linear','extrap');
-                rmse_table(i_fjord).tf_gcm = rmse(tprofile_gcm,res_obs(i_fjord).tf,'omitnan')./mean(res_obs(i_fjord).tf,'omitnan');
-                rmse_table(i_fjord).sf_gcm = rmse(sprofile_gcm,res_obs(i_fjord).sf,'omitnan')./mean(res_obs(i_fjord).sf,'omitnan');
-                rmse_table(i_fjord).ts_gcm = w_rmse_t.*rmse_table(i_fjord).tf_gcm + (1-w_rmse_t).*rmse_table(i_fjord).sf_gcm;
+                rmse_table(i_fjord).tf_gcm = rmse(tprofile_gcm,res_obs(i_fjord).tf,'omitnan');%./mean(res_obs(i_fjord).tf,'omitnan');
+                rmse_table(i_fjord).sf_gcm = rmse(sprofile_gcm,res_obs(i_fjord).sf,'omitnan');%./mean(res_obs(i_fjord).sf,'omitnan');
+                rmse_table(i_fjord).ts_gcm = w_rmse_t.*rmse_table(i_fjord).tf_gcm./mean(res_obs(i_fjord).tf,'omitnan') + (1-w_rmse_t).*rmse_table(i_fjord).sf_gcm/mean(res_obs(i_fjord).sf,'omitnan');
             end
         end
     end
@@ -324,7 +326,7 @@ if nargin > 14 && plt_rmse
     xlabels(2:end-1) = fjord_names;
     xlabels{1} = ' '; xlabels{end} = ' ';
     set(gca,'XtickLabels',xlabels,'FontSize',14);
-    ylabel('RMSE rel. fjord cast');
+    ylabel('RMSE rel. fjord cast (^oC)');
     xlabel('Fjord')
     if plt_mitgcm
         leg_handles = [h_rpm,h_gcm,h_shf];
