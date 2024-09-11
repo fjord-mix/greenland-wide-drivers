@@ -13,7 +13,7 @@ fjord_names = cell([1,length(fjord_IDs)]);
 for i=1:length(fjord_names), fjord_names{i} = fjord_IDs(i); end
 
 hf = figure('Name','Best parameters','Position',[40 40 1200 1000]);
-tiledlayout('flow');
+ht = tiledlayout('flow');
 
 
 h_yr = [];
@@ -92,6 +92,7 @@ for i_yr=1:n_years
             ylim([0.1*min(range_params{i_param}) 10*max(range_params{i_param})])
         end
         hline(range_params{i_param},'--','color',[0.75 0.75 0.75])
+        xlabel('Fjord','fontsize',16)
     end
     h_yr = [h_yr h1];
     lbl_years{i_yr} = num2str(2015+i_yr);
@@ -101,4 +102,4 @@ end
 % legend([h1,h2,h3],{'RMSE_T','RMSE_S','RMSE_{both}'},'fontsize',fsize,'Location','Northwest');
 % legend([h1,h2],{'RMSE_T','RMSE_S'},'fontsize',fsize,'Location','Northwest');
 legend(h_yr,lbl_years,'fontsize',fsize,'Location','best');
-
+% xlabel(ht,'Fjord','fontsize',16)
