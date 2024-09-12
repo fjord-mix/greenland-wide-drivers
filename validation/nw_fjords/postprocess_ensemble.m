@@ -1,8 +1,12 @@
 function [res_obs,res_box] = postprocess_ensemble(fjord_model,ensemble,tgt_days)
 
-
 n_fjords = size(ensemble,1);
 n_runs   = size(ensemble,2);
+if nargin < 3 
+    n_days = 1;
+else
+    n_days = length(tgt_days);
+end
 
 res_obs(size(fjord_model)) = struct("tf",[],"sf",[],"zf",[]);
 res_box(size(fjord_model)) = struct("tf",[],"sf",[],"zf",[],"id",[],"name",[]);
@@ -20,12 +24,12 @@ for i_fjord=1:n_fjords
         continue
     end
 
-    tf_box = NaN([fjord_model(i_fjord).p.N,n_runs,length(tgt_days)]);
+    tf_box = NaN([fjord_model(i_fjord).p.N,n_runs,n_days]);
     sf_box = NaN(size(tf_box));
-    tf_box_comp = NaN([length(zf_obs),n_runs,length(tgt_days)]);
+    tf_box_comp = NaN([length(zf_obs),n_runs,n_days]);
     sf_box_comp = NaN(size(tf_box_comp));
-    rmse_tf = NaN([n_runs,length(tgt_days)]);
-    rmse_sf = NaN([n_runs,length(tgt_days)]);
+    rmse_tf = NaN([n_runs,n_days]);
+    rmse_sf = NaN([n_runs,n_days]);
     tupper_box_comp = NaN([length(fjord_model(i_fjord).p.t_save),n_runs]);
     tinter_box_comp = NaN(size(tupper_box_comp));
     tlower_box_comp = NaN(size(tupper_box_comp));
@@ -39,13 +43,15 @@ for i_fjord=1:n_fjords
             % we get a profile for each of our target days - if something
             % goes wrong here it's because of the sign/orientation of depth
             % profiles
-            for i_day=1:length(tgt_days) 
-                tf_box(:,i_run,i_day) = ensemble(i_fjord,i_run).s.Tfinal(:,i_day); 
-                sf_box(:,i_run,i_day) = ensemble(i_fjord,i_run).s.Sfinal(:,i_day);
-                
-                tf_box_comp(:,i_run,i_day) = interp1(ensemble(i_fjord,i_run).s.z,tf_box(:,i_run,i_day),zf_obs,'nearest','extrap');
-                sf_box_comp(:,i_run,i_day) = interp1(ensemble(i_fjord,i_run).s.z,sf_box(:,i_run,i_day),zf_obs,'nearest','extrap');
-            end
+            % if nargin > 2 || ~isempty(tgt_days)
+                for i_day=1:n_days
+                    tf_box(:,i_run,i_day) = ensemble(i_fjord,i_run).s.Tfinal(:,i_day); 
+                    sf_box(:,i_run,i_day) = ensemble(i_fjord,i_run).s.Sfinal(:,i_day);
+                    
+                    tf_box_comp(:,i_run,i_day) = interp1(ensemble(i_fjord,i_run).s.z,tf_box(:,i_run,i_day),zf_obs,'nearest','extrap');
+                    sf_box_comp(:,i_run,i_day) = interp1(ensemble(i_fjord,i_run).s.z,sf_box(:,i_run,i_day),zf_obs,'nearest','extrap');
+                end
+            % end
 
             tupper_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Tupper;
             tinter_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Tinter;
@@ -57,7 +63,7 @@ for i_fjord=1:n_fjords
 
             min_depth_rmse = 0;
             depths_rmse = (zf_obs > min_depth_rmse) & (zf_obs < ensemble(i_fjord,i_run).p.Hgl);
-            for i_day = 1:length(tgt_days)
+            for i_day = 1:n_days
                 if size(tf_obs(depths_rmse),1) ~= size(tf_box_comp(depths_rmse,i_run,i_day),1)
                     tf_obs_ref = tf_obs(depths_rmse)';
                     sf_obs_ref = sf_obs(depths_rmse)';
@@ -92,6 +98,9 @@ for i_fjord=1:n_fjords
     res_obs(i_fjord).zs = fjord_model(i_fjord).c.zs;
     res_obs(i_fjord).ts = fjord_model(i_fjord).c.ts;
     res_obs(i_fjord).ss = fjord_model(i_fjord).c.ss;
+
+    res_box(i_fjord).Tforc = ensemble(i_fjord,1).s.Tforc;
+    res_box(i_fjord).Sforc = ensemble(i_fjord,1).s.Sforc;
 
     res_box(i_fjord).t  = fjord_model(i_fjord).p.t_save;
     res_box(i_fjord).zf = zf_box;
