@@ -56,22 +56,34 @@ taxis_tsg = taxis_tsg(which_dates);
 Qsg_sum   = Qsg_sum(which_dates);
 seconds_in_month = eomday(taxis_tsg.Year,taxis_tsg.Month)*86400; 
 
+% TODO: adapt for haing multi-year or repeat single-year
+
 % set f.Qsg and f.tsg accordingly
-tsg = NaT([1,length(taxis_tsg)*n_years]);
-i_yr_beg=1;
-i_yr_end=12;
-% tsg(i_yr_beg:i_yr_end) = juliandate(taxis_tsg) - juliandate(taxis_tsg(1));
-for i_yr=1:n_years    
-    tsg(i_yr_beg:i_yr_end) = taxis_tsg + years(i_yr-1);
-    i_yr_beg=i_yr_end+1;
-    i_yr_end=i_yr_beg+11;
+if exist('n_years','var') % we treat things slightly differently in case we do a repeat of one year, or several years
+    tsg = NaT([1,length(taxis_tsg)*n_years]);
+    i_yr_beg=1;
+    i_yr_end=12;
+    for i_yr=1:n_years    
+        tsg(i_yr_beg:i_yr_end) = taxis_tsg + years(i_yr-1);
+        i_yr_beg=i_yr_end+1;
+        i_yr_end=i_yr_beg+11;
+    end
+    f.tsg = juliandate(tsg) - juliandate(tsg(1));
+else
+    f.tsg = juliandate(taxis_tsg) - juliandate(taxis_tsg(1));
 end
-f.tsg = juliandate(tsg) - juliandate(tsg(1));
 Qsg = Qsg_sum./seconds_in_month;
 
 % makes sure they are in the correct dimensions
 if size(Qsg,1) > size(Qsg,2)
     Qsg = Qsg';
 end
+if size(f.tsg,1) > size(f.tsg,2)
+    f.tsg = f.tsg';
+end
 
-f.Qsg = repmat(Qsg,1,n_years);
+if exist('n_years','var')
+    f.Qsg = repmat(Qsg,1,n_years);
+else
+    f.Qsg = Qsg;
+end
