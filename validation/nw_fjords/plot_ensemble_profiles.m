@@ -130,6 +130,11 @@ for i_fjord=1:n_fjord_runs
     hb=[];
     % 
     % % RPM profile(s)
+    % forcing
+    if isfield(res_box(i_fjord),'Tforc')
+        hforc = plot(res_box(i_fjord).Tforc,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(1,:),'LineStyle','--');
+    end
+    % results
     for i_day=1:length(i_tgt_day)
         % res_box(i_fjord).zf = res_box(i_fjord).zf';
 
@@ -172,7 +177,11 @@ for i_fjord=1:n_fjord_runs
     ylim([-fjord_model(i_fjord).p.H 0])
     if i_fjord==1 
         % string_legend = {"Shelf","Fjord","Best_T","Best_{TS}"};
-        string_legend = {"Shelf","Fjord","FjordRPM_{best}"};
+        if exist('hforc','var')
+            string_legend = {"RPM Forcing","Shelf","Fjord","FjordRPM_{best}"};
+        else
+            string_legend = {"Shelf","Fjord","FjordRPM_{best}"};
+        end
 
         if length(tgt_days)==1
             % string_legend{end+1} = sprintf("mean_{%s}",name_days{i_tgt_day});
@@ -185,7 +194,12 @@ for i_fjord=1:n_fjord_runs
         end
         string_legend{end+1} = 'MITgcm';
         % hl1 = legend([hs, hf, hbest, hbest2, hb, hm],string_legend,'fontsize',fsize,'Location','east'); 
-        hl1 = legend([hs, hf, hbest, hb, hm],string_legend,'fontsize',fsize,'Location','best'); 
+        if exist('hforc','var')
+            leg_handles = [hforc, hs, hf, hbest, hb, hm];
+        else
+            leg_handles = [hs, hf, hbest, hb, hm];
+        end
+        hl1 = legend(leg_handles,string_legend,'fontsize',fsize,'Location','best'); 
         % title(hl1,sprintf('Profiles at day %d\n(10-day avg.)',tgt_day))
         hl1.NumColumns=1;
         % old_pos = hl1.Position;
@@ -207,6 +221,10 @@ for i_fjord=1:n_fjord_runs
         
     
         % RPM profile(s)
+        % forcing
+        if isfield(res_box(i_fjord),'Sforc')
+            plot(res_box(i_fjord).Sforc,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(1,:),'LineStyle','--');
+        end
         for i_day=1:length(i_tgt_day)
             y2 = [-res_box(i_fjord).zf'; flip(-res_box(i_fjord).zf')];
             try
