@@ -73,6 +73,9 @@ for i_fjord=1:height(fjord_matrix)
     if ~strcmp(id_cast_shelf,'NaN') && ~strcmp(id_cast_fjord,'NaN')
         digitised_id = find([fjords_digitised.id] == fjord_matrix.ID(i_fjord));
 
+        x_fjord = fjords_digitised(digitised_id).x;
+        y_fjord = fjords_digitised(digitised_id).y;
+
         % default parameters
         p=default_parameters();
         p.fixedthickness=1;
