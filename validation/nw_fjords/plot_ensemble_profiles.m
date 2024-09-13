@@ -8,7 +8,11 @@ if nargin < 10 || isempty(mitgcm),    plt_mitgcm = 0; else, plt_mitgcm=1; end
 if nargin < 11 || isempty(plt_salt),  plt_salt   = 0; end
 if nargin < 12 || isempty(plt_series),plt_series = 0; end
 if nargin < 13 || isempty(verbose),   verbose    = 0; end
-
+if isempty(tgt_days)
+    n_days = 1;
+else
+    n_days = length(tgt_days);
+end
 
 if exist('rmse_table',"var"),       clear res_obs; end
 rmse_table(size(fjord_model)) = struct("tf_rpm",[],"sf_rpm",[],"ts_rpm",[],"tf_gcm",[],"sf_gcm",[],"ts_gcm",[]);
@@ -33,7 +37,7 @@ end
 if plt_series
     hf_series   = figure('Name','Temperature evolution','Position',[40 40 fig_width fig_height]);
     % tiledlayout(length(fjord_model)/2,2);
-    tiledlayout("flow");
+    ht_series = tiledlayout("flow");
 end
 
 
@@ -117,6 +121,7 @@ for i_fjord=1:n_fjord_runs
         end
         if ~plot_fjord, continue; end
     end
+
     figure(hf_profiles)
     nexttile; hold on; box on; grid on
     text(0.02,1.02,sprintf("%s) %s (%.0f km)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
@@ -126,7 +131,7 @@ for i_fjord=1:n_fjord_runs
     hs = plot(res_obs(i_fjord).ts,-res_obs(i_fjord).zs,'linewidth',2.5,'color',lcolor(1,:));
     hf = plot(res_obs(i_fjord).tf,-res_obs(i_fjord).zf,'linewidth',2.5,'color',lcolor(2,:));
     hbest = plot(tf_best,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(3,:));
-    hbest2 = plot(tf_best2,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(3,:),'LineStyle','--');
+    % hbest2 = plot(tf_best2,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(3,:),'LineStyle','--');
     hb=[];
     % 
     % % RPM profile(s)
@@ -135,11 +140,11 @@ for i_fjord=1:n_fjord_runs
         hforc = plot(res_box(i_fjord).Tforc,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(1,:),'LineStyle','--');
     end
     % results
-    for i_day=1:length(i_tgt_day)
+    for i_day=1:n_days
         % res_box(i_fjord).zf = res_box(i_fjord).zf';
 
         y2 = [-res_box(i_fjord).zf; flip(-res_box(i_fjord).zf)];
-        inBetween = [res_box(i_fjord).tfmin(:,i_tgt_day(i_day)); flip(res_box(i_fjord).tfmax(:,i_tgt_day(i_day)))];
+        inBetween = [res_box(i_fjord).tfmin(:,i_day); flip(res_box(i_fjord).tfmax(:,i_day))];
         try
             hfjd = patch(inBetween, y2, lcolor(3+i_day,:),'edgecolor','none','facealpha',0.1);
         catch
@@ -147,13 +152,13 @@ for i_fjord=1:n_fjord_runs
             hfjd = [];
         end
         try
-            inBetween = [res_box(i_fjord).tf1sl(:,i_tgt_day(i_day)); flip(res_box(i_fjord).tf1su(:,i_tgt_day(i_day)))];
+            inBetween = [res_box(i_fjord).tf1sl(:,i_day); flip(res_box(i_fjord).tf1su(:,i_day))];
             fill(inBetween, y2, lcolor(3+i_day,:),'edgecolor','none','facealpha',0.1);
         catch
             warning('Ensemble dimensions do not support shading')
             hfjd = [];
         end
-        hb_d = plot(res_box(i_fjord).tf(:,i_tgt_day(i_day)),-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(3+i_day,:));
+        hb_d = plot(res_box(i_fjord).tf(:,i_day),-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(3+i_day,:));
         hb = [hb hb_d];
     end
 
@@ -173,7 +178,7 @@ for i_fjord=1:n_fjord_runs
 
     set(gca,'fontsize',fsize)
     % xlim([-2.5 9])
-    xlim([-2 7.5])
+    xlim([-4 7.5])
     ylim([-fjord_model(i_fjord).p.H 0])
     if i_fjord==1 
         % string_legend = {"Shelf","Fjord","Best_T","Best_{TS}"};
@@ -199,7 +204,7 @@ for i_fjord=1:n_fjord_runs
         else
             leg_handles = [hs, hf, hbest, hb, hm];
         end
-        hl1 = legend(leg_handles,string_legend,'fontsize',fsize,'Location','best'); 
+        hl1 = legend(leg_handles,string_legend,'fontsize',fsize-4,'Location','best'); 
         % title(hl1,sprintf('Profiles at day %d\n(10-day avg.)',tgt_day))
         hl1.NumColumns=1;
         % old_pos = hl1.Position;
@@ -210,14 +215,14 @@ for i_fjord=1:n_fjord_runs
     if plt_salt
         figure(hfs_profiles)
         nexttile; hold on; box on; grid on
-        text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i_fjord).id{1},res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
+        text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
         % text(0.02,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
     
         % Observed shelf and fjord profiles
-        plot(res_obs(i_fjord).ss,-res_obs(i_fjord).zs,'linewidth',1.5,'color',lcolor(1,:));
-        plot(res_obs(i_fjord).sf,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(2,:));
-        plot(sf_best,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3,:),'LineStyle','--');
-        plot(sf_best2,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3,:));
+        plot(res_obs(i_fjord).ss,-res_obs(i_fjord).zs,'linewidth',2.5,'color',lcolor(1,:));
+        plot(res_obs(i_fjord).sf,-res_obs(i_fjord).zf,'linewidth',2.5,'color',lcolor(2,:));
+        plot(sf_best,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(3,:),'LineStyle','--');
+        % plot(sf_best2,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3,:));
         
     
         % RPM profile(s)
@@ -225,18 +230,21 @@ for i_fjord=1:n_fjord_runs
         if isfield(res_box(i_fjord),'Sforc')
             plot(res_box(i_fjord).Sforc,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(1,:),'LineStyle','--');
         end
-        for i_day=1:length(i_tgt_day)
-            y2 = [-res_box(i_fjord).zf'; flip(-res_box(i_fjord).zf')];
+        for i_day=1:n_days
+            y2 = [-res_box(i_fjord).zf; flip(-res_box(i_fjord).zf)];
+            inBetween = [res_box(i_fjord).sfmin(:,i_day); flip(res_box(i_fjord).sfmax(:,i_day))];
             try
-                inBetween = [res_box(i_fjord).sfmin(:,i_tgt_day(i_day)); flip(res_box(i_fjord).sfmax(:,i_tgt_day(i_day)))];
-                fill(inBetween, y2, lcolor(3+i_day,:),'edgecolor','none','facealpha',0.1);
-                inBetween = [res_box(i_fjord).sf1sl(:,i_tgt_day(i_day)); flip(res_box(i_fjord).sf1su(:,i_tgt_day(i_day)))];
+                patch(inBetween, y2, lcolor(3+i_day,:),'edgecolor','none','facealpha',0.1);
+            catch
+                warning('Ensemble dimensions do not support shading')
+            end
+            try
+                inBetween = [res_box(i_fjord).sf1sl(:,i_day); flip(res_box(i_fjord).sf1su(:,i_day))];
                 fill(inBetween, y2, lcolor(3+i_day,:),'edgecolor','none','facealpha',0.1);
             catch
                 warning('Ensemble dimensions do not support shading')
-                hfjd = [];
             end
-            plot(res_box(i_fjord).sf(:,i_tgt_day(i_day)),-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3+i_day,:));
+            plot(res_box(i_fjord).sf(:,i_day),-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(3+i_day,:));
         end
     
         % GCM profile (if exists for that fjord)
@@ -259,25 +267,23 @@ for i_fjord=1:n_fjord_runs
     if plt_series
         figure(hf_series)
         nexttile; hold on; box on; grid on
-        text(0.02,0.99,sprintf("(%s) %s (%.0f km; n=%d)",res_box(i_fjord).id{1},res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3,res_box(i_fjord).n),'units','normalized','VerticalAlignment','top','fontsize',fsize)
+        text(0.02,1.02,sprintf("(%s) %s (%.0f km)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
         % text(0.02,0.02,sprintf("n=%d",res_box(i).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
         if length(res_box(i_fjord).t) == length(res_box(i_fjord).Tupper)
             
-            hu = plot(res_box(i_fjord).t,res_box(i_fjord).Tupper,'linewidth',1.5,'color',lcolor(1,:));
-            hi = plot(res_box(i_fjord).t,res_box(i_fjord).Tinter,'linewidth',1.5,'color',lcolor(2,:));
-            hl = plot(res_box(i_fjord).t,res_box(i_fjord).Tlower,'linewidth',1.5,'color',lcolor(3,:));
+            hu = plot(res_box(i_fjord).t,res_box(i_fjord).Tupper,'linewidth',2.5,'color',lcolor(1,:));
+            hi = plot(res_box(i_fjord).t,res_box(i_fjord).Tinter,'linewidth',2.5,'color',lcolor(2,:));
+            hl = plot(res_box(i_fjord).t,res_box(i_fjord).Tlower,'linewidth',2.5,'color',lcolor(3,:));
            
-            for i_day=1:length(tgt_days)
-                xline(tgt_days(i_day),'linestyle','--','color',lcolor(3+i_day,:),'linewidth',2)
+            if n_days == 1 && isfield(fjord_model(i_fjord).c,'i_shf_cast')
+                xline(fjord_model(i_fjord).c.i_shf_cast,'linestyle','--','color',lcolor(3+i_day,:),'linewidth',2)
+            else
+                for i_day=1:n_days
+                    xline(tgt_days(i_day),'linestyle','--','color',lcolor(3+i_day,:),'linewidth',2)
+                end
             end
         end
-        ylim([-2 5.5])
-        if mod(i_fjord,2) > 0, ylabel('Temperature (^oC)'); end
-        if i_fjord>n_fjord_runs-2 
-            xlabel('Model time (days)'); 
-        else
-            set(gca,'xticklabels',[]);
-       end
+        % ylim([-2 5.5])
         set(gca,'fontsize',fsize)
         if i_fjord==1%n_fjords
             hl2 = legend([hu,hi,hl],{"0-50 m","50-250 m","250-500 m"},'fontsize',fsize,'Location','best'); 
@@ -290,6 +296,10 @@ end
 if plt_salt
     xlabel(ht_salt,'Salinity','fontsize',fsize+2);  
     ylabel(ht_salt,'Depth (m)','fontsize',fsize+2);
+end
+if plt_series
+    ylabel(ht_series,'Temperature (^oC)','fontsize',fsize+2);  
+    xlabel(ht_series,'Model time (days)','fontsize',fsize+2);  
 end
 xlabel(ht_temp,'Temperature (^oC)','fontsize',fsize+2);  
 ylabel(ht_temp,'Depth (m)','fontsize',fsize+2);
