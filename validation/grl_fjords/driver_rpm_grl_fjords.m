@@ -6,11 +6,11 @@ letters = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n'};
 
 %% Initialise all needed variables
 
-which_year = 2020; % {2016,2017,2018,2019,2020}
+which_year = 2019; % {2016,2017,2018,2019,2020}
 time_start = datetime(which_year,01,01);
 time_end   = datetime(which_year,12,31);
 
-n_runs     = 50;         % number of runs per fjord
+n_runs     = 10;         % number of runs per fjord
 input_dt   = 30;          % time step of model input (in days)
 dt_in_h    = 3.;          % time step in hours
 model_dt   = dt_in_h/24.; % time step in days for the model (e.g., 2h/24 ~ 0.083 days)
@@ -132,6 +132,10 @@ for i_fjord=1:height(fjord_matrix)
         if p.H-p.Hsill < 10
             p.Hsill = p.Hsill-(10-p.H-p.Hsill); % workaround so the layer division below the sill works
         end
+        if p.H < p.Hsill % the sill cannot be deeper than the fjord itself
+            p.Hsill = p.H;
+            p.sill = 0;
+        end
         if max(zf) > p.H % if the cast inside the fjord goes deeper than what we set as current depth, then the fjord is as deep as the cast
             p.H = ceil(max(zf));
             % p.Hgl = p.H; % since we take the fjord profiles to be as close as possible to the glacier front, this assumption is reasonable for most cases
@@ -204,9 +208,18 @@ for i_fjord=1:height(fjord_matrix)
     
             % initial conditions
             a.H0 = ones([p.N],1).*p.H/p.N;
+            ints = [0;cumsum(a.H0)];
+            z_box = 0.5*(ints(1:end-1)+ints(2:end));
             [T_clim, S_clim, ~] = bin_forcings(f, a.H0, t);
             a.T0 = T_clim(:,1);
             a.S0 = S_clim(:,1);
+            if p.Hsill < p.H % we ignore the shelf part in the initial conditions, and extrapolate with values at sill depth instead
+                % figure; hold on; plot(a.T0,-z_box); hline(-p.Hsill);
+                [~,i_sill] = min(abs(p.Hsill-z_box));
+                a.T0(i_sill+1:end) = a.T0(i_sill);
+                a.S0(i_sill+1:end) = a.S0(i_sill);
+                % plot(a.T0,-z_box)
+            end
     
     
             % create the model structure
@@ -231,13 +244,13 @@ for i_fjord=1:height(fjord_matrix)
         fprintf('No %d data for fjord %d.\n',which_year,fjord_matrix.ID(i_fjord))
     end
 end
-warning('on','all')
 idx = arrayfun(fun,fjord_model);
 fjord_model(idx)=[]; % remove the empty elements
 n_fjords = length(fjord_model);
 fprintf('Inputs processing complete. Total of fjords for %d: %d\n',which_year,n_fjords)
 
 %% Running the model
+warning('on','all')
 dims_ensemble = [n_fjords,size(X,1)];
 ensemble_fields = {'p','t','m','s'}; % 'a','f','c','s'};
 ensemble_fields{2,1} = cell(dims_ensemble);
@@ -280,6 +293,9 @@ for i_run=1:n_runs
             end
             ensemble(i_fjord,i_run).s.Tfinal = Tfinal;
             ensemble(i_fjord,i_run).s.Sfinal = Sfinal;
+
+            ensemble(i_fjord,i_run).s.Tforc = mean(cur_fjord.s.Ts(:,(tgt_day-5:tgt_day+5)),2); 
+            ensemble(i_fjord,i_run).s.Sforc = mean(cur_fjord.s.Ss(:,(tgt_day-5:tgt_day+5)),2); 
 
             zf_obs = cur_fjord.c.zf';
             Tregular=NaN([length(zf_obs),length(cur_fjord.s.t)]);
@@ -335,10 +351,11 @@ plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,t
 % plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,[],0,0,0);
 exportgraphics(gcf,[figs_path,'profiles_GRL_temp_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
-plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],which_year-2015);%, which_fj_sens{which_year-2015});
-% plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],which_year-2015, which_fj_sens{which_year-2015});
+% plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],which_year-2015);%, which_fj_sens{which_year-2015});
+plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],which_year-2015, which_fj_sens{which_year-2015});
 exportgraphics(gcf,[figs_path,'sensitivity_profiles_temp_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
+% plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(1),[],1,[],1,1,0)
 
 % plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,[],0,0,1);
 % exportgraphics(gcf,[figs_path,'rmse_temp_rpm_shelf_GRL_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
