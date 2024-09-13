@@ -3,7 +3,7 @@ clearvars
 warning('off','all')
 run setup_paths % Configuring paths
 
-which_year = 2018; % {2016,2017,2018,2019,2020}
+which_year = 2020; % {2016,2017,2018,2019,2020}
 time_start = datetime(2013,01,01);
 time_end   = datetime(2018,12,31);
 
@@ -75,6 +75,7 @@ fjord_matrix = readtable(file_fjords_compiled); % contains gate IDs for subglaci
 fjord_matrix(fjord_matrix.gl_depth < 50,:) = [];
 fjord_matrix(isnan(fjord_matrix.qsg_id1),:) = [];
 
+%% Prepare inputs
 if exist('fjord_model',"var"),       clear fjord_model; end
 fjord_model(height(fjord_matrix)) = struct("p",[],"a",[],"f",[],"t",[],"m",[],"c",[]);
 
@@ -164,6 +165,9 @@ for i_fjord=1:height(fjord_matrix)
         t_shelf = movmean(ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'temperature'),5);
         s_shelf = movmean(ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'salinity'),5);
         time_shelf_raw = ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'time'); % seconds since 1970-01-01T00:00:00Z
+        if length(time_shelf_raw) > 1
+            time_shelf_raw = time_shelf_raw(1);
+        end
         time_shelf = datetime(1970,1,1,0,0,0) + duration(0,0,time_shelf_raw);            % convert to julian date
         time_shelf_in_model = juliandate(time_shelf) - juliandate(time_start);           % convert to the model axis
         [~,i_tsave_shelf_cast] = min(abs(time_shelf_in_model-p.t_save));                 % finds closest point in "output time" to compare later
@@ -222,15 +226,43 @@ for i_fjord=1:height(fjord_matrix)
         run set_subglacial_discharge.m
         
         % get the shelf-profile forcing
-        ocean = get_ocean_profiles(datasets, x_fjord,y_fjord,-p.Hsill); % gets closest ocean reanalysis cell at least as deep as the sill
+        ocean = get_ocean_profiles(datasets, x_fjord,y_fjord,-p.H); % gets closest ocean reanalysis cell at least as deep as the fjord
         [Ts,Ss] = get_ocean_for_period(ocean,runtime_axis);
+        ocean.depth(isnan(Ts(:,1)))=[];
+        Ts(isnan(Ts))=[];
+        Ss(isnan(Ss))=[];
+        Ts = reshape(Ts,length(ocean.depth),[]);
+        Ss = reshape(Ss,length(ocean.depth),[]);
         f.Ts = flip(Ts,1);
         f.Ss = flip(Ss,1);
         f.zs = -flip(ocean.depth);
         f.ts = juliandate(runtime_axis) - juliandate(runtime_axis(1));
+        figure; tiledlayout('flow'); nexttile; imagesc(f.ts,-f.zs,f.Ts)
+        title(m.ID)
+        % % Bias correction (Hawkins et al., 2013): https://www.sciencedirect.com/science/article/abs/pii/S0168192312001372
+        % Ts_bc = t_obs_mean + t_obs_std./Ts_std .* (Ts - Ts_mean);
+        % Ss_bc = s_obs_mean + s_obs_std./Ss_std .* (Ss - Ss_mean);
 
-        % TODO: bias correction?
+        % Bias correction applying a simple dT based on the chosen year's cast
+        [~,i_t_shelf_cast] = min(abs(time_shelf_in_model-t)); % finds closest point in forcing to shelf cast
+        Ts_obs = flip(interp1(c.zs,c.ts,flip(-f.zs),'nearest','extrap')); % we need to flip f.zs and reflip the interpolated part
+        Ss_obs = flip(interp1(c.zs,c.ss,flip(-f.zs),'nearest','extrap')); % because f.zs goes from bottom to top with f.zs < 0
 
+        Ts_tgt = f.Ts(:,i_t_shelf_cast); % finds which the forcing profile for the same time as the shelf obs
+        Ss_tgt = f.Ss(:,i_t_shelf_cast);
+        Ts_obs(isnan(Ts_tgt)) = NaN;
+        Ss_obs(isnan(Ts_tgt)) = NaN;
+        dT_bias = Ts_obs - Ts_tgt; % gets the difference between the two profiles
+        dS_bias = Ss_obs - Ss_tgt;
+        dT_bias(isnan(dT_bias)) = 0;
+        dS_bias(isnan(dS_bias)) = 0;
+        f.Ts = f.Ts + dT_bias; % applies the difference to the forcing
+        f.Ss = f.Ss + dS_bias;
+        nexttile; imagesc(f.ts,-f.zs,f.Ts)
+        colorbar('eastoutside')
+
+        % figure; hold on; plot(mean(f.Ts(:,i_t_shelf_cast-5*dt_in_h*24:i_t_shelf_cast+5*dt_in_h*24),2),f.zs,'--b'); plot(Ts_obs,f.zs,'-b')
+        
         % icebergs
         % nu0 controls how much the total iceberg area extends below the surface
         % we do not vary this parameter, as previous sensitivity
@@ -266,13 +298,13 @@ for i_fjord=1:height(fjord_matrix)
         fprintf('No %d data for fjord %d.\n',which_year,fjord_matrix.ID(i_fjord))
     end
 end
-warning('on','all')
 idx = arrayfun(fun,fjord_model);
 fjord_model(idx)=[]; % remove the empty elements
 n_fjords = length(fjord_model);
 fprintf('Inputs processing complete. Total of fjords for %d: %d\n',which_year,n_fjords)
 
 %% Run the model
+warning('on','all')
 dims_ensemble = [n_fjords,size(X,1)];
 ensemble_fields = {'p','t','m','s'}; % 'a','f','c','s'};
 ensemble_fields{2,1} = cell(dims_ensemble);
@@ -310,13 +342,17 @@ for i_run=1:n_runs
             
             % 10-day avg centered at the target day
             tgt_day = cur_fjord.c.i_fjd_cast;
-            Tfinal  = mean(cur_fjord.s.T(:,(tgt_day-5:tgt_day+5)),2); 
-            Sfinal  = mean(cur_fjord.s.S(:,(tgt_day-5:tgt_day+5)),2);
+            % Tfinal  = mean(cur_fjord.s.T(:,(tgt_day-5:tgt_day+5)),2); 
+            % Sfinal  = mean(cur_fjord.s.S(:,(tgt_day-5:tgt_day+5)),2);
+            Tfinal  = cur_fjord.s.T(:,tgt_day); 
+            Sfinal  = cur_fjord.s.S(:,tgt_day);
             ensemble(i_fjord,i_run).s.Tfinal = Tfinal; 
             ensemble(i_fjord,i_run).s.Sfinal = Sfinal; 
             
-            Tforc = mean(cur_fjord.s.Ts(:,(tgt_day-5:tgt_day+5)),2);
-            Sforc = mean(cur_fjord.s.Ss(:,(tgt_day-5:tgt_day+5)),2);
+            % Tforc = mean(cur_fjord.s.Ts(:,(tgt_day-5:tgt_day+5)),2);
+            % Sforc = mean(cur_fjord.s.Ss(:,(tgt_day-5:tgt_day+5)),2);
+            Tforc = cur_fjord.s.Ts(:,tgt_day);
+            Sforc = cur_fjord.s.Ss(:,tgt_day);
             ensemble(i_fjord,i_run).s.Tforc = Tforc; 
             ensemble(i_fjord,i_run).s.Sforc = Sforc; 
 
@@ -352,7 +388,7 @@ fprintf('Done with fjord %d. ',i_fjord)
 toc
 fprintf('\n')
 end % for i_fjord
-file_out = [outs_path,'rpmMP_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_',num2str(fjord_model(1).p.N),'layers_dt',num2str(dt_in_h),'h'];
+file_out = [outs_path,'rpmMPbc_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_',num2str(fjord_model(1).p.N),'layers_dt',num2str(dt_in_h),'h'];
 save(file_out,'-v7.3','ensemble','fjord_model');
 if ~isempty(fjords_crashed)
     save([file_out,'_crashed'],'-v7.3','fjords_crashed');
@@ -365,4 +401,5 @@ load(file_out);
 [res_obs,res_box] = postprocess_ensemble(fjord_model,ensemble);
 disp('Postprocessing ensemble done.')
 plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(1),[],1);
+% plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(1),[],1,[],1,1,0)
 % exportgraphics(gcf,[figs_path,'profiles_GRLMP_temp_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
