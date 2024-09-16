@@ -37,8 +37,10 @@ for i_fjord=1:n_fjords
     sinter_box_comp = NaN(size(tupper_box_comp));
     slower_box_comp = NaN(size(tupper_box_comp));
 
+    first_valid_run = 0;
     for i_run=1:n_runs
         if ~isempty(ensemble(i_fjord,i_run).s) & ~isnan(ensemble(i_fjord,i_run).s.Tfinal(1))
+            if first_valid_run==0,first_valid_run=i_run; end
 
             % we get a profile for each of our target days - if something
             % goes wrong here it's because of the sign/orientation of depth
@@ -99,8 +101,8 @@ for i_fjord=1:n_fjords
     res_obs(i_fjord).ts = fjord_model(i_fjord).c.ts;
     res_obs(i_fjord).ss = fjord_model(i_fjord).c.ss;
 
-    res_box(i_fjord).Tforc = ensemble(i_fjord,1).s.Tforc;
-    res_box(i_fjord).Sforc = ensemble(i_fjord,1).s.Sforc;
+    res_box(i_fjord).Tforc = ensemble(i_fjord,first_valid_run).s.Tforc;
+    res_box(i_fjord).Sforc = ensemble(i_fjord,first_valid_run).s.Sforc;
 
     res_box(i_fjord).t  = fjord_model(i_fjord).p.t_save;
     res_box(i_fjord).zf = zf_box;
