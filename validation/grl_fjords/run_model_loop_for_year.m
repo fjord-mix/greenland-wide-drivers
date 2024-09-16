@@ -344,8 +344,8 @@ disp('Outputs saved.')
 which_fj_sens = {{'12','17','30','108'};
                 {'14','28','30','108'};
                 {'17','24','70','108'};
-                {'8','14','17','30'};
-                {'10','24','30','79'}};
+                {'12','30','78','108'}; % {'8','14','17','30'};
+                {'0','24','79','108'}}; %{'10','24','30','79'}};
 
 [res_obs,res_box] = postprocess_ensemble(fjord_model,ensemble,tgt_days);
 disp('Postprocessing ensemble done.')
