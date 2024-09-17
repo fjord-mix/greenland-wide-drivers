@@ -128,7 +128,7 @@ for i_fjord=1:size(ensemble,1)
         end
     end
     if no_legend==1
-        legend(gca,handle_fjords,param_names,'fontsize',12,'Location','best');
+        legend(gca,handle_fjords,param_names,'fontsize',10,'Location','best');
         % hl{i_bnd}.NumColumns=2;
         no_legend = 0;
     end
