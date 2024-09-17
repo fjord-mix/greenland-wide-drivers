@@ -1,9 +1,16 @@
+clear_empty     = @(s) all(structfun(@isempty,s)); % tiny function to get rid of empty entries in array
 n_years_to_plot = 5;
 res_box_yr      = cell([n_years_to_plot,1]);
-res_obs_yr     = cell(size(res_box_yr));
+res_obs_yr      = cell(size(res_box_yr));
 ensemble_yr     = cell(size(res_box_yr));
 fjord_model_yr  = cell(size(res_box_yr));
 fjord_IDs       = 0:height(fjord_matrix); %char(65:1:65+length(fjord_names)-1);
+
+which_fj_sens = {{'12','17','30','108'}; % 2016
+                {'14','28','30','108'};  % 2017
+                {'17','24','70','108'};  % 2018
+                {'12','30','78','108'};  % 2019 prev.: {'8','14','17','30'};
+                {'0','24','79','108'}};  % 2020 prev.: {'10','24','30','79'}};
 
 for i_yr_load=1:n_years_to_plot
     which_year_load = 2015+i_yr_load;
@@ -11,20 +18,20 @@ for i_yr_load=1:n_years_to_plot
     load(file_in);
 
     [res_obs_yr{i_yr_load},res_box_yr{i_yr_load}] = postprocess_ensemble(fjord_model,ensemble,tgt_days);
-    idx = arrayfun(fun,res_obs_yr{i_yr_load});
+    idx = arrayfun(clear_empty,res_obs_yr{i_yr_load});
     res_obs_yr{i_yr_load}(idx)=[]; % remove the empty elements
-    idx = arrayfun(fun,res_box_yr{i_yr_load});
+    idx = arrayfun(clear_empty,res_box_yr{i_yr_load});
     res_box_yr{i_yr_load}(idx)=[]; % remove the empty elements
 
     ensemble_yr{i_yr_load}    = ensemble;
     fjord_model_yr{i_yr_load} = fjord_model;
     fprintf('Postprocessing %d done.\n',which_year_load)
     % plot_ensemble_profiles(fjord_model,ensemble_yr{i_yr_load},res_box_yr{i_yr_load},res_obs_yr{i_yr_load},n_runs,param_names,tgt_days(2),name_days,2);
-    plot_ensemble_profiles(fjord_model,ensemble_yr{i_yr_load},res_box_yr{i_yr_load},res_obs_yr{i_yr_load},n_runs,param_names,tgt_days(2),name_days,2,[],0,0,0,[],1);
+    plot_ensemble_profiles(fjord_model,ensemble_yr{i_yr_load},res_box_yr{i_yr_load},res_obs_yr{i_yr_load},n_runs,param_names,tgt_days(2),[],2,[],0,0,0,[],1);
     % exportgraphics(gcf,[figs_path,'profiles_GRL_temp_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
     % exportgraphics(gcf,[figs_path,'rmse_temp_rpm_shelf_GRL_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
-    % plot_sensitivity_profiles_v3(X,ensemble_yr{i_yr_load},res_box_yr{i_yr_load},res_obs_yr{i_yr_load},param_names,2,0,[],i_yr_load, which_fj_sens{i_yr_load});
-    % exportgraphics(gcf,[figs_path,'sensitivity_profiles_temp_simple_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
+    plot_sensitivity_profiles_v3(X,ensemble_yr{i_yr_load},res_box_yr{i_yr_load},res_obs_yr{i_yr_load},param_names,2,0,[],i_yr_load, which_fj_sens{i_yr_load});
+    exportgraphics(gcf,[figs_path,'sensitivity_profiles_temp_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
     close all
 end
 plot_best_params_time(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,2);

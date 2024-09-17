@@ -1,8 +1,9 @@
-function run_model_loop_for_year(which_year)
+function [file_out,tgt_days] = run_model_loop_for_year(which_year,fjords_digitised,fjords_centreline,fjord_matrix,X,param_names,dt_in_h,plot_ensemble)
 
 warning('off','all')
 run setup_paths % Configuring paths
 % letters = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n'};
+clear_empty = @(s) all(structfun(@isempty,s)); % tiny function to get rid of empty entries in array
 
 %% Initialise all needed variables
 
@@ -12,9 +13,9 @@ end
 time_start = datetime(which_year,01,01);
 time_end   = datetime(which_year,12,31);
 
-n_runs     = 50;         % number of runs per fjord
+n_runs = size(X,1);
 input_dt   = 30;          % time step of model input (in days)
-dt_in_h    = 3.;          % time step in hours
+if isempty(dt_in_h), dt_in_h    = 3.; end          % time step in hours
 model_dt   = dt_in_h/24.; % time step in days for the model (e.g., 2h/24 ~ 0.083 days)
 n_years    = 10;           % how many years we want to run
 % tgt_days   = [935,1010];  % which days of the run we want vertical profiles for
@@ -23,48 +24,9 @@ name_days  = {'peak','post'};
 
 t = 0:model_dt:365*n_years; % we want to repeat the yearly data <n_years> times
 
-fun = @(s) all(structfun(@isempty,s));              % tiny function to get rid of empty entries in array
 iceberg_fun = @(NU, H, Z) (NU/H)*exp(NU*Z/H)/(1-exp(-NU)); % functional form of idealised iceberg depth profile
 
-%% Define parameter space
-param_names = {'A0','wp','C0','K0'};
 
-range_params = {[0,3e8],...    % A0
-                [10,700],...   % wp no crashes with [10,400]
-                [1e2,5e4],...  % C0
-                [1e-4,1e-3]};  % K0 or do we stick to [1e4,1e-3]?
-
-rng('default') % set the seed for reproducibility
-uqlab
-for i_param=1:length(param_names)
-    iOpts.Marginals(i_param).Type       = 'uniform';
-    iOpts.Marginals(i_param).Parameters = range_params{i_param};
-    iOpts.Marginals(i_param).Bounds     = range_params{i_param};
-    iOpts.Marginals(i_param).Name       = param_names{i_param};
-end
-
-input = uq_createInput(iOpts); % create probability functions
-X = uq_getSample(input,n_runs,'LHS');  % training dataset
-disp('Parameter space created.')
-
-%% Compiling data 
-
-% Read compilation of all fjords around Greenland (requires data-compilation repository)
-% only needed if not using fjord geometries from Cowton et al.
-% run compile_process_fjords 
-% fjord_ids = [4,9,17,20,22,23,24,25,28,29,30,31,24,37]; % These are the IDs of the corresponding fjords above in the "fjords_processed" data structure
-file_fjords_compiled = [data_path,'/greenland/FjordMIX/fjords_digitisation/fjords_gl_sill_depths_reduced.xlsx'];
-folder_ctd_casts     = [data_path,'/greenland/obs/OMG_all_casts'];
-file_lengths = [data_path,'/greenland/FjordMIX/fjords_digitisation/fjords_centreline.shp'];
-file_fjords = [data_path,'/greenland/FjordMIX/fjords_digitisation/fjords_grl.shp'];
-
-
-fjords_digitised  = shaperead(file_fjords);
-fjords_centreline = shaperead(file_lengths);
-
-fjord_matrix = readtable(file_fjords_compiled);
-fjord_matrix(fjord_matrix.gl_depth < 50,:) = [];
-fjord_matrix(isnan(fjord_matrix.qsg_id1),:) = [];
 
 if exist('fjord_model',"var"),       clear fjord_model; end
 fjord_model(height(fjord_matrix)) = struct("p",[],"a",[],"f",[],"t",[],"m",[],"c",[]);
@@ -246,14 +208,14 @@ for i_fjord=1:height(fjord_matrix)
         fprintf('No %d data for fjord %d.\n',which_year,fjord_matrix.ID(i_fjord))
     end
 end
-idx = arrayfun(fun,fjord_model);
+idx = arrayfun(clear_empty,fjord_model);
 fjord_model(idx)=[]; % remove the empty elements
 n_fjords = length(fjord_model);
 fprintf('Inputs processing complete. Total of fjords for %d: %d\n',which_year,n_fjords)
 
 %% Running the model
 warning('on','all')
-dims_ensemble = [n_fjords,size(X,1)];
+dims_ensemble = [n_fjords,n_runs];
 ensemble_fields = {'p','t','m','s'}; % 'a','f','c','s'};
 ensemble_fields{2,1} = cell(dims_ensemble);
 ensemble = struct(ensemble_fields{:});
@@ -341,21 +303,15 @@ disp('Outputs saved.')
 %% Sanity-check post processing and plot
 % load(file_out);
 
-which_fj_sens = {{'12','17','30','108'};
-                {'14','28','30','108'};
-                {'17','24','70','108'};
-                {'12','30','78','108'}; % {'8','14','17','30'};
-                {'0','24','79','108'}}; %{'10','24','30','79'}};
-
-[res_obs,res_box] = postprocess_ensemble(fjord_model,ensemble,tgt_days);
-disp('Postprocessing ensemble done.')
-plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2);
-% plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,[],0,0,0);
-exportgraphics(gcf,[figs_path,'profiles_GRL_temp_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
-
-% plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],which_year-2015);%, which_fj_sens{which_year-2015});
-plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],which_year-2015, which_fj_sens{which_year-2015});
-exportgraphics(gcf,[figs_path,'sensitivity_profiles_temp_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
-
-
+if plot_ensemble
+    [res_obs,res_box] = postprocess_ensemble(fjord_model,ensemble,tgt_days);
+    disp('Postprocessing ensemble done.')
+    plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2);
+    % plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,[],0,0,0);
+    exportgraphics(gcf,[figs_path,'profiles_GRL_temp_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
+    
+    % plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],which_year-2015);%, which_fj_sens{which_year-2015});
+    % plot_sensitivity_profiles_v3(X,ensemble,res_box,res_obs,param_names,2,0,[],which_year-2015, which_fj_sens{which_year-2015});
+    % exportgraphics(gcf,[figs_path,'sensitivity_profiles_temp_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
+end
 end
