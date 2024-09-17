@@ -124,8 +124,8 @@ for i_fjord=1:n_fjord_runs
 
     figure(hf_profiles)
     nexttile; hold on; box on; grid on
-    text(0.02,1.02,sprintf("%s) %s (%.0f km)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
-    text(0.98,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','HorizontalAlignment','right','FontSize',fsize-2)
+    text(0.02,1.02,sprintf("%s) %s (%.0f km)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize-4)
+    text(0.98,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','HorizontalAlignment','right','FontSize',fsize-4)
 
     % Observed shelf and fjord profiles
     hs = plot(res_obs(i_fjord).ts,-res_obs(i_fjord).zs,'linewidth',2.5,'color',lcolor(1,:));
@@ -198,7 +198,7 @@ for i_fjord=1:n_fjord_runs
             end
         end
         string_legend{end+1} = 'MITgcm';
-        % hl1 = legend([hs, hf, hbest, hbest2, hb, hm],string_legend,'fontsize',fsize,'Location','east'); 
+        % hl1 = legend([hs, hf, hbest, hbest2, hb, hm],string_legend,'fontsize',fsize-4,'Location','best'); 
         if exist('hforc','var')
             leg_handles = [hforc, hs, hf, hbest, hb, hm];
         else
@@ -215,7 +215,7 @@ for i_fjord=1:n_fjord_runs
     if plt_salt
         figure(hfs_profiles)
         nexttile; hold on; box on; grid on
-        text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
+        text(0.02,1.02,sprintf("(%s) %s (%.0f km long)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize-4)
         % text(0.02,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
     
         % Observed shelf and fjord profiles
@@ -267,7 +267,7 @@ for i_fjord=1:n_fjord_runs
     if plt_series
         figure(hf_series)
         nexttile; hold on; box on; grid on
-        text(0.02,1.02,sprintf("(%s) %s (%.0f km)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
+        text(0.02,1.02,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','VerticalAlignment','bottom','fontsize',fsize-4)
         % text(0.02,0.02,sprintf("n=%d",res_box(i).n),'Units','normalized','VerticalAlignment','bottom','FontSize',fsize)
         if length(res_box(i_fjord).t) == length(res_box(i_fjord).Tupper)
             
@@ -286,7 +286,7 @@ for i_fjord=1:n_fjord_runs
         % ylim([-2 5.5])
         set(gca,'fontsize',fsize)
         if i_fjord==1%n_fjords
-            hl2 = legend([hu,hi,hl],{"0-50 m","50-250 m","250-500 m"},'fontsize',fsize,'Location','best'); 
+            hl2 = legend([hu,hi,hl],{"0-50 m","50-250 m","250-500 m"},'fontsize',fsize-4,'Location','best'); 
             % title(hl2,'Time series')
             hl2.NumColumns=1;
         end
@@ -363,6 +363,6 @@ if nargin > 14 && plt_rmse
         leg_handles = [h_rpm,h_shf];
         leg_labels  = {'FjordRPM','shelf'};
     end
-    legend(leg_handles,leg_labels,'Location','best');
+    legend(leg_handles,leg_labels,'Location','best','fontsize',fsize-4);
 end
 end
