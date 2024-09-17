@@ -246,9 +246,13 @@ for i_run=1:n_runs
             ensemble(i_fjord,i_run).m   = cur_fjord.m;
             ensemble(i_fjord,i_run).s.t = cur_fjord.s.t;
             ensemble(i_fjord,i_run).s.Qsg_max = max(cur_fjord.s.Qsg);
+
+            ensemble(i_fjord,i_run).s.fw_export = sum(cur_fjord.s.QVs.*(Sref-cur_fjord.s.S)/Sref);
+            [~,i_max_export] = min(cur_fjord.s.QVs);
+            ensemble(i_fjord,i_run).s.z_max_export = cur_fjord.s.z(i_max_export);
+
             Tfinal=NaN([cur_fjord.p.N,length(tgt_days)]);
             Sfinal=NaN(size(Tfinal));
-            % Hfinal=NaN(size(Tfinal));
             for i_day=1:length(tgt_days)
                 % 10-day avg centered at the target day
                 tgt_day = tgt_days(i_day);
@@ -262,8 +266,6 @@ for i_run=1:n_runs
             ensemble(i_fjord,i_run).s.Sforc = mean(cur_fjord.s.Ss(:,(tgt_day-5:tgt_day+5)),2); 
 
             zf_obs = cur_fjord.c.zf';
-            % Tregular=NaN([length(zf_obs),length(cur_fjord.s.t)]);
-            % Sregular=NaN(size(Tregular));
             z_box = -cur_fjord.s.z;
             Tregular = interp1(z_box,cur_fjord.s.T,zf_obs,'nearest','extrap');
             Sregular = interp1(z_box,cur_fjord.s.S,zf_obs,'nearest','extrap');
