@@ -51,7 +51,8 @@ for year=2016:2020
     close all
 end
 
-% plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(1),[],1,[],1,1,0)
+% plot_ensemble_profiles(fjord_model_yr{end},ensemble_yr{end},res_box_yr{end},res_obs_yr{end},n_runs,param_names,tgt_days(2),[],1,[],1,1,0)
+% exportgraphics(gcf,[figs_path,'supp/series_temp_GRL_',num2str(year),'_n',num2str(n_runs),'.png'],'Resolution',300)
 
 % plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,[],0,0,1);
 % exportgraphics(gcf,[figs_path,'rmse_temp_rpm_shelf_GRL_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
