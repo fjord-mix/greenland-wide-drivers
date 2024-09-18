@@ -3,7 +3,7 @@ clearvars
 run setup_paths % Configuring paths
 
 plot_ensemble = 1;
-n_runs        = 50;         % number of runs per fjord
+n_runs        = 100;         % number of runs per fjord
 dt_in_h       = 3;
 %% Define parameter space
 param_names = {'A0','wp','C0','K0'};
@@ -47,7 +47,7 @@ fjord_matrix(isnan(fjord_matrix.qsg_id1),:) = [];
 
 %% Run the model for every year we want
 for year=2016:2020
-    [path_fout,tgt_days] = run_model_loop_for_year(year,fjords_digitised,fjords_centreline,fjord_matrix,X,param_names,dt_in_h,plot_ensemble); % {2016,2017,2018,2019,2020}
+    [path_fout,tgt_days] = run_model_loop_for_year(year,fjords_digitised,fjords_centreline,fjord_matrix,folder_ctd_casts,X,param_names,dt_in_h,plot_ensemble); % {2016,2017,2018,2019,2020}
     close all
 end
 

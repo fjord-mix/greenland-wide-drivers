@@ -1,4 +1,4 @@
-function [hf_profiles,hf_series] = plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days,name_days,i_tgt_day,mitgcm,plt_salt,plt_series,verbose,which_fjords,plt_rmse)
+function [hf_profiles,hfs_profiles,hf_series,hf_rmse] = plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days,name_days,i_tgt_day,mitgcm,plt_salt,plt_series,verbose,which_fjords,plt_rmse)
 
 n_fjord_runs = length(fjord_model);
 w_rmse_t = 0.5; % how much we want to weight the temperature (n)RMSE versus salinity (0.5 = 50:50; 1 = only temperature)
@@ -40,7 +40,7 @@ if plt_series
     ht_series = tiledlayout("flow");
 end
 
-
+i_iter = 0;
 for i_fjord=1:n_fjord_runs
 
     % find run with the smallest RMSE
@@ -112,7 +112,7 @@ for i_fjord=1:n_fjord_runs
     if nargin > 13
         plot_fjord=1;
         for i_tgt_fjords=1:length(which_fjords)
-            if strcmp(which_fjords{i_tgt_fjords},res_box(i_fjord).id{1}) == 1
+            if strcmp(which_fjords{i_tgt_fjords},res_box(i_fjord).id) == 1
                 plot_fjord=1;
                 break
             else
@@ -121,7 +121,7 @@ for i_fjord=1:n_fjord_runs
         end
         if ~plot_fjord, continue; end
     end
-
+    i_iter = i_iter+1;
     figure(hf_profiles)
     nexttile; hold on; box on; grid on
     text(0.02,1.02,sprintf("%s) %s (%.0f km)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize-4)
@@ -180,7 +180,7 @@ for i_fjord=1:n_fjord_runs
     % xlim([-2.5 9])
     xlim([-4 7.5])
     ylim([-fjord_model(i_fjord).p.H 0])
-    if i_fjord==1 
+    if i_iter==1 
         % string_legend = {"Shelf","Fjord","Best_T","Best_{TS}"};
         if exist('hforc','var')
             string_legend = {"RPM Forcing","Shelf","Fjord","FjordRPM_{best}"};
@@ -323,7 +323,7 @@ fprintf('-------------------------------------------------------------------\n')
 if nargin > 14 && plt_rmse
     mk_sz=100;
     fjord_names = cell(size(fjord_model));
-    figure; hold on; box on;
+    hf_rmse = figure; hold on; box on;
     % h_tf = scatter(-1,0,mk_sz,'^','MarkerEdgeColor',[0 0 0]);
     % h_sf = scatter(-1,0,mk_sz,'v','MarkerEdgeColor',[0 0 0]);
     % h_ts = scatter(-1,0,mk_sz,'square','MarkerEdgeColor',[0 0 0]);
