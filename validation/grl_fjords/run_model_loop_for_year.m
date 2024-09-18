@@ -1,4 +1,4 @@
-function [file_out,tgt_days] = run_model_loop_for_year(which_year,fjords_digitised,fjords_centreline,fjord_matrix,X,param_names,dt_in_h,plot_ensemble)
+function [file_out,tgt_days] = run_model_loop_for_year(which_year,fjords_digitised,fjords_centreline,fjord_matrix,folder_ctd_casts,X,param_names,dt_in_h,plot_ensemble)
 
 warning('off','all')
 run setup_paths % Configuring paths
@@ -247,23 +247,32 @@ for i_run=1:n_runs
             ensemble(i_fjord,i_run).s.t = cur_fjord.s.t;
             ensemble(i_fjord,i_run).s.Qsg_max = max(cur_fjord.s.Qsg);
 
-            ensemble(i_fjord,i_run).s.fw_export = sum(cur_fjord.s.QVs.*(Sref-cur_fjord.s.S)/Sref);
-            [~,i_max_export] = min(cur_fjord.s.QVs);
-            ensemble(i_fjord,i_run).s.z_max_export = cur_fjord.s.z(i_max_export);
-
             Tfinal=NaN([cur_fjord.p.N,length(tgt_days)]);
             Sfinal=NaN(size(Tfinal));
+            
+                         % we use a constant value for an easier comparison between different fjords. 
+            Sref = 35.0; % If we were concerned about the FW quantity itself, this should be a fjord-specific value 
+                         % (e.g., shelf salinity at sill depth). Varing
+                         % Sref by 2 PSU alters the results by < ~5%
+
+            fw_export=NaN([1,length(tgt_days)]);
+            i_max_export=NaN(size(fw_export));
             for i_day=1:length(tgt_days)
                 % 10-day avg centered at the target day
                 tgt_day = tgt_days(i_day);
                 Tfinal(:,i_day) = mean(cur_fjord.s.T(:,(tgt_day-5:tgt_day+5)),2); 
                 Sfinal(:,i_day) = mean(cur_fjord.s.S(:,(tgt_day-5:tgt_day+5)),2);
+                fw_export(i_day) = sum(mean(cur_fjord.s.QVs(:,(tgt_day-5:tgt_day+5)),2,'omitnan').*(Sref-Sfinal(:,i_day))/Sref);
+                [~,i_max_export(i_day)] = min(mean(cur_fjord.s.QVs(:,(tgt_day-5:tgt_day+5)))); % we use "min" because QVs < 0 means water is leaving the layer towards the shelf
             end
             ensemble(i_fjord,i_run).s.Tfinal = Tfinal;
             ensemble(i_fjord,i_run).s.Sfinal = Sfinal;
 
             ensemble(i_fjord,i_run).s.Tforc = mean(cur_fjord.s.Ts(:,(tgt_day-5:tgt_day+5)),2); 
             ensemble(i_fjord,i_run).s.Sforc = mean(cur_fjord.s.Ss(:,(tgt_day-5:tgt_day+5)),2); 
+
+            ensemble(i_fjord,i_run).s.fw_export = fw_export;
+            ensemble(i_fjord,i_run).s.z_max_export = cur_fjord.s.z(i_max_export);
 
             zf_obs = cur_fjord.c.zf';
             z_box = -cur_fjord.s.z;
