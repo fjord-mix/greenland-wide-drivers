@@ -55,7 +55,7 @@ for i_fjord=1:height(fjord_matrix)
         m.ID = num2str(fjord_matrix.ID(i_fjord));
         m.name = fjord_matrix.name(i_fjord);
         m.lon=ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'lon');
-        m.lat=ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'lon');
+        m.lat=ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'lat');
 
         % fjord obervations for reference and model fitting
         tf = movmean(ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'temperature'),5);
