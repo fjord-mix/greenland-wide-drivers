@@ -263,10 +263,10 @@ for i_run=1:n_runs
                 tgt_day = tgt_days(i_day);
                 Tfinal(:,i_day)  = mean(cur_fjord.s.T(:,(tgt_day-5:tgt_day+5)),2); 
                 Sfinal(:,i_day)  = mean(cur_fjord.s.S(:,(tgt_day-5:tgt_day+5)),2);
-                fw_export(i_day) = sum(mean(cur_fjord.s.QVs(:,(tgt_day-5:tgt_day+5)),2,'omitnan').*(Sref-Sfinal(:,i_day))/Sref);
+                fw_export(i_day) = sum(mean(cur_fjord.s.QVs(:,(tgt_day-5:tgt_day+5)).*(Sref-Sfinal(:,i_day))/Sref),2,'omitnan');
                 Qsg0             = mean(cur_fjord.s.Qsg(tgt_day-5:tgt_day+5),2);
 
-                [~,i_max_export(i_day)] = min(mean(cur_fjord.s.QVs(:,(tgt_day-5:tgt_day+5)),2,'omitnan').*(Sref-Sfinal(:,i_day))/Sref); % we use "min" because QVs < 0 means water is leaving the layer towards the shelf
+                [~,i_max_export(i_day)] = min(mean(cur_fjord.s.QVs(:,(tgt_day-5:tgt_day+5)).*(Sref-Sfinal(:,i_day))/Sref),2,'omitnan'); % we use "min" because QVs < 0 means water is leaving the layer towards the shelf
                 [inb(i_day), ~, ~, ~]   = get_plume_properties(cur_fjord.p, cur_fjord.s.kgl, cur_fjord.s.H, Sfinal(:,i_day), Tfinal(:,i_day), Qsg0);
             end
             ensemble(i_fjord,i_run).s.Tfinal = Tfinal;
@@ -275,9 +275,20 @@ for i_run=1:n_runs
             ensemble(i_fjord,i_run).s.Tforc = mean(cur_fjord.s.Ts(:,(tgt_day-5:tgt_day+5)),2); 
             ensemble(i_fjord,i_run).s.Sforc = mean(cur_fjord.s.Ss(:,(tgt_day-5:tgt_day+5)),2); 
 
+            fw_export_t  = sum(cur_fjord.s.QVs.*(Sref-Sfinal(:,i_day))/Sref,1,'omitnan');
+            [~,i_max_export_t] = min(cur_fjord.s.QVs.*(Sref-Sfinal(:,i_day))/Sref,1,'omitnan');
+
+            inb_t = NaN(size(cur_fjord.s.Qsg));
+            for i_s=1:length(cur_fjord.s.Qsg)
+                [inb_t(i_s), ~, ~, ~]   = get_plume_properties(cur_fjord.p, cur_fjord.s.kgl, cur_fjord.s.H, ...
+                                          cur_fjord.s.S(:,i_s), cur_fjord.s.T(:,i_s), cur_fjord.s.Qsg(i_s));
+            end
             ensemble(i_fjord,i_run).s.fw_export = fw_export;
+            ensemble(i_fjord,i_run).s.fw_export_t = fw_export_t;
             ensemble(i_fjord,i_run).s.z_max_export = cur_fjord.s.z(i_max_export);
+            ensemble(i_fjord,i_run).s.z_max_export_t = cur_fjord.s.z(i_max_export_t);
             ensemble(i_fjord,i_run).s.znb = cur_fjord.s.z(inb);
+            ensemble(i_fjord,i_run).s.znb_t = cur_fjord.s.z(inb_t);
 
             zf_obs = cur_fjord.c.zf';
             z_box = -cur_fjord.s.z;
