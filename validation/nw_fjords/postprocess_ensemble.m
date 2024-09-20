@@ -145,6 +145,9 @@ for i_fjord=1:n_fjords
     res_box(i_fjord).id = fjord_model(i_fjord).m.ID;
     res_box(i_fjord).name = fjord_model(i_fjord).m.name{1};
     res_box(i_fjord).n = n_completed./n_runs * 100;
+    res_box(i_fjord).L = fjord_model(i_fjord).p.L;
+    res_box(i_fjord).W = fjord_model(i_fjord).p.W;
+    
 end
 
 end
