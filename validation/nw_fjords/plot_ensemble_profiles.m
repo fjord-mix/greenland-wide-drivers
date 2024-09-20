@@ -136,9 +136,9 @@ for i_fjord=1:n_fjord_runs
     % 
     % % RPM profile(s)
     % forcing
-    if isfield(res_box(i_fjord),'Tforc')
-        hforc = plot(res_box(i_fjord).Tforc,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(1,:),'LineStyle','--');
-    end
+    % if isfield(res_box(i_fjord),'Tforc') % we use this in case we are not using the observed profile as the shelf forcing
+    %     hforc = plot(res_box(i_fjord).Tforc,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(1,:),'LineStyle','--');
+    % end
     % results
     for i_day=1:n_days
         % res_box(i_fjord).zf = res_box(i_fjord).zf';
@@ -346,9 +346,9 @@ if nargin > 14 && plt_rmse
         fjord_names{i_fjord} = res_box(i_fjord).id;
     end
     
-    % ylim([-6 6])
+    ylim([0 3.5])
     xlim([0 n_fjord_runs+1])
-    hline(0,'color',[0.5 0.5 0.5],'linestyle','--')
+    % hline(0,'color',[0.5 0.5 0.5],'linestyle','--')
     set(gca,'Xtick',0:1:n_fjord_runs+1)
     xlabels = get(gca,'XTickLabels');
     xlabels(2:end-1) = fjord_names;
@@ -363,6 +363,6 @@ if nargin > 14 && plt_rmse
         leg_handles = [h_rpm,h_shf];
         leg_labels  = {'FjordRPM','shelf'};
     end
-    legend(leg_handles,leg_labels,'Location','best','fontsize',fsize-4);
+    legend(leg_handles,leg_labels,'Location','northwest','fontsize',fsize-4);
 end
 end
