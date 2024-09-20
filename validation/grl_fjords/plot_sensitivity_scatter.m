@@ -193,6 +193,7 @@ for i_fjord=1:size(ensemble,1)
                 scatter(i_bin*10,round(fzplot,2),50,'filled','MarkerFaceColor',lcolor(i_param,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
             end
             set(gca,'fontsize',14)
+            ylim([-150 -10])
             if i_param==1
                 text(0.02,1.075,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','fontsize',12)
             end
