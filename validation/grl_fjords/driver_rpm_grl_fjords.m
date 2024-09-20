@@ -2,9 +2,12 @@
 clearvars
 run setup_paths % Configuring paths
 
-plot_ensemble = 1;
+plot_ensemble = 0;
 n_runs        = 100;         % number of runs per fjord
 dt_in_h       = 3;
+n_years       = 10;           % how many years we want to run
+tgt_days      = [n_years*365-60,n_years*365-90];  % which days of the run we want vertical profiles for
+
 %% Define parameter space
 param_names = {'A0','wp','C0','K0'};
 
@@ -46,24 +49,22 @@ fjord_matrix(fjord_matrix.gl_depth < 50,:) = [];
 fjord_matrix(isnan(fjord_matrix.qsg_id1),:) = [];
 
 %% Run the model for every year we want
-for year=2016:2020
-    [path_fout,tgt_days] = run_model_loop_for_year(year,fjords_digitised,fjords_centreline,fjord_matrix,folder_ctd_casts,X,param_names,dt_in_h,plot_ensemble); % {2016,2017,2018,2019,2020}
+for which_year=2016:2020
+    [path_fout,tgt_days] = run_model_loop_for_year(which_year,fjords_digitised,fjords_centreline,fjord_matrix,...
+                                                   folder_ctd_casts,X,param_names,n_years,tgt_days,dt_in_h,...
+                                                   plot_ensemble);
     close all
 end
 
-% plot_ensemble_profiles(fjord_model_yr{end},ensemble_yr{end},res_box_yr{end},res_obs_yr{end},n_runs,param_names,tgt_days(2),[],1,[],1,1,0)
-% exportgraphics(gcf,[figs_path,'supp/series_temp_GRL_',num2str(year),'_n',num2str(n_runs),'.png'],'Resolution',300)
-
-% plot_ensemble_profiles(fjord_model,ensemble,res_box,res_obs,n_runs,param_names,tgt_days(2),name_days,2,[],0,0,1);
-% exportgraphics(gcf,[figs_path,'rmse_temp_rpm_shelf_GRL_',num2str(which_year),'_n',num2str(n_runs),'.png'],'Resolution',300)
-%% Checking how results compare from year to year
-
-% plot_best_params_dist_qq(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,2,'poisson');
-% plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,2);
-% param_distributions = {'hn','hn','wbl','hn'};
-% plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,2,param_distributions);
 
 %% Batch processing all years together
-% path_fout = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(year),'_',num2str(60),'layers_dt',num2str(3),'h'];
+% path_fout = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_',num2str(60),'layers_dt',num2str(3),'h'];
 % load(path_fout)
 % run postprocess_plot_ensembles.m
+
+% [hf_zfw] = plot_hist_zfw_export(ensemble_yr,2);
+% exportgraphics(hf_zfw,[figs_path,'hist_z_fw_export.png'],'Resolution',300)
+
+% [hf_dst,hf_loc] = plot_ocn_cast_pairs(folder_ctd_casts,fjord_matrix,res_box_yr);
+% exportgraphics(hf_dst,[figs_path,'dst_OMG_fjord_shelf_casts.png'],'Resolution',300)
+% exportgraphics(hf_loc,[figs_path,'loc_OMG_fjord_shelf_casts.png'],'Resolution',300)
