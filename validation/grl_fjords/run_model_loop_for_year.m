@@ -1,4 +1,4 @@
-function [file_out,tgt_days] = run_model_loop_for_year(which_year,fjords_digitised,fjords_centreline,fjord_matrix,folder_ctd_casts,X,param_names,dt_in_h,plot_ensemble)
+function [file_out,tgt_days] = run_model_loop_for_year(which_year,fjords_digitised,fjords_centreline,fjord_matrix,folder_ctd_casts,X,param_names,n_years,tgt_days,dt_in_h,plot_ensemble)
 
 warning('off','all')
 run setup_paths % Configuring paths
@@ -18,9 +18,8 @@ input_dt   = 30;          % time step of model input (in days)
 if isempty(dt_in_h), dt_in_h    = 3.; end          % time step in hours
 model_dt   = dt_in_h/24.; % time step in days for the model (e.g., 2h/24 ~ 0.083 days)
 n_years    = 10;           % how many years we want to run
-% tgt_days   = [935,1010];  % which days of the run we want vertical profiles for
-tgt_days   = [1280,n_years*365-60];  % which days of the run we want vertical profiles for
-name_days  = {'peak','post'};
+tgt_days   = [n_years*365-60,n_years*365-90];  % which days of the run we want vertical profiles for
+name_days  = {'post','peak'};
 
 t = 0:model_dt:365*n_years; % we want to repeat the yearly data <n_years> times
 
@@ -249,6 +248,7 @@ for i_run=1:n_runs
 
             Tfinal=NaN([cur_fjord.p.N,length(tgt_days)]);
             Sfinal=NaN(size(Tfinal));
+            Hfinal=NaN(size(Tfinal));
             
                          % we use a constant value for an easier comparison between different fjords. 
             Sref = 35.0; % If we were concerned about the FW quantity itself, this should be a fjord-specific value 
@@ -257,13 +257,17 @@ for i_run=1:n_runs
 
             fw_export=NaN([1,length(tgt_days)]);
             i_max_export=NaN(size(fw_export));
+            inb=NaN(size(i_max_export));
             for i_day=1:length(tgt_days)
                 % 10-day avg centered at the target day
                 tgt_day = tgt_days(i_day);
-                Tfinal(:,i_day) = mean(cur_fjord.s.T(:,(tgt_day-5:tgt_day+5)),2); 
-                Sfinal(:,i_day) = mean(cur_fjord.s.S(:,(tgt_day-5:tgt_day+5)),2);
+                Tfinal(:,i_day)  = mean(cur_fjord.s.T(:,(tgt_day-5:tgt_day+5)),2); 
+                Sfinal(:,i_day)  = mean(cur_fjord.s.S(:,(tgt_day-5:tgt_day+5)),2);
                 fw_export(i_day) = sum(mean(cur_fjord.s.QVs(:,(tgt_day-5:tgt_day+5)),2,'omitnan').*(Sref-Sfinal(:,i_day))/Sref);
-                [~,i_max_export(i_day)] = min(mean(cur_fjord.s.QVs(:,(tgt_day-5:tgt_day+5)))); % we use "min" because QVs < 0 means water is leaving the layer towards the shelf
+                Qsg0             = mean(cur_fjord.s.Qsg(tgt_day-5:tgt_day+5),2);
+
+                [~,i_max_export(i_day)] = min(mean(cur_fjord.s.QVs(:,(tgt_day-5:tgt_day+5)),2,'omitnan').*(Sref-Sfinal(:,i_day))/Sref); % we use "min" because QVs < 0 means water is leaving the layer towards the shelf
+                [inb(i_day), ~, ~, ~]   = get_plume_properties(cur_fjord.p, cur_fjord.s.kgl, cur_fjord.s.H, Sfinal(:,i_day), Tfinal(:,i_day), Qsg0);
             end
             ensemble(i_fjord,i_run).s.Tfinal = Tfinal;
             ensemble(i_fjord,i_run).s.Sfinal = Sfinal;
@@ -273,6 +277,7 @@ for i_run=1:n_runs
 
             ensemble(i_fjord,i_run).s.fw_export = fw_export;
             ensemble(i_fjord,i_run).s.z_max_export = cur_fjord.s.z(i_max_export);
+            ensemble(i_fjord,i_run).s.znb = cur_fjord.s.z(inb);
 
             zf_obs = cur_fjord.c.zf';
             z_box = -cur_fjord.s.z;
