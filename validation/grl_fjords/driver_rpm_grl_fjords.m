@@ -6,7 +6,7 @@ plot_ensemble = 0;
 n_runs        = 100;         % number of runs per fjord
 dt_in_h       = 3;
 n_years       = 10;           % how many years we want to run
-tgt_days      = [n_years*365-60,n_years*365-90];  % which days of the run we want vertical profiles for
+tgt_days      = [n_years*365-180,n_years*365-105];  % which days of the run we want vertical profiles for
 
 %% Define parameter space
 param_names = {'A0','wp','C0','K0'};
