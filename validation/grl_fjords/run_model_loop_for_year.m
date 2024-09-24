@@ -285,12 +285,13 @@ for i_run=1:n_runs
                 [inb_t(i_s), ~, ~, ~]   = get_plume_properties(cur_fjord.p, cur_fjord.s.kgl, cur_fjord.s.H, ...
                                           cur_fjord.s.S(:,i_s), cur_fjord.s.T(:,i_s), cur_fjord.s.Qsg(i_s));
             end
-            ensemble(i_fjord,i_run).s.fw_export = fw_export;
-            ensemble(i_fjord,i_run).s.fw_export_t = fw_export_t;
-            ensemble(i_fjord,i_run).s.z_max_export = cur_fjord.s.z(i_max_export);
+            ensemble(i_fjord,i_run).s.fw_export      = fw_export;
+            ensemble(i_fjord,i_run).s.fw_export_t    = fw_export_t;
+            ensemble(i_fjord,i_run).s.z_max_export   = cur_fjord.s.z(i_max_export);
             ensemble(i_fjord,i_run).s.z_max_export_t = cur_fjord.s.z(i_max_export_t);
-            ensemble(i_fjord,i_run).s.znb = cur_fjord.s.z(inb);
-            ensemble(i_fjord,i_run).s.znb_t = cur_fjord.s.z(inb_t);
+            ensemble(i_fjord,i_run).s.znb            = cur_fjord.s.z(inb);
+            ensemble(i_fjord,i_run).s.znb_t          = cur_fjord.s.z(inb_t);
+            ensemble(i_fjord,i_run).s.Qsg            = cur_fjord.s.Qsg;
 
             zf_obs = cur_fjord.c.zf';
             z_box = -cur_fjord.s.z;
