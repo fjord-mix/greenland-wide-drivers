@@ -149,9 +149,13 @@ for i_fjord=1:size(ensemble,1)
                 for i_run=1:size(ensemble,2)
                     if isempty(ensemble(i_fjord,i_run).s), continue; end % we skip any empty entries
                     if mask_bnds(i_fjord,i_run).(param_names{i_param}) == i_bin
-                        fw_ensemble(i_run) = ensemble(i_fjord,i_run).s.fw_export(i_day);
+                        % fw_ensemble(i_run) = ensemble(i_fjord,i_run).s.fw_export(i_day);
+                        % fw_ensemble(i_run) = mean(ensemble(i_fjord,i_run).s.fw_export_t(end-365:end));
+                        fw_ensemble(i_run) = min(ensemble(i_fjord,i_run).s.fw_export_t(end-365:end));
                     end
-                    fw_full_ens(i_run) = ensemble(i_fjord,i_run).s.fw_export(i_day);
+                    % fw_full_ens(i_run) = ensemble(i_fjord,i_run).s.fw_export(i_day);
+                    % fw_full_ens(i_run) = mean(ensemble(i_fjord,i_run).s.fw_export_t(end-365:end));
+                    fw_full_ens(i_run) = min(ensemble(i_fjord,i_run).s.fw_export_t(end-365:end));
                 end
                 
                 fwplot = mean(fw_ensemble,[1,2],'omitnan'); % take mean for that subset
@@ -181,9 +185,15 @@ for i_fjord=1:size(ensemble,1)
                 for i_run=1:size(ensemble,2)
                     if isempty(ensemble(i_fjord,i_run).s), continue; end % we skip any empty entries
                     if mask_bnds(i_fjord,i_run).(param_names{i_param}) == i_bin
-                        fz_ensemble(i_run) = ensemble(i_fjord,i_run).s.z_max_export(i_day);
+                        % fz_ensemble(i_run) = ensemble(i_fjord,i_run).s.z_max_export(i_day);
+                        % fz_ensemble(i_run) = mean(ensemble(i_fjord,i_run).s.z_max_export_t(end-365:end));
+                        i_fz = find(ensemble(i_fjord,i_run).s.fw_export_t == fw_full_ens(i_run),1,'last');
+                        fz_ensemble(i_run) = ensemble(i_fjord,i_run).s.z_max_export_t(i_fz);
                     end
-                    fz_full_ens(i_run) = ensemble(i_fjord,i_run).s.z_max_export(i_day);
+                    % fz_full_ens(i_run) = ensemble(i_fjord,i_run).s.z_max_export(i_day);
+                    % fz_full_ens(i_run) = mean(ensemble(i_fjord,i_run).s.z_max_export_t(end-365:end));
+                    i_fz = find(ensemble(i_fjord,i_run).s.fw_export_t == fw_full_ens(i_run),1,'last');
+                    fz_full_ens(i_run) = ensemble(i_fjord,i_run).s.z_max_export_t(i_fz);
                 end
                 
                 fzplot = mean(fz_ensemble,[1,2],'omitnan'); % take mean for that subset
@@ -193,7 +203,7 @@ for i_fjord=1:size(ensemble,1)
                 scatter(i_bin*10,round(fzplot,2),50,'filled','MarkerFaceColor',lcolor(i_param,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
             end
             set(gca,'fontsize',14)
-            ylim([-150 -10])
+            % ylim([-150 -10])
             if i_param==1
                 text(0.02,1.075,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','fontsize',12)
             end
@@ -216,7 +226,7 @@ if plt_salt
     ylabel(ht_s,'Departure from mean salinity (10^{-3} PSU)','fontsize',16)
 end
 if plt_fw
-    ylabel(ht_f,'Mean freshwater export (mSv)','fontsize',16)
+    ylabel(ht_f,'Peak freshwater export (mSv)','fontsize',16)
     % ylabel(ht_f,'Departure from mean freshwater export (mSv)','fontsize',16)
 end
 if plt_fwz
