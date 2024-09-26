@@ -62,8 +62,9 @@ end
 % load(path_fout)
 % run postprocess_plot_ensembles.m
 
-% [hf_zfw] = plot_hist_zfw_export(ensemble_yr,2);
+% [hf_zfw,hf_tfw] = plot_hist_zfw_export(ensemble_yr,2);
 % exportgraphics(hf_zfw,[figs_path,'hist_z_fw_export.png'],'Resolution',300)
+% exportgraphics(hf_tfw,[figs_path,'hist_t_fw_export.png'],'Resolution',300)
 
 % [hf_dst,hf_loc] = plot_ocn_cast_pairs(folder_ctd_casts,fjord_matrix,res_box_yr);
 % exportgraphics(hf_dst,[figs_path,'dst_OMG_fjord_shelf_casts.png'],'Resolution',300)
