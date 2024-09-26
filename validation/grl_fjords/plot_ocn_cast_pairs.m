@@ -39,7 +39,7 @@ for which_year=2016:2020
             slat(i_year,i_fjord)=ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'lat');
 
             dist_between_casts = m_lldist([flon(i_year,i_fjord),slon(i_year,i_fjord)],[flat(i_year,i_fjord),slat(i_year,i_fjord)]);
-            % dist_between_casts = dist_between_casts./(res_box(id_simulated_fjord).L.*1e-3); % normalise distance
+            % dist_between_casts = dist_between_casts-(res_box(id_simulated_fjord).L.*1e-3); % subtract fjord distance
             if first_plot
                 hs = scatter(fjord_matrix.ID(i_fjord),dist_between_casts,150,'o','MarkerFaceColor',mcolor(which_year-2015,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
                 first_plot=0;
