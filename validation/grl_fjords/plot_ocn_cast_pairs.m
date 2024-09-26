@@ -20,11 +20,15 @@ for which_year=2016:2020
     for i_res_box=1:length(res_box)
         res_box_ids(i_res_box) = int32(str2double(res_box(i_res_box).id));
     end
+    
     for i_fjord=1:height(fjord_matrix)
         eval(sprintf('id_cast_shelf = num2str(fjord_matrix.shelf_%d(i_fjord));',which_year));
         eval(sprintf('id_cast_fjord = num2str(fjord_matrix.fjord_%d(i_fjord));',which_year));
         if ~strcmp(id_cast_shelf,'NaN') && ~strcmp(id_cast_fjord,'NaN')
             % digitised_id = find([fjords_digitised.id] == fjord_matrix.ID(i_fjord));
+            id_simulated_fjord = find(res_box_ids == fjord_matrix.ID(i_fjord));
+            rmse_fjord(i_year,i_fjord) = min(res_box(id_simulated_fjord).rmse_tf(:,2));
+
             omg_data_shelf = dir([folder_ctd_casts,'/*',id_cast_shelf,'*.nc']);
             omg_data_fjord = dir([folder_ctd_casts,'/*',id_cast_fjord,'*.nc']);
 
@@ -35,6 +39,7 @@ for which_year=2016:2020
             slat(i_year,i_fjord)=ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'lat');
 
             dist_between_casts = m_lldist([flon(i_year,i_fjord),slon(i_year,i_fjord)],[flat(i_year,i_fjord),slat(i_year,i_fjord)]);
+            % dist_between_casts = dist_between_casts./(res_box(id_simulated_fjord).L.*1e-3); % normalise distance
             if first_plot
                 hs = scatter(fjord_matrix.ID(i_fjord),dist_between_casts,150,'o','MarkerFaceColor',mcolor(which_year-2015,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
                 first_plot=0;
@@ -43,9 +48,6 @@ for which_year=2016:2020
             else
                 scatter(fjord_matrix.ID(i_fjord),dist_between_casts,100,'o','MarkerFaceColor',mcolor(which_year-2015,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.75);
             end
-
-            id_simulated_fjord = find(res_box_ids == fjord_matrix.ID(i_fjord));
-            rmse_fjord(i_year,i_fjord) = min(res_box(id_simulated_fjord).rmse_tf(:,2));
         end
     end
 end
