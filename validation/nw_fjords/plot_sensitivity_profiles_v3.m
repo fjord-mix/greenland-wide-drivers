@@ -149,7 +149,7 @@ for i_fjord=1:size(ensemble,1)
 
     %% Plotting salinity
     if plt_salt
-        figure(hf_e)
+        figure(hf_s)
         
         for i_param=1:length(param_names)    
             nexttile; hold on; box on
@@ -223,7 +223,9 @@ for i_fjord=1:size(ensemble,1)
                 for i_run=1:size(ensemble,2)
                     if isempty(ensemble(i_fjord,i_run).s), continue; end % we skip any empty entries
                     if mask_bnds(i_fjord,i_run).(param_names{i_param}) == i_bnd
-                        ef_ensemble(:,i_run) = ensemble(i_fjord,i_run).s.QVsfinal(:,i_day);
+                        % ef_ensemble(:,i_run) = ensemble(i_fjord,i_run).s.QVsfinal(:,i_day);
+                        Sref = 35.0;
+                        ef_ensemble(:,i_run) = ensemble(i_fjord,i_run).s.QVsfinal(:,i_day).*((Sref-ensemble(i_fjord,i_run).s.Sfinal(:,i_day))/Sref);
                     end
                     
                     Hsill = ensemble(i_fjord,i_run).p.Hsill;
@@ -299,7 +301,8 @@ end
 
 if plt_exp
     figure(hf_e)
-    xlabel(ht_e,'Shelf-fjord volume flux (m^3s^{-1})','fontsize',14);
+    % xlabel(ht_e,'Shelf-fjord volume flux (m^3s^{-1})','fontsize',14);
+    xlabel(ht_e,'Shelf-fjord freshwater flux (m^3s^{-1})','fontsize',14);
     ylabel(ht_e,'Depth (m)','fontsize',14);
     ht_s.TileSpacing='compact';
     ht_s.Padding='compact';
