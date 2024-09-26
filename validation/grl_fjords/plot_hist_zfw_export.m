@@ -29,7 +29,9 @@ for i_year=n_years:-1:1
                 % znb(i_fjord,i_run) = ensemble(i_fjord,i_run).s.znb(i_tgt_day);
 
                 % % average depth over the last year
-                zfw(i_fjord,i_run) = mean(ensemble(i_fjord,i_run).s.z_max_export_t(end-365:end));
+                % zfw(i_fjord,i_run) =
+                % mean(ensemble(i_fjord,i_run).s.z_max_export_t(end-365:end)); % average of peak FW exp depth
+                zfw(i_fjord,i_run) = ensemble(i_fjord,i_run).s.z_max_export;   % depth of the average peak FW exp
                 znb(i_fjord,i_run) = mean(ensemble(i_fjord,i_run).s.znb_t(end-365:end));
                 % 
                 % % depth of export maximum over the last year

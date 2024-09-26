@@ -186,12 +186,14 @@ for i_fjord=1:size(ensemble,1)
                     if isempty(ensemble(i_fjord,i_run).s), continue; end % we skip any empty entries
                     if mask_bnds(i_fjord,i_run).(param_names{i_param}) == i_bin
                         % fz_ensemble(i_run) = ensemble(i_fjord,i_run).s.z_max_export(i_day);
-                        fz_ensemble(i_run) = mean(ensemble(i_fjord,i_run).s.z_max_export_t(end-365:end));
+                        fz_ensemble(i_run) = ensemble(i_fjord,i_run).s.z_max_export;
+                        % fz_ensemble(i_run) = mean(ensemble(i_fjord,i_run).s.z_max_export_t(end-365:end));
                         % i_fz = find(ensemble(i_fjord,i_run).s.fw_export_t == fw_full_ens(i_run),1,'last');
                         % fz_ensemble(i_run) = ensemble(i_fjord,i_run).s.z_max_export_t(i_fz);
                     end
                     % fz_full_ens(i_run) = ensemble(i_fjord,i_run).s.z_max_export(i_day);
-                    fz_full_ens(i_run) = mean(ensemble(i_fjord,i_run).s.z_max_export_t(end-365:end));
+                    fz_full_ens(i_run) = ensemble(i_fjord,i_run).s.z_max_export;
+                    % fz_full_ens(i_run) = mean(ensemble(i_fjord,i_run).s.z_max_export_t(end-365:end));
                     % i_fz = find(ensemble(i_fjord,i_run).s.fw_export_t == fw_full_ens(i_run),1,'last');
                     % fz_full_ens(i_run) = ensemble(i_fjord,i_run).s.z_max_export_t(i_fz);
                 end
