@@ -6,11 +6,11 @@ ensemble_yr     = cell(size(res_box_yr));
 fjord_model_yr  = cell(size(res_box_yr));
 fjord_IDs       = 0:height(fjord_matrix); %char(65:1:65+length(fjord_names)-1);
 
-which_fj_sens = {{'12','17','30','108'}; % 2016
+which_fj_sens = {{'8','17','30','108'}; % 2016
                 {'14','30','77','108'};  % 2017
-                {'17','89','108','127'};  % 2018
-                {'12','30','79','108'};  % 2019 prev.: {'8','14','17','30'};
-                {'0','28','89','108'}};  % 2020 prev.: {'10','24','30','79'}};
+                {'17','18','108','127'};  % 2018 prev.: {'17','89','108','127'};
+                {'12','19','30','108'};  % 2019 prev.: {'8','14','17','30'}; and {'12','30','79','108'};
+                {'0','8','24','28'}};  % 2020 prev.: {'10','24','30','79'}}; and {'0','28','89','108'}};
 
 for i_yr_load=1:n_years_to_plot
     which_year_load = 2015+i_yr_load;
@@ -40,19 +40,27 @@ for i_yr_load=1:n_years_to_plot
     % exportgraphics(hf_rmse,[figs_path,'supp/rmse/rmse_temp_rpm_shelf_GRL_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
     % close all
 
-    %% Plotting sensitivity profiles
-    % [hf_t,~,hf_e] = plot_sensitivity_profiles_v3(X,ensemble_yr{i_yr_load},res_box_yr{i_yr_load},param_names,1,0,1,which_fj_sens{i_yr_load});
+    %% Plotting sensitivity profiles - fjord cast time for T and S, peak fw export for freshwater export
+    % [hf_t,hf_s,~] = plot_sensitivity_profiles_v3(X,ensemble_yr{i_yr_load},res_box_yr{i_yr_load},param_names,2,1,0,which_fj_sens{i_yr_load});
+    % [~,~,hf_e]    = plot_sensitivity_profiles_v3(X,ensemble_yr{i_yr_load},res_box_yr{i_yr_load},param_names,1,0,1,which_fj_sens{i_yr_load});
     % exportgraphics(hf_t,[figs_path,'supp/sens_profiles/sensitivity_profiles_temp_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
-    % exportgraphics(hf_e,[figs_path,'supp/sens_profiles/sensitivity_profiles_qvs_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
+    % exportgraphics(hf_s,[figs_path,'supp/sens_profiles/sensitivity_profiles_salt_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
+    % exportgraphics(hf_e,[figs_path,'supp/sens_profiles/sensitivity_profiles_fwfl_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
     % close all
 
     %% Plotting sensitivity scatter
-    [hf_t,hf_s,hf_f,hf_z] = plot_sensitivity_scatter(X,ensemble_yr{i_yr_load},res_box_yr{i_yr_load},param_names,1,1,1,1,which_fj_sens{i_yr_load});
-    exportgraphics(hf_t,[figs_path,'supp/sens_scatter/temp/sensitivity_scatter_temp_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
-    exportgraphics(hf_s,[figs_path,'supp/sens_scatter/salt/sensitivity_scatter_salt_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
-    exportgraphics(hf_f,[figs_path,'supp/sens_scatter/fw_export/sensitivity_scatter_fwexport_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
-    exportgraphics(hf_z,[figs_path,'supp/sens_scatter/fw_z/sensitivity_scatter_zfwexport_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
-    close all
+    % [hf_t,hf_s,~,~] = plot_sensitivity_scatter(X,ensemble_yr{i_yr_load},res_box_yr{i_yr_load},param_names,2,1,0,0,which_fj_sens{i_yr_load});
+    % [~,~,hf_f,hf_z] = plot_sensitivity_scatter(X,ensemble_yr{i_yr_load},res_box_yr{i_yr_load},param_names,1,0,1,1,which_fj_sens{i_yr_load});
+    % exportgraphics(hf_t,[figs_path,'supp/sens_scatter/temp/sensitivity_scatter_temp_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
+    % exportgraphics(hf_s,[figs_path,'supp/sens_scatter/salt/sensitivity_scatter_salt_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
+    % exportgraphics(hf_f,[figs_path,'supp/sens_scatter/fw_export/sensitivity_scatter_fwexport_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
+    % exportgraphics(hf_z,[figs_path,'supp/sens_scatter/fw_z/sensitivity_scatter_zfwexport_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
+    % close all
+
+    [hf_t,hf_e] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_load},res_box_yr{i_yr_load},param_names,which_fj_sens{i_yr_load});
+    exportgraphics(hf_t,[figs_path,'sensitivity_temp_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
+    exportgraphics(hf_e,[figs_path,'sensitivity_fwex_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
+    close all;
 end
 % close all
 %% Plotting best parameters
