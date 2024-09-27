@@ -81,5 +81,5 @@ end
 
 
 % [hf_dst,hf_loc] = plot_ocn_cast_pairs(folder_ctd_casts,fjord_matrix,res_box_yr);
-% exportgraphics(hf_dst,[figs_path,'dst_OMG_fjord_shelf_casts.png'],'Resolution',300)
-% exportgraphics(hf_loc,[figs_path,'loc_OMG_fjord_shelf_casts.png'],'Resolution',300)
+% exportgraphics(hf_dst,[figs_path,'supp/casts_dst_comparison/dst_OMG_fjord_shelf_casts.png'],'Resolution',300)
+% exportgraphics(hf_loc,[figs_path,'overview_fig/loc_OMG_fjord_shelf_casts.png'],'Resolution',300)
