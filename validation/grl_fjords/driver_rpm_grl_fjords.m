@@ -35,7 +35,7 @@ disp('Parameter space created.')
 % only needed if not using fjord geometries from Cowton et al.
 % run compile_process_fjords 
 % fjord_ids = [4,9,17,20,22,23,24,25,28,29,30,31,24,37]; % These are the IDs of the corresponding fjords above in the "fjords_processed" data structure
-file_fjords_compiled = [data_path,'/greenland/FjordMIX/fjords_digitisation/fjords_gl_sill_depths_reduced.xlsx'];
+file_fjords_compiled = [data_path,'/greenland/FjordMIX/fjords_digitisation/fjords_gl_sill_depths_reduced_v2.xlsx'];
 folder_ctd_casts     = [data_path,'/greenland/obs/OMG_all_casts'];
 file_lengths = [data_path,'/greenland/FjordMIX/fjords_digitisation/fjords_centreline.shp'];
 file_fjords = [data_path,'/greenland/FjordMIX/fjords_digitisation/fjords_grl.shp'];
@@ -62,9 +62,8 @@ end
 % load(path_fout)
 % run postprocess_plot_ensembles.m
 
-% [hf_zfw,hf_tfw] = plot_hist_zfw_export(ensemble_yr,2);
-% exportgraphics(hf_zfw,[figs_path,'hist_z_fw_export.png'],'Resolution',300)
-% exportgraphics(hf_tfw,[figs_path,'hist_t_fw_export.png'],'Resolution',300)
+% hf_fw = plot_hist_zfw_export(ensemble_yr);
+% exportgraphics(hf_fw,[figs_path,'hist_fw_export.png'],'Resolution',300)
 
 % [hf_dst,hf_loc] = plot_ocn_cast_pairs(folder_ctd_casts,fjord_matrix,res_box_yr);
 % exportgraphics(hf_dst,[figs_path,'dst_OMG_fjord_shelf_casts.png'],'Resolution',300)
