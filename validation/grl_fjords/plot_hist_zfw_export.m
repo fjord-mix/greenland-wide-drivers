@@ -1,4 +1,4 @@
-function [hf_zfw,hf_tfw] = plot_hist_zfw_export(ensemble_yr,i_tgt_day)
+function hf_zfw = plot_hist_zfw_export(ensemble_yr)
 
 n_years = length(ensemble_yr);
 lcolor=lines(n_years);
@@ -9,11 +9,8 @@ znb_stacked = [];
 tfw_stacked = [];
 t_qsg_stacked = [];
 
-hf_zfw = figure('Position',[50 50, 900 400]); 
-ht_zfw = tiledlayout('horizontal');
-
-hf_tfw = figure('Position',[50 50, 600 800]); 
-ht_tfw = tiledlayout('vertical');
+hf_zfw = figure('Position',[50 50, 1200 800]); 
+ht_main = tiledlayout(2,3,'TileSpacing','Compact');
 
 for i_year=n_years:-1:1
     ensemble = ensemble_yr{i_year};
@@ -50,54 +47,50 @@ for i_year=n_years:-1:1
     end
     t_qsg_stacked = [t_qsg_stacked; t_qsg_max(:)];
 
-    figure(hf_zfw)
-    nexttile(1); hold on; box on; grid on;
-    title('(a) Neutral buoyancy')
+    nexttile(1,[2 1]); hold on; box on; grid on;
     histogram(znb(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',lcolor(i_year,:),'orientation','horizontal','FaceAlpha',0.5);
     set(gca, 'xdir', 'reverse','fontsize',16);
     ylim([-450 0])
 
-    nexttile(2); hold on; box on; grid on;
-    title('(b) Maximum FW export')
+    nexttile(2,[2 1]); hold on; box on; grid on;
     h1 = histogram(zfw(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',lcolor(i_year,:),'orientation','horizontal','FaceAlpha',0.5);
     set(gca,'fontsize',16)
     ylim([-450 0])
 
-    figure(hf_tfw)
-    nexttile(1); hold on; box on; grid on;
-    title('(a) Time of maximum FW export')
+    nexttile(3,[1 1]); hold on; box on; grid on;
     histogram(t_fw_max(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',lcolor(i_year,:),'orientation','vertical','FaceAlpha',0.5);
     set(gca,'fontsize',16)
-
-    nexttile(2); hold on; box on; grid on;
-    title('(b) Time of maximum subglacial discharge')
+    
+    nexttile(6,[1 1]); hold on; box on; grid on;
     histogram(t_qsg_max(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',lcolor(i_year,:),'orientation','vertical','FaceAlpha',0.5);
     set(gca,'fontsize',16,'ydir','reverse')
 
     h_sit = [h_hist h1];
     lbl_hist{end+1} = num2str(2015+i_year);
 end
-figure(hf_zfw)
-nexttile(1); hold on;
+nexttile(1,[2 1]); hold on;
+title('(a) Neutral buoyancy','fontsize',14)
 histogram(znb_stacked(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',[0 0 0],'orientation','horizontal','FaceAlpha',1.);
 xlabel('Probability','fontsize',16)
-nexttile(2); hold on;
+ylabel('Depth (m)','fontsize',16)
+
+nexttile(2,[2 1]); hold on;
+title('(b) Maximum FW export','fontsize',14)
 histogram(zfw_stacked(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',[0 0 0],'orientation','horizontal','FaceAlpha',1.);
 xlabel('Probability','fontsize',16)
-legend(h_hist,lbl_hist,'location','best')
+legend(h_hist,lbl_hist,'location','southeast')
 
-figure(hf_tfw)
-nexttile(1); hold on;
+nexttile(3,[1 1]); hold on;
+title('(c) Maximum FW export','fontsize',14)
 histogram(tfw_stacked(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',[0 0 0],'orientation','vertical','FaceAlpha',1.);
 xlim([100 300])
-nexttile(2); hold on;
+ylabel('Probability','fontsize',16)
+
+nexttile(6,[1 1]); hold on;
+title('(d) Maximum subglacial discharge','fontsize',14)
 histogram(t_qsg_stacked(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',[0 0 0],'orientation','vertical','FaceAlpha',1.);
 xlim([100 300])
-
-ylabel(ht_zfw,'Depth (m)','fontsize',16)
-xlabel(ht_zfw,'Probability','fontsize',16)
-
-xlabel(ht_tfw,'Day of year','fontsize',16)
-ylabel(ht_tfw,'Probability','fontsize',16)
+ylabel('Probability','fontsize',16)
+xlabel('Day of year','fontsize',16)
 
 end
