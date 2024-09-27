@@ -66,7 +66,7 @@ xlim([-2 125])
 
 hf_loc = figure('Position',[50 50 1000 1000]); box on; hold on;
 
-tiledlayout('flow');
+tiledlayout('flow','TileSpacing','Compact');
 nexttile; hold on
 m_proj('UTM','lon',[-75 -10],'lat',[59.5 84]); % GRL wide
 m_gshhs_h('color','k','linewidth',0.5);
