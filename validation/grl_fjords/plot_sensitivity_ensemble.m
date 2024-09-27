@@ -13,6 +13,7 @@ letters=lower(char(65:65+n_params*n_fjords));
 %% Finding the low/mid/high ranges for the different parameters
 key_param_bnd = {'low ','mid ','high '};
 ls_bnds = {':','-.','-'};
+n_cols = 2;
 
 % profiles: low, mid, and high
 n_std      = 1; % how many standard deviations away from the mean we want our central interval to span
@@ -66,7 +67,7 @@ lbl_fjords = cell([1,length(param_names)]);
 
 %% Plotting temperature
 hf_t = figure('Name','Temperature sensitivity','Position',[40 40 1200 900]);
-ht_t = tiledlayout(2*n_fjords,2*length(param_names));
+ht_t = tiledlayout(2*n_fjords,n_cols*length(param_names));
 no_legend = 1;
 i_plt_fjord=0;
 i_panel=1;
@@ -83,10 +84,10 @@ for i_fjord=1:size(ensemble,1)
         if ~plot_fjord, continue; end
     end
     i_plt_fjord=i_plt_fjord+1;
-    i_plt = 1+(i_plt_fjord-1)*2*8;
-    i_plt_sub = i_plt+8;
+    i_plt = 1+(i_plt_fjord-1)*2*(n_cols*4);
+    i_plt_sub = i_plt+(n_cols*4);
     for i_param=1:length(param_names)
-        ha_main = nexttile(i_plt,[2 2]); hold on; box on
+        ha_main = nexttile(i_plt,[2 n_cols]); hold on; box on
         text(0.98,1.01,['(',letters(i_panel),')'],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',12)
         i_panel=i_panel+1;
         base_gl_and_sill_t = 0;
@@ -138,6 +139,7 @@ for i_fjord=1:size(ensemble,1)
         % Adding inset scatter plot
         ax2 = axes(ht_t);
         ax2.Layout.Tile=i_plt_sub;
+        ax2.Layout.TileSpan=[1 n_cols-1];
         ax2.Box = 'on';
         hold on;
         % nexttile(i_plt_sub,[1 1]); box on;
@@ -164,8 +166,8 @@ for i_fjord=1:size(ensemble,1)
         set(gca,'XTickLabel',{'',xticks{2:end}})
         ytickangle(45)
         % set(gca,'YTickLabel',{'',yticks{2:end}})
-        i_plt = i_plt+2;
-        i_plt_sub=i_plt_sub+2;
+        i_plt = i_plt+n_cols;
+        i_plt_sub=i_plt_sub+n_cols;
     end
 end
 % if no_legend==1
@@ -174,7 +176,7 @@ end
 % end
 %% Plotting shelf export
 hf_e = figure('Name','Shelf export sensitivity','Position',[40 40 1200 900]);
-ht_e = tiledlayout(2*n_fjords,2*length(param_names));
+ht_e = tiledlayout(2*n_fjords,n_cols*length(param_names));
 no_legend=1;
 i_plt_fjord=0;
 i_panel=1;
@@ -191,10 +193,10 @@ for i_fjord=1:size(ensemble,1)
         if ~plot_fjord, continue; end
     end
     i_plt_fjord=i_plt_fjord+1;
-    i_plt = 1+(i_plt_fjord-1)*2*8;
-    i_plt_sub = i_plt+8;
+    i_plt = 1+(i_plt_fjord-1)*2*(n_cols*4);
+    i_plt_sub = i_plt+(n_cols*4);
     for i_param=1:length(param_names)    
-        ha_main = nexttile(i_plt,[2 2]); hold on; box on
+        ha_main = nexttile(i_plt,[2 n_cols]); hold on; box on
         text(0.98,1.01,['(',letters(i_panel),')'],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',12)
         i_panel=i_panel+1;
         for i_bnd=1:length(key_param_bnd)
@@ -244,6 +246,7 @@ for i_fjord=1:size(ensemble,1)
         % Adding inset scatter plot
         ax2 = axes(ht_e);
         ax2.Layout.Tile=i_plt_sub;
+        ax2.Layout.TileSpan=[1 n_cols-1];
         ax2.Box = 'on';
         hold on;
         for i_bin=1:length(bins)-1
@@ -269,8 +272,8 @@ for i_fjord=1:size(ensemble,1)
         set(gca,'XTickLabel',{'',xticks{2:end}})
         ytickangle(45)
         % set(gca,'YTickLabel',{'',yticks{2:end}})
-        i_plt = i_plt+2;
-        i_plt_sub=i_plt_sub+2;
+        i_plt = i_plt+n_cols;
+        i_plt_sub=i_plt_sub+n_cols;
     end
 end
 legend(ha_main,handle_fjords,param_names,'fontsize',10,'Location','southeast');
