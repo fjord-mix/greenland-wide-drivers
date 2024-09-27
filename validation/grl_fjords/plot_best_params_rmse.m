@@ -1,6 +1,6 @@
-function hf = plot_best_params_rmse(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,i_tgt_day)
+function hf = plot_best_params_rmse(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,i_tgt_day)
 
-if nargin < 6, i_tgt_day=1; end
+if nargin < 7, i_tgt_day=1; end
 w_rmse_t = 0.5; % how much we want to weight the temperature (n)RMSE versus salinity (0.5 = 50:50; 1 = only temperature)
 fsize    = 14;
 n_fjords = length(fjord_IDs);
@@ -76,7 +76,7 @@ for i_yr=1:n_years
                 % scatter(x_var,best_fjord_params(i_fjord).best_s.(param_names{i_param}),150,lcolor(i_yr,:),'filled','v','MarkerFaceAlpha',.5);
             end
         end
-        ylabel(param_names{i_param})
+        ylabel([param_names{i_param},' (',param_units{i_param},')'])
         ylim([0.5*min(range_params{i_param}) 1.1*max(range_params{i_param})])
     
         % if i_yr==1

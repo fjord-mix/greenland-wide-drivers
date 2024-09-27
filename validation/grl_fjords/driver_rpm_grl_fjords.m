@@ -9,6 +9,7 @@ n_years       = 10;           % how many years we want to run
 tgt_days      = [n_years*365-180,n_years*365-105];  % which days of the run we want vertical profiles for
 
 %% Define parameter space
+param_units = {'m^2','m','s^{-1}','-'};
 param_names = {'A0','wp','C0','K0'};
 
 range_params = {[0,3e8],...    % A0
@@ -56,7 +57,6 @@ for which_year=2016:2020
     close all
 end
 
-
 %% Batch processing all years together
 % path_fout = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_',num2str(60),'layers_dt',num2str(3),'h'];
 % load(path_fout)
@@ -64,6 +64,21 @@ end
 
 % hf_fw = plot_hist_zfw_export(ensemble_yr);
 % exportgraphics(hf_fw,[figs_path,'hist_fw_export.png'],'Resolution',300)
+
+%% Plotting best parameters
+% plot_best_params_time(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
+% exportgraphics(gcf,[figs_path,'supp/best_params_GRL_scatter_allyrs_n',num2str(n_runs),'.png'],'Resolution',300)
+% plot_best_params_rmse(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,2);
+% exportgraphics(gcf,[figs_path,'best_params_GRL_rmse',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
+% plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
+% exportgraphics(gcf,[figs_path,'best_params_GRL_hist_n',num2str(n_runs),'.png'],'Resolution',300)
+% close all;
+
+% If we find a distribution that fits
+% plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2,'kernel');
+% exportgraphics(gcf,[figs_path,'best_params_GRL_prob_density',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
+% close all;
+
 
 % [hf_dst,hf_loc] = plot_ocn_cast_pairs(folder_ctd_casts,fjord_matrix,res_box_yr);
 % exportgraphics(hf_dst,[figs_path,'dst_OMG_fjord_shelf_casts.png'],'Resolution',300)

@@ -1,12 +1,13 @@
-function hf = plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,i_tgt_day,which_dist)
+function hf = plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,i_tgt_day,which_dist)
 
-if nargin < 7, i_tgt_day=1; end
-if nargin < 8, which_dist='hist'; end
+if nargin < 8, i_tgt_day=1; end
+if nargin < 9, which_dist='hist'; end
 w_rmse_t = 0.5; % how much we want to weight the temperature (n)RMSE versus salinity (0.5 = 50:50; 1 = only temperature)
-fsize    = 14;
+fsize    = 16;
 n_years  = length(fjord_model_yr);
 n_params = length(param_names);
-lcolor   = cmocean('thermal',n_years);
+% lcolor   = cmocean('thermal',n_years);
+lcolor=lines(n_years);
 
 rmse_tf_threshold = 0.5;
 rmse_sf_threshold = 0.05;
@@ -15,12 +16,12 @@ fjord_names = cell([1,length(fjord_IDs)]);
 for i=1:length(fjord_names), fjord_names{i} = fjord_IDs(i); end
 
 hf = figure('Name','Best parameters','Position',[40 40 1200 1000]);
-tiledlayout('flow');
+ht = tiledlayout('flow','TileSpacing','Compact');
 
 param_entries_all = cell([1,n_params]);
 h_yr = [];
 lbl_years = cell([n_years,1]);
-for i_yr=1:n_years
+for i_yr=n_years:-1:1
 
     fjord_model = fjord_model_yr{i_yr};
     ensemble    = ensemble_yr{i_yr};
@@ -67,7 +68,7 @@ for i_yr=1:n_years
         param_entries_all{i_param} = [param_entries_all{i_param}; param_entry_filtered];
         
         if strcmp(which_dist,'hist') == 1
-            h1 = histogram(param_entry_filtered,20,'FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5); % if there are no distributions, we plot a histogram
+            h1 = histogram(param_entry_filtered,20,'Normalization','probability','FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5); % if there are no distributions, we plot a histogram
         else
             if iscell(which_dist)
                 kern_marginal= fitdist(param_entry_filtered,which_dist{i_param}); % in case we want different distributions for each variable
@@ -82,13 +83,13 @@ for i_yr=1:n_years
             set(gca,'XScale','log')
             xlim([0.1*min(range_params{i_param}) 10*max(range_params{i_param})])
         end
-        if i_yr==n_years
-            xlabel(param_names{i_param})
+        if i_yr==1
+            xlabel([param_names{i_param},' (',param_units{i_param},')'])
             set(gca,'fontsize',fsize)
             % xlim(range_params{i_param})
             % vline(range_params{i_param},'--','color',[0.25 0.25 0.25])
             xlim(range_params{i_param});
-            histogram(param_entries_all{i_param},20,'FaceColor',[0.7 0.7 0.7],'FaceAlpha',0.75); % if there are no distributions, we plot a histogram
+            histogram(param_entries_all{i_param},20,'Normalization','probability','FaceColor',[0. 0. 0.],'FaceAlpha',0.5); % if there are no distributions, we plot a histogram
         end
     end
     h_yr = [h_yr h1];
@@ -99,4 +100,4 @@ end
 % legend([h1,h2,h3],{'RMSE_T','RMSE_S','RMSE_{both}'},'fontsize',fsize,'Location','Northwest');
 % legend([h1,h2],{'RMSE_T','RMSE_S'},'fontsize',fsize,'Location','Northwest');
 legend(h_yr,lbl_years,'fontsize',fsize,'Location','best');
-
+ylabel(ht,'Probability','fontsize',fsize)
