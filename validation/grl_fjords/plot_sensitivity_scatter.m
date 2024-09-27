@@ -12,7 +12,7 @@ end
 if size(X,2) ~=length(param_names), error('input parameter matrix must me [n_runs,n_params], and param_names must have entries for each param'); end
 
 %% Finding the value bins for the different parameters
-n_runs     = size(X,1);
+% n_runs     = size(X,1);
 n_params   = size(X,2);
 bins       = 0:10:100;
 param_bnds = NaN([length(bins),n_params]);
@@ -48,14 +48,20 @@ ht_t = tiledlayout(n_fjords,n_params);
 if plt_salt
     hf_s = figure('Name','Salinity sensitivity','Position',[40 40 900 700]);
     ht_s = tiledlayout(n_fjords,n_params);
+else
+    hf_s = [];
 end
 if plt_fw
     hf_f = figure('Name','Freshwater export sensitivity','Position',[40 40 900 700]);
     ht_f = tiledlayout(n_fjords,n_params);
+else
+    hf_f = [];
 end
 if plt_fwz
     hf_z = figure('Name','Freshwater export depth sensitivity','Position',[40 40 900 700]);
     ht_z = tiledlayout(n_fjords,n_params);
+else
+    hf_z = [];
 end
 i_iter=0;
 for i_fjord=1:size(ensemble,1)
