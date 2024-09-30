@@ -200,7 +200,7 @@ for i_fjord=1:size(ensemble,1)
     end
     i_plt_fjord=i_plt_fjord+1;
     i_plt = 1+(i_plt_fjord-1)*2*(n_cols*4);
-    i_plt_sub = i_plt+(n_cols*4);
+    i_plt_sub = i_plt+(n_cols*4)+1;
     for i_param=1:length(param_names)    
         ha_main = nexttile(i_plt,[2 n_cols]); hold on; box on
         text(0.98,1.01,['(',letters(i_panel),')'],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',12)
@@ -224,7 +224,7 @@ for i_fjord=1:size(ensemble,1)
 
             % take mean and min/max for that subset
             depths = -res_box(i_fjord).zf;
-            efmean = mean(ef_ensemble,2,'omitnan');
+            efmean = -mean(ef_ensemble,2,'omitnan');
             
             plot(efmean,depths,'linewidth',1.5,'color',lcolor(i_param,:),'linestyle',ls_bnds{i_bnd});
             if i_bnd==length(key_param_bnd)
@@ -269,7 +269,7 @@ for i_fjord=1:size(ensemble,1)
             fzplot = mean(fz_ensemble,[1,2],'omitnan'); % take mean for that subset
             scatter(i_bin*10,round(fzplot,2),50,'filled','MarkerFaceColor',lcolor(i_param,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
         end
-        set(gca,'YAxisLocation','right','XAxisLocation','top','fontsize',8)
+        set(gca,'YAxisLocation','left','XAxisLocation','top','fontsize',8)
         xlabel([param_names{i_param},' percentile'],'fontsize',10)
         % xlabel('percentile','fontsize',10)
         ylabel('z export (m)','fontsize',10)
@@ -277,13 +277,13 @@ for i_fjord=1:size(ensemble,1)
         % yticks = get(gca,'YTickLabel');
         % set(gca,'XTickLabel',{'',xticks{2:end-1},''})
         set(gca,'XTick',[25, 50, 75])
-        ytickangle(45)
+        ytickangle(-45)
         % set(gca,'YTickLabel',{'',yticks{2:end}})
         i_plt = i_plt+n_cols;
         i_plt_sub=i_plt_sub+n_cols;
     end
 end
-legend(ha_main,handle_fjords,param_names,'fontsize',10,'Location','southeast');
+legend(ha_main,handle_fjords,param_names,'fontsize',10,'Location','southwest');
 % no_legend = 0;
 
 
@@ -294,7 +294,8 @@ ht_t.TileSpacing='compact';
 ht_t.Padding='compact';
 
 figure(hf_e)
-xlabel(ht_e,'Shelf-fjord freshwater flux (m^3s^{-1})','fontsize',14);
+% xlabel(ht_e,'Shelf-fjord freshwater flux (m^3s^{-1})','fontsize',14);
+xlabel(ht_e,'Export freshwater flux (m^3s^{-1})','fontsize',14);
 ylabel(ht_e,'Depth (m)','fontsize',14);
 ht_e.TileSpacing='compact';
 ht_e.Padding='compact';
