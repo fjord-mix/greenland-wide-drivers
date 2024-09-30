@@ -115,9 +115,14 @@ for i_fjord=1:size(ensemble,1)
                 hp = plot(tfmean,depths,'linewidth',1.5,'color',lcolor(i_param,:),'linestyle',ls_bnds{i_bnd});
             end
             % add depth-range of plume neutral buoyancy
+            % scatter(base_gl_and_sill_t+0.1*i_bnd,mean(znb_ensemble,'omitnan'),60,lcolor(i_param,:),'x')
+            % plot([base_gl_and_sill_t+0.1*i_bnd,base_gl_and_sill_t+0.1*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
+            %                                     mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
+            %                                     'linewidth',1.7,'color',lcolor(i_param,:),'linestyle',ls_bnds{i_bnd})
+            scatter(base_gl_and_sill_t+0.1*i_bnd,mean(znb_ensemble,'omitnan'),60,[0 0 0],'x')
             plot([base_gl_and_sill_t+0.1*i_bnd,base_gl_and_sill_t+0.1*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
                                                 mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
-                                                'linewidth',1.7,'color',lcolor(i_param,:),'linestyle',ls_bnds{i_bnd})
+                                                'linewidth',1.7,'color',[0 0 0],'linestyle',ls_bnds{i_bnd})
         end
         % add depictions of GL and sill depths
         scatter(base_gl_and_sill_t,-Hgl,40,'v','filled','MarkerFaceColor',[0 0 0])
