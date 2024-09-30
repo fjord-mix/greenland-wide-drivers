@@ -114,7 +114,7 @@ for i_fjord=1:size(ensemble,1)
             if i_bnd==length(key_param_bnd)
                 hp = plot(tfmean,depths,'linewidth',1.5,'color',lcolor(i_param,:),'linestyle',ls_bnds{i_bnd});
             end
-            % add depth of plume neutral buoyancy
+            % add depth-range of plume neutral buoyancy
             plot([base_gl_and_sill_t+0.1*i_bnd,base_gl_and_sill_t+0.1*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
                                                 mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
                                                 'linewidth',1.7,'color',lcolor(i_param,:),'linestyle',ls_bnds{i_bnd})
@@ -161,9 +161,10 @@ for i_fjord=1:size(ensemble,1)
         xlabel([param_names{i_param},' percentile'],'fontsize',10)
         % xlabel('percentile','fontsize',10)
         ylabel('T diff. (^oC)','fontsize',10)
-        xticks = get(gca,'XTickLabel');
+        % xticks = get(gca,'XTickLabel');
         % yticks = get(gca,'YTickLabel');
-        set(gca,'XTickLabel',{'',xticks{2:end}})
+        % set(gca,'XTickLabel',{'',xticks{2:end-1},''})
+        set(gca,'XTick',[25, 50, 75])
         ytickangle(45)
         % set(gca,'YTickLabel',{'',yticks{2:end}})
         i_plt = i_plt+n_cols;
@@ -267,9 +268,10 @@ for i_fjord=1:size(ensemble,1)
         xlabel([param_names{i_param},' percentile'],'fontsize',10)
         % xlabel('percentile','fontsize',10)
         ylabel('z export (m)','fontsize',10)
-        xticks = get(gca,'XTickLabel');
-        yticks = get(gca,'YTickLabel');
-        set(gca,'XTickLabel',{'',xticks{2:end}})
+        % xticks = get(gca,'XTickLabel');
+        % yticks = get(gca,'YTickLabel');
+        % set(gca,'XTickLabel',{'',xticks{2:end-1},''})
+        set(gca,'XTick',[25, 50, 75])
         ytickangle(45)
         % set(gca,'YTickLabel',{'',yticks{2:end}})
         i_plt = i_plt+n_cols;
