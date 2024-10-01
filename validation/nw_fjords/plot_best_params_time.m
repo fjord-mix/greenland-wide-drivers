@@ -2,12 +2,12 @@ function hf = plot_best_params_time(fjord_IDs,fjord_model_yr,ensemble_yr,res_box
 
 if nargin < 7, i_tgt_day=1; end
 w_rmse_t = 0.5; % how much we want to weight the temperature (n)RMSE versus salinity (0.5 = 50:50; 1 = only temperature)
-fsize    = 14;
+fsize    = 16;
 n_fjords = length(fjord_IDs);
 n_years  = length(fjord_model_yr);
 n_params = length(param_names);
 lcolor   = cmocean('thermal',n_years);
-letters  = lower(char(65:1:65+n_params));
+letters=lower(char(65:65+n_params));
 
 fjord_names = cell([1,length(fjord_IDs)]);
 for i=1:length(fjord_names), fjord_names{i} = fjord_IDs(i); end
@@ -74,14 +74,15 @@ for i_yr=1:n_years
         ylabel([param_names{i_param},' (',param_units{i_param},')'])
         ylim([0.5*min(range_params{i_param}) 1.1*max(range_params{i_param})])
     
-        % if i_yr==1
+        if i_yr==1
+            text(0.02,0.98,['(',letters(i_param),')'],'HorizontalAlignment','left','VerticalAlignment','top','Units','normalized','fontsize',fsize)
         %     xlim([0 n_fjords+1])
         %     set(gca,'Xtick',0:1:n_fjords+1)
         %     xlabels = get(gca,'XTickLabels');
         %     xlabels(2:end-1) = fjord_names;
         %     xlabels{1} = ' '; xlabels{end} = ' ';
         %     set(gca,'XtickLabels',xlabels,'fontsize',fsize);text(0.02,0.95,sprintf("(%s)",letters(i_param)),'Units','normalized','fontsize',fsize);
-        % end
+        end
         % xlabel('Fjord length (km)');
         % xlabel('Peak subglacial discharge (m^3s^{-1})');
         
@@ -101,5 +102,5 @@ end
 % TODO: add legend pertaining to different years
 % legend([h1,h2,h3],{'RMSE_T','RMSE_S','RMSE_{both}'},'fontsize',fsize,'Location','Northwest');
 % legend([h1,h2],{'RMSE_T','RMSE_S'},'fontsize',fsize,'Location','Northwest');
-legend(h_yr,lbl_years,'fontsize',fsize,'Location','best');
+legend(h_yr,lbl_years,'fontsize',fsize,'Location','northeast');
 % xlabel(ht,'Fjord','fontsize',16)

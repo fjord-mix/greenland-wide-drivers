@@ -8,6 +8,7 @@ n_years  = length(fjord_model_yr);
 n_params = length(param_names);
 % lcolor   = cmocean('thermal',n_years);
 lcolor=lines(n_years);
+letters=lower(char(65:65+n_params));
 
 rmse_tf_threshold = 0.5;
 rmse_sf_threshold = 0.05;
@@ -85,6 +86,7 @@ for i_yr=n_years:-1:1
         end
         if i_yr==1
             xlabel([param_names{i_param},' (',param_units{i_param},')'])
+            text(0.02,0.98,['(',letters(i_param),')'],'HorizontalAlignment','left','VerticalAlignment','top','Units','normalized','fontsize',fsize)
             set(gca,'fontsize',fsize)
             % xlim(range_params{i_param})
             % vline(range_params{i_param},'--','color',[0.25 0.25 0.25])
