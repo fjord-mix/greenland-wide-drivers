@@ -10,6 +10,19 @@ if size(X,2) ~=length(param_names), error('input parameter matrix must me [n_run
 n_params   = size(X,2);
 letters=lower(char(65:65+n_params*n_fjords));
 
+%% Applying the RMSE filter - speculative, for now trying out to see if it works
+
+rmse_threshold = 0.5;
+for i_fjord=1:size(ensemble,1)
+    for i_run=1:size(ensemble,2)
+        if ~isempty(ensemble(i_fjord,i_run).p)
+            if res_box(i_fjord).rmse_tf(i_run,2) > rmse_threshold
+                ensemble(i_fjord,i_run).s = []; % we clear the outputs structure, which will make L112 skip this ensemble member
+            end
+        end
+    end
+end
+
 %% Finding the low/mid/high ranges for the different parameters
 key_param_bnd = {'low ','mid ','high '};
 ls_bnds = {':','-.','-'};
