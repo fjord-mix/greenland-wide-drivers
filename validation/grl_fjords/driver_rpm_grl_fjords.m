@@ -3,7 +3,7 @@ clearvars
 run setup_paths % Configuring paths
 
 plot_ensemble = 0;
-n_runs        = 100;         % number of runs per fjord
+n_runs        = 200;         % number of runs per fjord
 dt_in_h       = 3;
 n_years       = 10;           % how many years we want to run
 tgt_days      = [n_years*365-180,n_years*365-105];  % which days of the run we want vertical profiles for
@@ -62,17 +62,18 @@ end
 % load(path_fout)
 % run postprocess_plot_ensembles.m
 
-% hf_fw = plot_hist_zfw_export(ensemble_yr);
-% exportgraphics(hf_fw,[figs_path,'hist_fw_export.png'],'Resolution',300)
+% hf_fw = plot_hist_zfw_export(ensemble_yr,res_box_yr);
+% exportgraphics(hf_fw,[figs_path,'2_hist_fw_export.png'],'Resolution',300)
 
 %% Plotting best parameters
+% plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
+% exportgraphics(gcf,[figs_path,'best_params_GRL_hist_n',num2str(n_runs),'.png'],'Resolution',300)
+% close all;
+
 % plot_best_params_time(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
 % exportgraphics(gcf,[figs_path,'supp/best_params_GRL_scatter_allyrs_n',num2str(n_runs),'.png'],'Resolution',300)
 % plot_best_params_rmse(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,range_params,2);
 % exportgraphics(gcf,[figs_path,'best_params_GRL_rmse',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
-% plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
-% exportgraphics(gcf,[figs_path,'best_params_GRL_hist_n',num2str(n_runs),'.png'],'Resolution',300)
-% close all;
 
 % If we find a distribution that fits
 % plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2,'kernel');
