@@ -10,8 +10,8 @@ n_params = length(param_names);
 lcolor=lines(n_years);
 letters=lower(char(65:65+n_params));
 
-rmse_tf_threshold = 0.5;
-rmse_sf_threshold = 0.05;
+rmse_tf_threshold = 1.0; %0.5;
+rmse_sf_threshold = 0.1;
 
 fjord_names = cell([1,length(fjord_IDs)]);
 for i=1:length(fjord_names), fjord_names{i} = fjord_IDs(i); end
@@ -40,19 +40,25 @@ for i_yr=n_years:-1:1
         % Filter out runs that have a high RMSE, i.e., we want to focus on the fjords we can simulate well
         rmse_tf_filtered = res_box(i_fjord).rmse_tf;
         rmse_sf_filtered = res_box(i_fjord).rmse_sf;
+        rmse_tf_threshold = 0.5; %prctile(rmse_tf_filtered(:,i_tgt_day),10,1);
+        rmse_sf_threshold = 0.05; %prctile(rmse_sf_filtered(:,i_tgt_day),10,1);
         rmse_tf_filtered(rmse_tf_filtered>rmse_tf_threshold) = NaN;
         rmse_sf_filtered(rmse_sf_filtered>rmse_sf_threshold) = NaN;
 
         % find run with the smallest RMSE
         rmse_both = w_rmse_t.*rmse_tf_filtered + (1-w_rmse_t).*rmse_sf_filtered;
         [~,inds_best_tf] = min(squeeze(rmse_tf_filtered(:,i_tgt_day)),[],'all','omitnan');
-        [~,inds_best_sf] = min(squeeze(rmse_tf_filtered(:,i_tgt_day)),[],'all','omitnan');
+        [~,inds_best_sf] = min(squeeze(rmse_sf_filtered(:,i_tgt_day)),[],'all','omitnan');
         [~,inds_best2]    = min(squeeze(rmse_both(:,i_tgt_day)),[],'all','omitnan');
         
         for i_param=1:n_params
-            best_fjord_params(i_fjord).best_t.(param_names{i_param}) = ensemble(i_fjord,inds_best_tf).p.(param_names{i_param});
-            best_fjord_params(i_fjord).best_s.(param_names{i_param}) = ensemble(i_fjord,inds_best_sf).p.(param_names{i_param});
-            best_fjord_params(i_fjord).best_2.(param_names{i_param}) = ensemble(i_fjord,inds_best2).p.(param_names{i_param});
+            if isempty(ensemble(i_fjord,inds_best_tf).p)
+                best_fjord_params(i_fjord).best_t.(param_names{i_param}) = NaN;
+            else
+                best_fjord_params(i_fjord).best_t.(param_names{i_param}) = ensemble(i_fjord,inds_best_tf).p.(param_names{i_param});
+                % best_fjord_params(i_fjord).best_s.(param_names{i_param}) = ensemble(i_fjord,inds_best_sf).p.(param_names{i_param});
+                % best_fjord_params(i_fjord).best_2.(param_names{i_param}) = ensemble(i_fjord,inds_best2).p.(param_names{i_param});
+            end
             param_entry(i_fjord,i_param) = best_fjord_params(i_fjord).best_t.(param_names{i_param});
         end
     
