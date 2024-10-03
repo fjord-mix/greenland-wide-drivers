@@ -22,7 +22,7 @@ for i_year=n_years:-1:1
     t_qsg_max = NaN([size(ensemble,1),1]);
     for i_fjord=1:size(ensemble,1)
         for i_run=1:size(ensemble,2)
-            if ~isempty(ensemble(i_fjord,i_run).s) && res_box(i_fjord).rmse_tf(i_run,2) < rmse_threshold
+            if ~isempty(ensemble(i_fjord,i_run).s) %&& res_box(i_fjord).rmse_tf(i_run,2) < rmse_threshold
                 % depths at target day
                 % zfw(i_fjord,i_run) = ensemble(i_fjord,i_run).s.z_max_export(i_tgt_day);
                 % znb(i_fjord,i_run) = ensemble(i_fjord,i_run).s.znb(i_tgt_day);
