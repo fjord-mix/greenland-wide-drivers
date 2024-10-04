@@ -3,7 +3,7 @@ clearvars
 run setup_paths % Configuring paths
 
 plot_ensemble = 0;
-n_runs        = 200;         % number of runs per fjord
+n_runs        = 400;         % number of runs per fjord
 dt_in_h       = 3;
 n_years       = 10;           % how many years we want to run
 tgt_days      = [n_years*365-180,n_years*365-105];  % which days of the run we want vertical profiles for
@@ -67,7 +67,7 @@ end
 
 %% Plotting best parameters
 % plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
-% exportgraphics(gcf,[figs_path,'best_params_GRL_hist_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'best_params_GRL_hist_n',num2str(n_runs),'_ign20.png'],'Resolution',300)
 % close all;
 
 % plot_best_params_time(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
