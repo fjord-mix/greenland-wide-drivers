@@ -34,7 +34,8 @@ for i_fjord=1:height(fjord_matrix)
     eval(sprintf('id_cast_shelf = num2str(fjord_matrix.shelf_%d(i_fjord));',which_year));
     eval(sprintf('id_cast_fjord = num2str(fjord_matrix.fjord_%d(i_fjord));',which_year));
     if ~strcmp(id_cast_shelf,'NaN') && ~strcmp(id_cast_fjord,'NaN')
-        digitised_id = find([fjords_digitised.id] == fjord_matrix.ID(i_fjord));
+        % digitised_id = find([fjords_digitised.id] == fjord_matrix.ID(i_fjord));
+        % centreline_id = find([fjords_centreline.id] == fjord_matrix.ID(i_fjord));
 
         % x_fjord = fjords_digitised(digitised_id).x;
         % y_fjord = fjords_digitised(digitised_id).y;
@@ -78,8 +79,8 @@ for i_fjord=1:height(fjord_matrix)
         end
         
         % get geometry
-        p.L = fjords_centreline(digitised_id).length.*1e3;
-        p.W = fjords_digitised(digitised_id).area/p.L;
+        p.L = fjords_centreline([fjords_centreline.id] == fjord_matrix.ID(i_fjord)).length.*1e3;
+        p.W = fjords_digitised([fjords_digitised.id] == fjord_matrix.ID(i_fjord)).area/p.L;
         p.Hsill = abs(fjord_matrix.sill_depth(i_fjord));
         p.Hgl   = abs(fjord_matrix.gl_depth(i_fjord));
 
