@@ -174,7 +174,9 @@ for i_fjord=1:n_fjord_runs
     end
 
     scatter(0,-fjord_model(i_fjord).p.Hgl,40,'v','filled','MarkerFaceColor','black')
-    plot([0 0],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
+    if fjord_model(i_fjord).p.sill
+        plot([0 0],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
+    end
 
     set(gca,'fontsize',fsize)
     % xlim([-2.5 9])
@@ -256,7 +258,9 @@ for i_fjord=1:n_fjord_runs
             end
         end
         scatter(33,-fjord_model(i_fjord).p.Hgl,40,'v','filled','MarkerFaceColor','black')
-        plot([33 33],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
+        if fjord_model(i_fjord).p.sill
+            plot([33 33],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
+        end
     
         set(gca,'fontsize',fsize)
         xlim([30.5 35])
