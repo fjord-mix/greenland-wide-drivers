@@ -107,5 +107,5 @@ end
 % TODO: add legend pertaining to different years
 % legend([h1,h2,h3],{'RMSE_T','RMSE_S','RMSE_{both}'},'fontsize',fsize,'Location','Northwest');
 % legend([h1,h2],{'RMSE_T','RMSE_S'},'fontsize',fsize,'Location','Northwest');
-legend(h_yr,lbl_years,'fontsize',fsize,'Location','best');
+legend(flip(h_yr),lbl_years,'fontsize',fsize,'Location','best');
 ylabel(ht,'Probability','fontsize',fsize)
