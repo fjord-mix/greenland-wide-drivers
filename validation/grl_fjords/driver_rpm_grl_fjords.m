@@ -1,6 +1,6 @@
 %% Driver file for simulating the compiled fjords
 clearvars
-run setup_paths % Configuring paths
+run setup_paths % Configuring paths 
 
 plot_ensemble = 0;
 n_runs        = 400;         % number of runs per fjord
@@ -58,16 +58,18 @@ for which_year=2016:2020
 end
 
 %% Batch processing all years together
+% which_year=2020;
 % path_fout = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_',num2str(60),'layers_dt',num2str(3),'h'];
 % load(path_fout)
 % run postprocess_plot_ensembles
 
-% hf_fw = plot_hist_zfw_export(ensemble_yr,res_box_yr);
-% exportgraphics(hf_fw,[figs_path,'2_hist_fw_export_n',num2str(n_runs),'.png'],'Resolution',300)
+%% Summary of simulated fjords & FW export (Fig. 1)
+% hf_fig1 = plot_fw_simulated_fjords(data_path,ensemble_yr,res_box_yr);
+% exportgraphics(hf_fig1,[figs_path,'1_fjords_fw_yrs',num2str(n_runs),'.png'],'Resolution',300)
 
-%% Plotting best parameters
+%% Plotting best parameters (Fig. 4 & supplementary)
 % plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
-% exportgraphics(gcf,[figs_path,'best_params_GRL_hist_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'.png'],'Resolution',300)
 % close all;
 
 % plot_best_params_time(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
