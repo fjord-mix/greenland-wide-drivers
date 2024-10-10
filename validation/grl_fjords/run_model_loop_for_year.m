@@ -90,20 +90,22 @@ for i_fjord=1:height(fjord_matrix)
         else
             p.sill=1;
         end
-        p.H = max(p.Hgl,p.Hsill);
+        
+        p.H = max(p.Hgl,p.Hsill); % we treat the fjord to be as deep as the deepest point we know exists in the fjord
+        if max(zf) > p.H % if the cast inside the fjord goes deeper than what we set as current depth, then the fjord is as deep as the cast
+            p.H = ceil(max(zf));
+        end
+
         if p.H == p.Hsill,p.sill=0; end % if we made the fjord as deep as the sill, it essentially has no sill
 
-        if p.H-p.Hsill < 10
-            p.Hsill = p.Hsill-(10-p.H-p.Hsill); % workaround so the layer division below the sill works
+        if (p.H-p.Hsill < 10)                     % if p.H and p.Hsill are too close to each other, 
+            p.Hsill = p.Hsill-(10-(p.H-p.Hsill)); % we bump the sill upwards a wee bit (workaround so the layer division below the sill works)
         end
         if p.H < p.Hsill % the sill cannot be deeper than the fjord itself
             p.Hsill = p.H;
             p.sill = 0;
         end
-        if max(zf) > p.H % if the cast inside the fjord goes deeper than what we set as current depth, then the fjord is as deep as the cast
-            p.H = ceil(max(zf));
-            % p.Hgl = p.H; % since we take the fjord profiles to be as close as possible to the glacier front, this assumption is reasonable for most cases
-        end
+        
         
 
         % get subglacial discharge (separate file for better readability
