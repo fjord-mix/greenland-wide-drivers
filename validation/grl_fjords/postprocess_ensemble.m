@@ -63,7 +63,7 @@ for i_fjord=1:n_fjords
             sinter_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Sinter;
             slower_box_comp(:,i_run) = ensemble(i_fjord,i_run).s.Slower;
 
-            min_depth_rmse = 20;
+            min_depth_rmse = 0;
             depths_rmse = (zf_obs > min_depth_rmse) & (zf_obs < ensemble(i_fjord,i_run).p.Hgl);
             for i_day = 1:n_days
                 if size(tf_obs(depths_rmse),1) ~= size(tf_box_comp(depths_rmse,i_run,i_day),1)
