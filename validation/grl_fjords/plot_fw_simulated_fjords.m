@@ -4,7 +4,9 @@ rmse_threshold = 0.5;
 n_years = length(ensemble_yr);
 lcolor=lines(n_years);
 h_hist = [];
+hb_colors = [];
 lbl_hist = {};
+lbl_yrs = {};
 zfw_stacked = [];
 znb_stacked = [];
 tfw_stacked = [];
@@ -55,14 +57,17 @@ for i_year=n_years:-1:1
             end
         end
     end % i_fjord
-    bubblechart(x_fjd,y_fjd,rmse_fjd,lcolor(i_year,:),'MarkerEdgeColor',[0 0 0],'MarkerFaceAlpha',0.5);
+    hb = bubblechart(x_fjd,y_fjd,rmse_fjd,lcolor(i_year,:),'MarkerEdgeColor',[0 0 0],'MarkerFaceAlpha',0.5);
+    hb_colors = [hb_colors hb];
+    lbl_yrs{end+1} = sprintf("%d (n=%d)",2015+i_year,n_fjords);
 end % i_year
 bubblesize([5 15])
 bubblelim([0 2.1])
 % blgd = bubblelegend('RMSE (^oC)','Style','telescopic','Location','southeast','fontsize',12);
 blgd = bubblelegend('RMSE (^oC)','Location','southwest','fontsize',8);
+hl = legend(hb_colors,lbl_yrs,'location','layout','fontsize',16);
+hl.Layout.Tile = 5;
 blgd.Title.FontWeight='normal';
-blgd.Title.FontSize=8;
 set(blgd.BoxFace, 'ColorType','truecoloralpha', 'ColorData',uint8(255*[1;1;1;.8]));
 
 %% Histograms
@@ -74,8 +79,13 @@ for i_year=n_years:-1:1
     t_fw_max = NaN(size(ensemble));
     t_qsg_max = NaN([size(ensemble,1),1]);
     for i_fjord=1:size(ensemble,1)
+        sum_fw_export = NaN([ensemble(i_fjord,end).p.N,size(ensemble,2)]);
+        sum_fw_discharge = NaN(size(sum_fw_export));
         for i_run=1:size(ensemble,2)
             if ~isempty(ensemble(i_fjord,i_run).s) %&& res_box(i_fjord).rmse_tf(i_run,2) < rmse_threshold
+                sum_fw_export(:,i_run)    = ensemble(i_fjord,i_run).s.fw_profile_export;
+                sum_fw_discharge(:,i_run) = ensemble(i_fjord,i_run).s.fw_profile_discharge;
+
                 % depths at target day
                 % zfw(i_fjord,i_run) = ensemble(i_fjord,i_run).s.z_max_export(i_tgt_day);
                 % znb(i_fjord,i_run) = ensemble(i_fjord,i_run).s.znb(i_tgt_day);
@@ -99,6 +109,19 @@ for i_year=n_years:-1:1
                 tfw_stacked = [tfw_stacked; t_fw_max(:)];
             end
         end
+
+        nexttile(3,[2 1]); hold on; box on; grid on;
+        % histogram(znb(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',lcolor(i_year,:),'orientation','horizontal','FaceAlpha',0.5);
+        plot(mean(sum_fw_discarge,'omitnan'),ensemble(i_fjord,end).s.z,'color',lcolor(i_year,:),'linewidth',1.5)
+        % set(gca, 'xdir', 'reverse','fontsize',16);
+        % ylim([-450 0])
+
+        nexttile(4,[2 1]); hold on; box on; grid on;
+        % histogram(zfw(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',lcolor(i_year,:),'orientation','horizontal','FaceAlpha',0.5);
+        plot(-mean(sum_fw_export,'omitnan'),ensemble(i_fjord,end).s.z,'color',lcolor(i_year,:),'linewidth',1.5)
+        set(gca,'fontsize',16)
+        % ylim([-450 0])
+
     end
     t_qsg_stacked = [t_qsg_stacked; t_qsg_max(:)];
 
@@ -110,42 +133,32 @@ for i_year=n_years:-1:1
     histogram(t_qsg_max(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',lcolor(i_year,:),'orientation','vertical','FaceAlpha',0.5);
     set(gca,'fontsize',16,'ydir','reverse')
 
-    nexttile(3,[2 1]); hold on; box on; grid on;
-    histogram(znb(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',lcolor(i_year,:),'orientation','horizontal','FaceAlpha',0.5);
-    set(gca, 'xdir', 'reverse','fontsize',16);
-    ylim([-450 0])
-
-    nexttile(4,[2 1]); hold on; box on; grid on;
-    h1 = histogram(zfw(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',lcolor(i_year,:),'orientation','horizontal','FaceAlpha',0.5);
-    set(gca,'fontsize',16)
-    ylim([-450 0])
-
-    h_sit = [h_hist h1];
-    lbl_hist{end+1} = num2str(2015+i_year);
+    % h_sit = [h_hist h1];
+    % lbl_hist{end+1} = num2str(2015+i_year);
 end
 nexttile(2,[1 1]); hold on;
-title('(b) Maximum FW export','fontsize',14)
+title('(b) Peak FW export','fontsize',14)
 histogram(tfw_stacked(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',[0 0 0],'orientation','vertical','FaceAlpha',1.);
 xlim([100 300])
 ylabel('Probability','fontsize',16)
 
 nexttile(6,[1 1]); hold on;
-title('(c) Maximum subglacial discharge','fontsize',14)
+title('(c) Peak subglacial discharge','fontsize',14)
 histogram(t_qsg_stacked(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',[0 0 0],'orientation','vertical','FaceAlpha',1.);
 xlim([100 300])
 ylabel('Probability','fontsize',16)
 xlabel('Day of year','fontsize',16)
 
 nexttile(3,[2 1]); hold on;
-title('(d) Neutral buoyancy','fontsize',14)
-histogram(znb_stacked(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',[0 0 0],'orientation','horizontal','FaceAlpha',1.);
-xlabel('Probability','fontsize',16)
+title('(d) Plume to fjord','fontsize',14)
+% histogram(znb_stacked(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',[0 0 0],'orientation','horizontal','FaceAlpha',1.);
+xlabel('Plume freshwater flux (m^3/s)','fontsize',16)
 ylabel('Depth (m)','fontsize',16)
 
 nexttile(4,[2 1]); hold on;
-title('(e) Maximum FW export','fontsize',14)
-histogram(zfw_stacked(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',[0 0 0],'orientation','horizontal','FaceAlpha',1.);
-xlabel('Probability','fontsize',16)
-legend(h_hist,lbl_hist,'location','southeast')
+title('(e) Fjord to ocean','fontsize',14)
+% histogram(zfw_stacked(:),ensemble(1,1).p.N,'Normalization','probability','FaceColor',[0 0 0],'orientation','horizontal','FaceAlpha',1.);
+xlabel('Fjord freshwater export (m^3/s)','fontsize',16)
+% legend(h_hist,lbl_hist,'location','southeast')
 
 end
