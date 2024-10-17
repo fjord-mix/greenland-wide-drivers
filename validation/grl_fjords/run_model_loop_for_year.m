@@ -276,6 +276,7 @@ for i_run=1:n_runs
             QVs_mean = mean(cur_fjord.s.QVs(:,(end-365:end)),2,'omitnan');
             QVp_mean = mean(cur_fjord.s.QVp(:,(end-365:end)),2,'omitnan');
             S_mean   = mean(cur_fjord.s.S(:,(end-365:end)),2,'omitnan');
+            T_mean   = mean(cur_fjord.s.T(:,(end-365:end)),2,'omitnan');
             fw_mean_export_profile = QVs_mean.*((Sref-S_mean)/Sref);
             fw_mean_discharge_profile = QVp_mean.*((Sref-S_mean)/Sref);
 
@@ -283,6 +284,8 @@ for i_run=1:n_runs
             ensemble(i_fjord,i_run).s.Sfinal = Sfinal;
             ensemble(i_fjord,i_run).s.QVsfinal = QVsfinal;
             ensemble(i_fjord,i_run).s.QVpfinal = QVpfinal;
+            ensemble(i_fjord,i_run).s.Tmean = T_mean;
+            ensemble(i_fjord,i_run).s.Smean = S_mean;
 
             ensemble(i_fjord,i_run).s.Tforc = mean(cur_fjord.s.Ts(:,(tgt_day-5:tgt_day+5)),2); 
             ensemble(i_fjord,i_run).s.Sforc = mean(cur_fjord.s.Ss(:,(tgt_day-5:tgt_day+5)),2); 
