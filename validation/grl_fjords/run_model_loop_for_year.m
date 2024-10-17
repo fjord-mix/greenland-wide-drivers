@@ -273,10 +273,10 @@ for i_run=1:n_runs
                 Qsg0              = mean(cur_fjord.s.Qsg(tgt_day-5:tgt_day+5),2);
                 [inb(i_day), ~, ~, ~]   = get_plume_properties(cur_fjord.p, cur_fjord.s.kgl, cur_fjord.s.H, Sfinal(:,i_day), Tfinal(:,i_day), Qsg0);
             end
-            QVs_mean = mean(cur_fjord.s.QVs(:,(end-365:end)),2,'omitnan');
-            QVp_mean = mean(cur_fjord.s.QVp(:,(end-365:end)),2,'omitnan');
-            S_mean   = mean(cur_fjord.s.S(:,(end-365:end)),2,'omitnan');
-            T_mean   = mean(cur_fjord.s.T(:,(end-365:end)),2,'omitnan');
+            QVs_mean = mean(cur_fjord.s.QVs(:,(end-364:end)),2,'omitnan');
+            QVp_mean = mean(cur_fjord.s.QVp(:,(end-364:end)),2,'omitnan');
+            S_mean   = mean(cur_fjord.s.S(:,(end-364:end)),2,'omitnan');
+            T_mean   = mean(cur_fjord.s.T(:,(end-364:end)),2,'omitnan');
             fw_mean_export_profile = QVs_mean.*((Sref-S_mean)/Sref);
             fw_mean_discharge_profile = QVp_mean.*((Sref-S_mean)/Sref);
 
@@ -290,7 +290,7 @@ for i_run=1:n_runs
             ensemble(i_fjord,i_run).s.Tforc = mean(cur_fjord.s.Ts(:,(tgt_day-5:tgt_day+5)),2); 
             ensemble(i_fjord,i_run).s.Sforc = mean(cur_fjord.s.Ss(:,(tgt_day-5:tgt_day+5)),2); 
 
-            ymean_fw_export = mean(cur_fjord.s.QVs(:,end-365:end).*((Sref-cur_fjord.s.S(:,end-365:end))/Sref),2,'omitnan');
+            ymean_fw_export = mean(cur_fjord.s.QVs(:,end-364:end).*((Sref-cur_fjord.s.S(:,end-364:end))/Sref),2,'omitnan');
             [~,i_max_export] = min(ymean_fw_export); % we use "min" because QVs < 0 means water is leaving the layer towards the shelf
 
             fw_export_t  = sum(cur_fjord.s.QVs.*((Sref-cur_fjord.s.S)/Sref),1,'omitnan');
