@@ -218,15 +218,19 @@ for i_fjord=1:size(ensemble,1)
         ha_main = nexttile(i_plt,[2 n_cols]); hold on; box on
         text(0.98,1.01,['(',letters(i_panel),')'],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',12)
         i_panel=i_panel+1;
+        base_gl_and_sill_ef = 0;
         for i_bnd=1:length(key_param_bnd)
             
             ef_ensemble = NaN([length(res_box(i_fjord).zf),size(ensemble,2)]);
+            znb_ensemble = NaN([1,size(ensemble,2)]);
             % find profiles that fit into that interval for that cast
             for i_run=1:size(ensemble,2)
                 if isempty(ensemble(i_fjord,i_run).s), continue; end % we skip any empty entries
                 if mask_bnds_profile(i_fjord,i_run).(param_names{i_param}) == i_bnd
                     Sref = 35.0;
-                    ef_ensemble(:,i_run) = ensemble(i_fjord,i_run).s.QVsfinal(:,1).*((Sref-ensemble(i_fjord,i_run).s.Sfinal(:,1))/Sref);
+                    % ef_ensemble(:,i_run) = ensemble(i_fjord,i_run).s.QVsfinal(:,2).*((Sref-ensemble(i_fjord,i_run).s.Sfinal(:,2))/Sref);
+                    ef_ensemble(:,i_run) = ensemble(i_fjord,i_run).s.fw_profile_export;%/trapz(ensemble(i_fjord,i_run).s.fw_profile_export,ensemble(i_fjord,i_run).s.z);
+                    znb_ensemble(i_run) = ensemble(i_fjord,i_run).s.znb(1);
                 end
                 Hsill = ensemble(i_fjord,i_run).p.Hsill;
                 Hgl   = ensemble(i_fjord,i_run).p.Hgl;
@@ -243,13 +247,18 @@ for i_fjord=1:size(ensemble,1)
             if i_bnd==length(key_param_bnd)
                 hp = plot(efmean,depths,'linewidth',1.5,'color',lcolor(i_param,:),'linestyle',ls_bnds{i_bnd});
             end
+
+            % add plume
+            % scatter(base_gl_and_sill_ef+1*i_bnd,mean(znb_ensemble,'omitnan'),60,[0 0 0],'x')
+            % plot([base_gl_and_sill_ef+1*i_bnd,base_gl_and_sill_ef+1*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
+            %                                     mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
+            %                                     'linewidth',1.7,'color',[0 0 0],'linestyle',ls_bnds{i_bnd})
         end
         
         % add depictions of GL and sill depths
-        base_gl_and_sill_t = 0;
-        scatter(base_gl_and_sill_t,-Hgl,40,'v','filled','MarkerFaceColor',[0 0 0])
+        scatter(base_gl_and_sill_ef,-Hgl,40,'v','filled','MarkerFaceColor',[0 0 0])
         if has_sill
-            plot([base_gl_and_sill_t base_gl_and_sill_t],[-H -Hsill],'-','linewidth',2,'color',[0 0 0])
+            plot([base_gl_and_sill_ef base_gl_and_sill_ef],[-H -Hsill],'-','linewidth',2,'color',[0 0 0])
         end
         
         set(gca,'fontsize',14)
@@ -271,15 +280,49 @@ for i_fjord=1:size(ensemble,1)
         for i_bin=1:length(bins)-1
             fz_ensemble = NaN([1,size(ensemble,2)]);
             fz_full_ens = NaN(size(fz_ensemble));
+            ef_ensemble_peaks = NaN(size(ef_ensemble));
             % find profiles that fit into that bin for that cast
             for i_run=1:size(ensemble,2)
                 if isempty(ensemble(i_fjord,i_run).s), continue; end % we skip any empty entries
                 if mask_bnds_prctile(i_fjord,i_run).(param_names{i_param}) == i_bin
-                    fz_ensemble(i_run) = ensemble(i_fjord,i_run).s.z_max_export;
+                    % fz_ensemble(i_run) = ensemble(i_fjord,i_run).s.z_max_export;
+                    % ef_ensemble_peaks(:,i_run) = ensemble(i_fjord,i_run).s.QVsfinal(:,1).*((Sref-ensemble(i_fjord,i_run).s.Sfinal(:,1))/Sref);
+                    ef_ensemble_peaks(:,i_run) = ensemble(i_fjord,i_run).s.fw_profile_export;
+                    ef_ensemble_peaks(:,i_run) = ef_ensemble_peaks(:,i_run)/trapz(ef_ensemble_peaks(:,i_run),ensemble(i_fjord,i_run).s.z); % normalising the flux magnitude
                 end
                 fz_full_ens(i_run) = ensemble(i_fjord,i_run).s.z_max_export;
             end
-            fzplot = mean(fz_ensemble,[1,2],'omitnan'); % take mean for that subset
+
+            % finds peaks in the FW export profile. We want those associated with export (i.e., positive & above the grounding line)
+            ef_peaks = -mean(ef_ensemble_peaks,2,'omitnan');
+            ef_peaks(depths < -Hgl) = 0;
+            ef_peaks(ef_peaks < 0) = 0;
+            
+            % [ef_peaks_rsmp,depths_rsmp] = resample(ef_peaks,-round(depths),1);
+            [val_peaks,z_peaks,w_peaks,p_peaks] = findpeaks(ef_peaks,-round(depths));%,'NPeaks',5);
+            area_peak = w_peaks.*val_peaks; % Although this is not properly the area, it worked much better than the numerical integral approach below
+
+            % functions to estimate area undr the curve of each peak
+            % sfcn = @(b,x) b(4) + b(1).*x.*(exp(b(2).*x) + exp(b(3).*x));
+            % AUC = @(b,x) - b(4).*(x(1) - x(end)) - b(1).*((exp(b(2).*x(1)).*(b(2)*x(1) - 1))./b(2).^2 - (exp(b(2).*x(end)).*(b(2)*x(end) - 1))./b(2).^2) - b(1)*((exp(b(3)*x(1)).*(b(3).*x(1) - 1))./b(3)^2 - (exp(b(3)*x(end))*(b(3)*x(end) - 1))./b(3)^2);
+            % for k = 1:numel(z_peaks)
+            %     % ixrng = -(z_peaks(k)+20:-1:z_peaks(k)-200);
+            %     ixrng = max(1,z_peaks(k)-100) : min(z_peaks(k)+100,numel(depths_rsmp));
+            %     drv = depths_rsmp(ixrng) - depths_rsmp(ixrng(1));
+            %     B(k,:) = fminsearch(@(b)norm(ef_peaks_rsmp(ixrng) - sfcn(b,drv)), [z_peaks(k)*10 -rand(1,2)*10 0.01]);
+            %     sfit{k} = [drv+depths_rsmp(ixrng(1)), sfcn(B(k,:),drv), ixrng(:)];
+            %     % area_peak(k) = AUC(B(k,:),drv);
+            %     area_peak(k,:) = trapz(drv, sfit{k}(:,2));
+            % end
+
+            % we are interested in the widest peak, i.e., the one associated with the most freshwater export
+            if isempty(val_peaks)
+                    fzplot=0;
+            else
+                fzplot = -z_peaks(area_peak == max(area_peak)); 
+            end
+
+            % fzplot = mean(fz_ensemble,[1,2],'omitnan'); % take mean for that subset
             scatter(i_bin*10,round(fzplot,2),50,'filled','MarkerFaceColor',lcolor(i_param,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
         end
         set(gca,'YAxisLocation','left','XAxisLocation','top','fontsize',8)
@@ -308,7 +351,7 @@ ht_t.Padding='compact';
 
 figure(hf_e)
 % xlabel(ht_e,'Shelf-fjord freshwater flux (m^3s^{-1})','fontsize',14);
-xlabel(ht_e,'Export freshwater flux (m^3s^{-1})','fontsize',14);
+xlabel(ht_e,'Mean exported freshwater flux (m^3s^{-1})','fontsize',14);
 ylabel(ht_e,'Depth (m)','fontsize',14);
 ht_e.TileSpacing='compact';
 ht_e.Padding='compact';
