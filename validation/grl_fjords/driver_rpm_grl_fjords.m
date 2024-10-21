@@ -58,16 +58,19 @@ for which_year=2016:2020
 end
 
 %% Batch processing all years together
-% which_year=2020;
-% path_fout = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_',num2str(60),'layers_dt',num2str(3),'h'];
-% load(path_fout)
-% run postprocess_plot_ensembles
+which_year=2020;
+path_fout = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_',num2str(60),'layers_dt',num2str(3),'h'];
+load(path_fout)
+run postprocess_plot_ensembles
 
 %% Summary of simulated fjords & FW export (Fig. 1)
 % hf_fig1 = plot_fw_simulated_fjords(data_path,ensemble_yr,res_box_yr);
 % exportgraphics(hf_fig1,[figs_path,'1_fjords_fw_yrs_n',num2str(n_runs),'_norm_all.png'],'Resolution',300)
 
-%% Sensitivity plots for select fjords
+%% Proof of concept that the model works
+hf = plot_ensemble_tempsalt(fjord_model_yr{end},ensemble_yr{end},res_box_yr{end},res_obs_yr{end},n_runs,tgt_days(2),2,{'28','89'});
+
+%% Sensitivity plots for select fjords (Fig. 3)
 % [hf_t,hf_e] = plot_sensitivity_ensemble(X,ensemble_yr{5},res_box_yr{5},param_names,which_fj_sens{5});
 % exportgraphics(hf_t,[figs_path,'2_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
 % exportgraphics(hf_e,[figs_path,'3_sensitivity_fwex_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
