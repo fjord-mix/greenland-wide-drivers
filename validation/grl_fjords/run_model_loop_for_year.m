@@ -106,11 +106,13 @@ for i_fjord=1:height(fjord_matrix)
             p.sill = 0;
         end
         
-        
-
         % get subglacial discharge (separate file for better readability
         run set_subglacial_discharge.m
-        
+        if max(f.Qsg) > 4e3
+            disp('Subglacial runoff data is abnormaly high! Skipping...')
+            continue
+        end
+
         % get the shelf-profile forcing
         z_shelf = ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'depth');
         t_shelf = movmean(ncread([omg_data_shelf.folder,'/',omg_data_shelf.name],'temperature'),5);
