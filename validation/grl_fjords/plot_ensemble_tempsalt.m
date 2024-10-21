@@ -1,4 +1,4 @@
-function hf = plot_ensemble_tempsalt(fjord_model,ensemble,res_box,res_obs,n_runs,tgt_days,i_tgt_day,which_fjords)
+function hf_ts = plot_ensemble_tempsalt(fjord_model,ensemble,res_box,res_obs,n_runs,tgt_days,i_tgt_day,which_fjords)
 
 if isempty(tgt_days)
     n_days = 1;
@@ -18,7 +18,7 @@ fig_height = 300*length(which_fjords);
 % rmse_table(size(fjord_model)) = struct("tf_rpm",[],"sf_rpm",[],"ts_rpm",[],"tf_gcm",[],"sf_gcm",[],"ts_gcm",[]);
 % rmse_table = cell(size(fjord_model));
 
-hf       = figure('Name','Temperature and salinity profiles','Position',[40 40 fig_width fig_height]);
+hf_ts    = figure('Name','Temperature and salinity profiles','Position',[40 40 fig_width fig_height]);
 ht       = tiledlayout(length(which_fjords),2,'TileSpacing','compact');
 i_iter   = 0;
 i_letter =1;
