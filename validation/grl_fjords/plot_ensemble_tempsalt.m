@@ -19,7 +19,8 @@ if length(which_fjords) > 1
 else
     fig_height = 250;
 end
-rmse_table(size(fjord_model)) = struct("tf_rpm",[],"sf_rpm",[],"ts_rpm",[],"tf_gcm",[],"sf_gcm",[],"ts_gcm",[]);
+% rmse_table(size(fjord_model)) = struct("tf_rpm",[],"sf_rpm",[],"ts_rpm",[],"tf_gcm",[],"sf_gcm",[],"ts_gcm",[]);
+% rmse_table = cell(size(fjord_model));
 
 hf       = figure('Name','Temperature and salinity profiles','Position',[40 40 fig_width fig_height]);
 ht       = tiledlayout(length(which_fjords),2,'TileSpacing','compact');
@@ -30,43 +31,48 @@ for i_fjord=1:n_fjord_runs
     % find run with the smallest RMSE
     if isempty(res_box(i_fjord).rmse_tf)
         continue
-    elseif isempty(i_tgt_day)
-        rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf./mean(res_box(i_fjord).tf,'omitnan') + (1-w_rmse_t).*res_box(i_fjord).rmse_sf./mean(res_box(i_fjord).sf,'omitnan');
-
-        [rmse_table(i_fjord).tf_rpm,i_min_rmse_tf] = min(res_box(i_fjord).rmse_tf,[],'all','omitnan');
-        [rmse_table(i_fjord).sf_rpm,i_min_rmse_sf] = min(res_box(i_fjord).rmse_sf,[],'all','omitnan');
-        [rmse_table(i_fjord).ts_rpm,i_min_rmse]    = min(rmse_both,[],'all','omitnan');
-
-        [irun_best_tf,id_best_tf] = ind2sub([n_runs,length(tgt_days)],i_min_rmse_tf);
-        [irun_best_sf,id_best_sf] = ind2sub([n_runs,length(tgt_days)],i_min_rmse_sf);
-        [irun_best,id_best] = ind2sub([n_runs,length(tgt_days)],i_min_rmse);
-    
-        tf_best = res_box(i_fjord).ensemble_tf(:,irun_best_tf,id_best_tf);
-        sf_best = res_box(i_fjord).ensemble_sf(:,irun_best_sf,id_best_sf);
-    
-        tf_best2 = res_box(i_fjord).ensemble_tf(:,irun_best,id_best);
-        sf_best2 = res_box(i_fjord).ensemble_sf(:,irun_best,id_best);
-    
-        inds_best_tf = [irun_best_tf,id_best_tf];
-        inds_best_sf = [irun_best_sf,id_best_sf];
-        inds_best2   = [irun_best,id_best];
-    else
-        rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf./mean(res_box(i_fjord).tf,1,'omitnan') + (1-w_rmse_t).*res_box(i_fjord).rmse_sf./mean(res_box(i_fjord).sf,1,'omitnan');
-
-        [rmse_table(i_fjord).tf_rpm,inds_best_tf] = min(squeeze(res_box(i_fjord).rmse_tf(:,i_tgt_day)),[],'all','omitnan');
-        [rmse_table(i_fjord).sf_rpm,inds_best_sf] = min(squeeze(res_box(i_fjord).rmse_sf(:,i_tgt_day)),[],'all','omitnan');
-        [rmse_table(i_fjord).ts_rpm,inds_best2]   = min(squeeze(rmse_both(:,i_tgt_day)),[],'all','omitnan');
-    
-        tf_best = res_box(i_fjord).ensemble_tf(:,inds_best_tf,i_tgt_day);
-        sf_best = res_box(i_fjord).ensemble_sf(:,inds_best_sf,i_tgt_day);
-    
-        tf_best2 = res_box(i_fjord).ensemble_tf(:,inds_best2,i_tgt_day);
-        sf_best2 = res_box(i_fjord).ensemble_sf(:,inds_best2,i_tgt_day);
     end
-
-    % adds Shelf-fjord RMSE to the table
-    rmse_table(i_fjord).rmse_ts = res_box(i_fjord).rmse_ts;
-    rmse_table(i_fjord).rmse_ss = res_box(i_fjord).rmse_ss;
+    [~,tf_best,sf_best] = get_best_profiles_rmse(res_box,i_fjord,n_runs,w_rmse_t,tgt_days,i_tgt_day);
+    
+    % if isempty(res_box(i_fjord).rmse_tf)
+    %     continue
+    % elseif isempty(i_tgt_day)
+    %     rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf./mean(res_box(i_fjord).tf,'omitnan') + (1-w_rmse_t).*res_box(i_fjord).rmse_sf./mean(res_box(i_fjord).sf,'omitnan');
+    % 
+    %     [rmse_table(i_fjord).tf_rpm,i_min_rmse_tf] = min(res_box(i_fjord).rmse_tf,[],'all','omitnan');
+    %     [rmse_table(i_fjord).sf_rpm,i_min_rmse_sf] = min(res_box(i_fjord).rmse_sf,[],'all','omitnan');
+    %     [rmse_table(i_fjord).ts_rpm,i_min_rmse]    = min(rmse_both,[],'all','omitnan');
+    % 
+    %     [irun_best_tf,id_best_tf] = ind2sub([n_runs,length(tgt_days)],i_min_rmse_tf);
+    %     [irun_best_sf,id_best_sf] = ind2sub([n_runs,length(tgt_days)],i_min_rmse_sf);
+    %     [irun_best,id_best] = ind2sub([n_runs,length(tgt_days)],i_min_rmse);
+    % 
+    %     tf_best = res_box(i_fjord).ensemble_tf(:,irun_best_tf,id_best_tf);
+    %     sf_best = res_box(i_fjord).ensemble_sf(:,irun_best_sf,id_best_sf);
+    % 
+    %     tf_best2 = res_box(i_fjord).ensemble_tf(:,irun_best,id_best);
+    %     sf_best2 = res_box(i_fjord).ensemble_sf(:,irun_best,id_best);
+    % 
+    %     inds_best_tf = [irun_best_tf,id_best_tf];
+    %     inds_best_sf = [irun_best_sf,id_best_sf];
+    %     inds_best2   = [irun_best,id_best];
+    % else
+    %     rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf./mean(res_box(i_fjord).tf,1,'omitnan') + (1-w_rmse_t).*res_box(i_fjord).rmse_sf./mean(res_box(i_fjord).sf,1,'omitnan');
+    % 
+    %     [rmse_table(i_fjord).tf_rpm,inds_best_tf] = min(squeeze(res_box(i_fjord).rmse_tf(:,i_tgt_day)),[],'all','omitnan');
+    %     [rmse_table(i_fjord).sf_rpm,inds_best_sf] = min(squeeze(res_box(i_fjord).rmse_sf(:,i_tgt_day)),[],'all','omitnan');
+    %     [rmse_table(i_fjord).ts_rpm,inds_best2]   = min(squeeze(rmse_both(:,i_tgt_day)),[],'all','omitnan');
+    % 
+    %     tf_best = res_box(i_fjord).ensemble_tf(:,inds_best_tf,i_tgt_day);
+    %     sf_best = res_box(i_fjord).ensemble_sf(:,inds_best_sf,i_tgt_day);
+    % 
+    %     tf_best2 = res_box(i_fjord).ensemble_tf(:,inds_best2,i_tgt_day);
+    %     sf_best2 = res_box(i_fjord).ensemble_sf(:,inds_best2,i_tgt_day);
+    % end
+    % 
+    % % adds Shelf-fjord RMSE to the table
+    % rmse_table(i_fjord).rmse_ts = res_box(i_fjord).rmse_ts;
+    % rmse_table(i_fjord).rmse_ss = res_box(i_fjord).rmse_ss;
 
 
     %% Plotting temperature
@@ -88,15 +94,17 @@ for i_fjord=1:n_fjord_runs
     text(0.02,1.02,sprintf("%s) %s (%.0f km)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
     text(0.98,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','HorizontalAlignment','right','FontSize',fsize)
     i_letter=i_letter+1;
-    % Observed shelf and fjord profiles
-    hs = plot(res_obs(i_fjord).ts,-res_obs(i_fjord).zs,'linewidth',2.5,'color',lcolor(1,:));
+
+    % Observed fjord profile
     hf = plot(res_obs(i_fjord).tf,-res_obs(i_fjord).zf,'linewidth',2.5,'color',lcolor(2,:));
     hb=[];
  
     % RPM profile(s)
     % forcing
     if isfield(res_box(i_fjord),'Tforc') % we use this in case we are not using the observed profile as the shelf forcing
-        plot(res_box(i_fjord).Tforc,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(1,:),'LineStyle','--');
+        hs = plot(res_box(i_fjord).Tforc,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(1,:),'LineStyle','-');
+    else
+        hs = plot(res_obs(i_fjord).ts,-res_obs(i_fjord).zs,'linewidth',2.5,'color',lcolor(1,:)); % plots observed if Tforc doesnt exist
     end
     % results
     for i_day=1:n_days
@@ -144,12 +152,14 @@ for i_fjord=1:n_fjord_runs
     text(0.98,0.98,sprintf("(%s)",letters(i_letter)),'Units','normalized','VerticalAlignment','top','HorizontalAlignment','right','FontSize',fsize)
     i_letter=i_letter+1;
     % Observed shelf and fjord profiles
-    plot(res_obs(i_fjord).ss,-res_obs(i_fjord).zs,'linewidth',2.5,'color',lcolor(1,:));
+    
     plot(res_obs(i_fjord).sf,-res_obs(i_fjord).zf,'linewidth',2.5,'color',lcolor(2,:));        
 
     % forcing
     if isfield(res_box(i_fjord),'Sforc')
-        plot(res_box(i_fjord).Sforc,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(1,:),'LineStyle','--');
+        plot(res_box(i_fjord).Sforc,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(1,:),'LineStyle','-');
+    else
+        plot(res_obs(i_fjord).ss,-res_obs(i_fjord).zs,'linewidth',2.5,'color',lcolor(1,:));
     end
     for i_day=1:n_days
         y2 = [-res_box(i_fjord).zf; flip(-res_box(i_fjord).zf)];
