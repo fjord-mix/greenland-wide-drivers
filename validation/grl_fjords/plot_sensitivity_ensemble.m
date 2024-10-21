@@ -1,5 +1,6 @@
-function [hf_t,hf_e] = plot_sensitivity_ensemble(X,ensemble,res_box,param_names,which_fjords)
+function [hf_t,hf_e] = plot_sensitivity_ensemble(X,ensemble,res_box,res_obs,param_names,which_fjords,plt_fw)
 
+if nargin < 7, plt_fw = 0; hf_e=[]; end
 
 if nargin > 4
     n_fjords = length(which_fjords);
@@ -10,6 +11,9 @@ if size(X,2) ~=length(param_names), error('input parameter matrix must me [n_run
 n_params   = size(X,2);
 letters=lower(char(65:65+n_params*n_fjords));
 
+
+fig_width = 1200;
+fig_height = 250*length(which_fjords);
 %% Applying the RMSE filter - speculative, for now trying out to see if it works
 
 % rmse_threshold = 0.5;
@@ -79,7 +83,7 @@ lbl_fjords = cell([1,length(param_names)]);
 
 
 %% Plotting temperature
-hf_t = figure('Name','Temperature sensitivity','Position',[40 40 1200 900]);
+hf_t = figure('Name','Temperature sensitivity','Position',[40 40 fig_width fig_height]);
 ht_t = tiledlayout(2*n_fjords,n_cols*length(param_names));
 no_legend = 1;
 i_plt_fjord=0;
@@ -96,14 +100,26 @@ for i_fjord=1:size(ensemble,1)
         end
         if ~plot_fjord, continue; end
     end
+    % find best run with the smallest RMSE
+    if isempty(res_box(i_fjord).rmse_tf)
+        tf_best = NaN(size(res_box(i_fjord).zf));
+    else 
+        [~,tf_best,~] = get_best_profiles_rmse(res_box,i_fjord,size(ensemble,2));
+    end
+    
+
+
     i_plt_fjord=i_plt_fjord+1;
     i_plt = 1+(i_plt_fjord-1)*2*(n_cols*4);
     i_plt_sub = i_plt+(n_cols*4);
     for i_param=1:length(param_names)
         ha_main = nexttile(i_plt,[2 n_cols]); hold on; box on
-        text(0.98,1.01,['(',letters(i_panel),')'],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',12)
+        text(0.99,1.01,['(',letters(i_panel),') ',param_names{i_param}],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',12)
         i_panel=i_panel+1;
-        base_gl_and_sill_t = 0;
+
+        base_gl_and_sill_t = 1;
+        base_gl_and_sill_p = 0;
+
         for i_bnd=1:length(key_param_bnd)
             tf_ensemble = NaN([length(res_box(i_fjord).zf),size(ensemble,2)]);
             znb_ensemble = NaN([1,size(ensemble,2)]);
@@ -120,22 +136,35 @@ for i_fjord=1:size(ensemble,1)
                 has_sill = ensemble(i_fjord,i_run).p.sill;
             end
 
+
             depths = -res_box(i_fjord).zf;
             tfmean = mean(tf_ensemble,2,'omitnan');
+            if i_bnd==1
+                % Plotting shelf forcing observation
+                plot(res_box(i_fjord).Tforc,depths,'linewidth',1.0,'color',lcolor(1,:),'linestyle','-');
+
+                % Plotting fjord observation
+                plot(res_obs(i_fjord).tf,-res_obs(i_fjord).zf,'linewidth',1.0,'color',lcolor(2,:),'linestyle','-');
     
-            plot(tfmean,depths,'linewidth',1.5,'color',lcolor(i_param,:),'linestyle',ls_bnds{i_bnd});
-            if i_bnd==length(key_param_bnd)
-                hp = plot(tfmean,depths,'linewidth',1.5,'color',lcolor(i_param,:),'linestyle',ls_bnds{i_bnd});
+                % Plotting fjord ensemble best run
+                plot(tf_best,depths,'linewidth',1.0,'color',lcolor(3,:),'linestyle','-');
             end
+
+            % Plot sensitivity profile
+            plot(tfmean,depths,'linewidth',2.0,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd});
+            if i_bnd==length(key_param_bnd)
+                hp = plot(tfmean,depths,'linewidth',2.0,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd});
+            end
+
             % add depth-range of plume neutral buoyancy
             % scatter(base_gl_and_sill_t+0.1*i_bnd,mean(znb_ensemble,'omitnan'),60,lcolor(i_param,:),'x')
             % plot([base_gl_and_sill_t+0.1*i_bnd,base_gl_and_sill_t+0.1*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
             %                                     mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
             %                                     'linewidth',1.7,'color',lcolor(i_param,:),'linestyle',ls_bnds{i_bnd})
-            scatter(base_gl_and_sill_t+0.1*i_bnd,mean(znb_ensemble,'omitnan'),60,[0 0 0],'x')
-            plot([base_gl_and_sill_t+0.1*i_bnd,base_gl_and_sill_t+0.1*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
+            scatter(base_gl_and_sill_p+0.2*i_bnd,mean(znb_ensemble,'omitnan'),60,lcolor(4,:),'x')
+            plot([base_gl_and_sill_p+0.2*i_bnd,base_gl_and_sill_p+0.2*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
                                                 mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
-                                                'linewidth',1.7,'color',[0 0 0],'linestyle',ls_bnds{i_bnd})
+                                                'linewidth',1.7,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd})
         end
         % add depictions of GL and sill depths
         scatter(base_gl_and_sill_t,-Hgl,40,'v','filled','MarkerFaceColor',[0 0 0])
@@ -144,10 +173,10 @@ for i_fjord=1:size(ensemble,1)
         end
 
         set(gca,'fontsize',14)
-        % xlim([-2 5])
+        xlim([-2 3])
         ylim([-H 0])
         if i_param==1
-            text(0.02,1.075,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','fontsize',12)
+            text(0.02,1.01,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','VerticalAlignment','bottom','fontsize',12)
         end
         if no_legend==1
             handle_fjords = [handle_fjords hp];
@@ -173,7 +202,7 @@ for i_fjord=1:size(ensemble,1)
                 tf_full_ens(:,i_run) = ensemble(i_fjord,i_run).s.Tfinal(:,2);
             end
             tfplot = mean(tf_ensemble,[1,2],'omitnan') - mean(tf_full_ens,[1,2],'omitnan');
-            scatter(i_bin*10,tfplot,50,'filled','MarkerFaceColor',lcolor(i_param,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
+            scatter(i_bin*10,tfplot,50,'filled','MarkerFaceColor',lcolor(4,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
         end
         set(gca,'YAxisLocation','right','XAxisLocation','top','fontsize',8)
         xlabel([param_names{i_param},' percentile'],'fontsize',10)
@@ -189,12 +218,18 @@ for i_fjord=1:size(ensemble,1)
         i_plt_sub=i_plt_sub+n_cols;
     end
 end
+xlabel(ht_t,'Temperature (^oC)','fontsize',14);
+ylabel(ht_t,'Depth (m)','fontsize',14);
+ht_t.TileSpacing='compact';
+ht_t.Padding='compact';
+
 % if no_legend==1
-    legend(ha_main,handle_fjords,param_names,'fontsize',10,'Location','southeast');
+    % legend(ha_main,handle_fjords,param_names,'fontsize',10,'Location','southeast');
     % no_legend = 0;
 % end
 %% Plotting shelf export
-hf_e = figure('Name','Shelf export sensitivity','Position',[40 40 1200 900]);
+if plt_fw
+hf_e = figure('Name','Shelf export sensitivity','Position',[40 40 fig_width fig_height]);
 ht_e = tiledlayout(2*n_fjords,n_cols*length(param_names));
 no_legend=1;
 i_plt_fjord=0;
@@ -243,9 +278,9 @@ for i_fjord=1:size(ensemble,1)
             depths = -res_box(i_fjord).zf;
             efmean = -mean(ef_ensemble,2,'omitnan');
             
-            plot(efmean,depths,'linewidth',1.5,'color',lcolor(i_param,:),'linestyle',ls_bnds{i_bnd});
+            plot(efmean,depths,'linewidth',1.5,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd});
             if i_bnd==length(key_param_bnd)
-                hp = plot(efmean,depths,'linewidth',1.5,'color',lcolor(i_param,:),'linestyle',ls_bnds{i_bnd});
+                hp = plot(efmean,depths,'linewidth',1.5,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd});
             end
 
             % add plume
@@ -323,7 +358,7 @@ for i_fjord=1:size(ensemble,1)
             end
 
             % fzplot = mean(fz_ensemble,[1,2],'omitnan'); % take mean for that subset
-            scatter(i_bin*10,round(fzplot,2),50,'filled','MarkerFaceColor',lcolor(i_param,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
+            scatter(i_bin*10,round(fzplot,2),50,'filled','MarkerFaceColor',lcolor(4,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
         end
         set(gca,'YAxisLocation','left','XAxisLocation','top','fontsize',8)
         xlabel([param_names{i_param},' percentile'],'fontsize',10)
@@ -339,21 +374,12 @@ for i_fjord=1:size(ensemble,1)
         i_plt_sub=i_plt_sub+n_cols;
     end
 end
-legend(ha_main,handle_fjords,param_names,'fontsize',10,'Location','southwest');
-% no_legend = 0;
-
-
-figure(hf_t)
-xlabel(ht_t,'Temperature (^oC)','fontsize',14);
-ylabel(ht_t,'Depth (m)','fontsize',14);
-ht_t.TileSpacing='compact';
-ht_t.Padding='compact';
-
-figure(hf_e)
 % xlabel(ht_e,'Shelf-fjord freshwater flux (m^3s^{-1})','fontsize',14);
 xlabel(ht_e,'Mean exported freshwater flux (m^3s^{-1})','fontsize',14);
 ylabel(ht_e,'Depth (m)','fontsize',14);
 ht_e.TileSpacing='compact';
 ht_e.Padding='compact';
-
+% legend(ha_main,handle_fjords,param_names,'fontsize',10,'Location','southwest');
+% no_legend = 0;
+end
 end
