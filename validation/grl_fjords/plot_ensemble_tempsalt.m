@@ -9,16 +9,12 @@ end
 n_fjord_runs = length(fjord_model);
 w_rmse_t     = 0.5; % how much we want to weight the temperature (n)RMSE versus salinity (0.5 = 50:50; 1 = only temperature)
 
-fsize   = 16;
+fsize   = 14;
 lcolor  = lines(3+length(tgt_days));
 letters = lower(char(65:65+length(which_fjords)*2));
 
 fig_width = 900; 
-if length(which_fjords) > 1
-    fig_height = 250*length(fjord_model)/2;
-else
-    fig_height = 250;
-end
+fig_height = 300*length(which_fjords);
 % rmse_table(size(fjord_model)) = struct("tf_rpm",[],"sf_rpm",[],"ts_rpm",[],"tf_gcm",[],"sf_gcm",[],"ts_gcm",[]);
 % rmse_table = cell(size(fjord_model));
 
@@ -216,7 +212,7 @@ for i_fjord=1:n_fjord_runs
         else
             leg_handles = [hs, hf, hbest, hb];
         end
-        hl1 = legend(leg_handles,string_legend,'fontsize',fsize-4,'Location','best'); 
+        hl1 = legend(leg_handles,string_legend,'fontsize',fsize,'Location','best'); 
         % title(hl1,sprintf('Profiles at day %d\n(10-day avg.)',tgt_day))
         hl1.NumColumns=1;
         % old_pos = hl1.Position;

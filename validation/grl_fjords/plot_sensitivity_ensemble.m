@@ -11,7 +11,7 @@ if size(X,2) ~=length(param_names), error('input parameter matrix must me [n_run
 n_params   = size(X,2);
 letters=lower(char(65:65+n_params*n_fjords));
 
-
+fsize = 14;
 fig_width = 1200;
 fig_height = 250*length(which_fjords);
 %% Applying the RMSE filter - speculative, for now trying out to see if it works
@@ -114,7 +114,7 @@ for i_fjord=1:size(ensemble,1)
     i_plt_sub = i_plt+(n_cols*4);
     for i_param=1:length(param_names)
         ha_main = nexttile(i_plt,[2 n_cols]); hold on; box on
-        text(0.99,1.01,['(',letters(i_panel),') ',param_names{i_param}],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',12)
+        text(0.99,1.01,['(',letters(i_panel),') ',param_names{i_param}],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',fsize)
         i_panel=i_panel+1;
 
         base_gl_and_sill_t = 1;
@@ -172,11 +172,11 @@ for i_fjord=1:size(ensemble,1)
             plot([base_gl_and_sill_t base_gl_and_sill_t],[-H -Hsill],'-','linewidth',2,'color',[0 0 0])
         end
 
-        set(gca,'fontsize',14)
+        set(gca,'fontsize',fsize)
         xlim([-2 3])
         ylim([-H 0])
         if i_param==1
-            text(0.02,1.01,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','VerticalAlignment','bottom','fontsize',12)
+            text(0.02,1.01,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
         end
         if no_legend==1
             handle_fjords = [handle_fjords hp];
@@ -218,8 +218,8 @@ for i_fjord=1:size(ensemble,1)
         i_plt_sub=i_plt_sub+n_cols;
     end
 end
-xlabel(ht_t,'Temperature (^oC)','fontsize',14);
-ylabel(ht_t,'Depth (m)','fontsize',14);
+xlabel(ht_t,'Temperature (^oC)','fontsize',fsize);
+ylabel(ht_t,'Depth (m)','fontsize',fsize);
 ht_t.TileSpacing='compact';
 ht_t.Padding='compact';
 
@@ -251,7 +251,7 @@ for i_fjord=1:size(ensemble,1)
     i_plt_sub = i_plt+(n_cols*4)+1;
     for i_param=1:length(param_names)    
         ha_main = nexttile(i_plt,[2 n_cols]); hold on; box on
-        text(0.98,1.01,['(',letters(i_panel),')'],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',12)
+        text(0.98,1.01,['(',letters(i_panel),')'],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',fsize)
         i_panel=i_panel+1;
         base_gl_and_sill_ef = 0;
         for i_bnd=1:length(key_param_bnd)
@@ -296,14 +296,14 @@ for i_fjord=1:size(ensemble,1)
             plot([base_gl_and_sill_ef base_gl_and_sill_ef],[-H -Hsill],'-','linewidth',2,'color',[0 0 0])
         end
         
-        set(gca,'fontsize',14)
+        set(gca,'fontsize',fsize)
         ylim([-H 0])
         if no_legend==1
             handle_fjords = [handle_fjords hp];
             lbl_fjords{i_fjord} = param_names{i_param};%res_box(i_fjord).id;
         end
         if i_param==1
-            text(gca,0.02,1.075,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','fontsize',12)
+            text(gca,0.02,1.075,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','fontsize',fsize)
         end
 
         % Adding inset scatter plot
@@ -374,9 +374,9 @@ for i_fjord=1:size(ensemble,1)
         i_plt_sub=i_plt_sub+n_cols;
     end
 end
-% xlabel(ht_e,'Shelf-fjord freshwater flux (m^3s^{-1})','fontsize',14);
-xlabel(ht_e,'Mean exported freshwater flux (m^3s^{-1})','fontsize',14);
-ylabel(ht_e,'Depth (m)','fontsize',14);
+% xlabel(ht_e,'Shelf-fjord freshwater flux (m^3s^{-1})','fontsize',fsize);
+xlabel(ht_e,'Mean exported freshwater flux (m^3s^{-1})','fontsize',fsize);
+ylabel(ht_e,'Depth (m)','fontsize',fsize);
 ht_e.TileSpacing='compact';
 ht_e.Padding='compact';
 % legend(ha_main,handle_fjords,param_names,'fontsize',10,'Location','southwest');
