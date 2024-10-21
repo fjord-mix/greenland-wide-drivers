@@ -13,9 +13,9 @@ param_units = {'m^2','m','s^{-1}','-'};
 param_names = {'A0','wp','C0','K0'};
 
 range_params = {[0,3e8],...    % A0
-                [10,700],...   % wp no crashes with [10,400]
+                [10,700],...   % wp 
                 [1e2,5e4],...  % C0
-                [1e-4,1e-3]};  % K0 or do we stick to [1e4,1e-3]?
+                [1e-4,1e-3]};  % K0 
 
 rng('default') % set the seed for reproducibility
 uqlab
@@ -63,20 +63,27 @@ path_fout = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year
 load(path_fout)
 run postprocess_plot_ensembles
 
+i_yr_plt = 5;
 %% Summary of simulated fjords & FW export (Fig. 1)
 % hf_fig1 = plot_fw_simulated_fjords(data_path,ensemble_yr,res_box_yr);
 % exportgraphics(hf_fig1,[figs_path,'1_fjords_fw_yrs_n',num2str(n_runs),'_norm_all.png'],'Resolution',300)
 
-%% Proof of concept that the model works
-hf = plot_ensemble_tempsalt(fjord_model_yr{end},ensemble_yr{end},res_box_yr{end},res_obs_yr{end},n_runs,tgt_days(2),2,{'28','89'});
+%% Proof of concept that the model works (Fig. 2)
+hf_ts = plot_ensemble_tempsalt(fjord_model_yr{i_yr_plt},ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},n_runs,tgt_days(2),2,{'28','89'});
+exportgraphics(hf_ts,[figs_path,'2_temp_salt_example_fjords',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
+close all
 
 %% Sensitivity plots for select fjords (Fig. 3)
-% [hf_t,hf_e] = plot_sensitivity_ensemble(X,ensemble_yr{5},res_box_yr{5},param_names,which_fj_sens{5});
-% exportgraphics(hf_t,[figs_path,'2_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
-% exportgraphics(hf_e,[figs_path,'3_sensitivity_fwex_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
-% close all;
+[hf_t,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'28','89'});
+exportgraphics(hf_t,[figs_path,'2_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
+close all
 
-%% Plotting best parameters (Fig. 4 & supplementary)
+%% Plotting best parameters (Fig. 4)
+hf_hist = plot_best_params_time_hist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
+exportgraphics(hf_hist,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'.png'],'Resolution',300)
+close all
+
+%% Supplementary/unused
 % plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
 % exportgraphics(gcf,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'.png'],'Resolution',300)
 % close all;
