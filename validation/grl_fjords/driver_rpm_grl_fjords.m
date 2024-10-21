@@ -68,10 +68,10 @@ end
 % exportgraphics(hf_fig1,[figs_path,'1_fjords_fw_yrs_n',num2str(n_runs),'_norm_all.png'],'Resolution',300)
 
 %% Sensitivity plots for select fjords
-[hf_t,hf_e] = plot_sensitivity_ensemble(X,ensemble_yr{5},res_box_yr{5},param_names,which_fj_sens{5});
-exportgraphics(hf_t,[figs_path,'2_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
-exportgraphics(hf_e,[figs_path,'3_sensitivity_fwex_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
-close all;
+% [hf_t,hf_e] = plot_sensitivity_ensemble(X,ensemble_yr{5},res_box_yr{5},param_names,which_fj_sens{5});
+% exportgraphics(hf_t,[figs_path,'2_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(hf_e,[figs_path,'3_sensitivity_fwex_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
+% close all;
 
 %% Plotting best parameters (Fig. 4 & supplementary)
 % plot_best_params_dist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
