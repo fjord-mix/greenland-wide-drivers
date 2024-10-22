@@ -118,7 +118,7 @@ for i_fjord=1:size(ensemble,1)
         i_panel=i_panel+1;
 
         base_gl_and_sill_t = 1;
-        base_gl_and_sill_p = 0;
+        base_gl_and_sill_p = -2;
 
         for i_bnd=1:length(key_param_bnd)
             tf_ensemble = NaN([length(res_box(i_fjord).zf),size(ensemble,2)]);
@@ -173,7 +173,7 @@ for i_fjord=1:size(ensemble,1)
         end
 
         set(gca,'fontsize',fsize)
-        xlim([-2 3])
+        xlim([-3 3])
         ylim([-H 0])
         if i_param==1
             text(0.02,1.01,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)

@@ -19,7 +19,7 @@ fig_height = 300*length(which_fjords);
 % rmse_table = cell(size(fjord_model));
 
 hf_ts    = figure('Name','Temperature and salinity profiles','Position',[40 40 fig_width fig_height]);
-ht       = tiledlayout(length(which_fjords),2,'TileSpacing','compact');
+ht       = tiledlayout(length(which_fjords),2,'TileSpacing','loose','padding','compact');
 i_iter   = 0;
 i_letter =1;
 for i_fjord=1:n_fjord_runs
