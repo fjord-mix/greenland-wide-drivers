@@ -72,12 +72,12 @@ hf_fig1 = plot_best_runs_map(data_path,ensemble_yr,res_box_yr);
 % exportgraphics(hf_fig1,[figs_path,'sketch_processes/fjords_simulated_n',num2str(n_runs),'.png'],'BackgroundColor','none','Resolution',300)
 
 %% Proof of concept that the model works (Fig. 2)
-hf_ts = plot_ensemble_tempsalt(fjord_model_yr{i_yr_plt},ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},n_runs,tgt_days(2),2,{'0','28','89','108'});
+hf_ts = plot_ensemble_tempsalt(fjord_model_yr{i_yr_plt},ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},n_runs,tgt_days(2),2,{'0','28','89'});
 % exportgraphics(hf_ts,[figs_path,'2_temp_salt_example_fjords',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
 close all
 
 %% Sensitivity plots for select fjords (Fig. 3)
-[hf_t,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'0','28','89','108'});
+[hf_t,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'0','28','89'});
 % exportgraphics(hf_t,[figs_path,'3_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
 close all
 
