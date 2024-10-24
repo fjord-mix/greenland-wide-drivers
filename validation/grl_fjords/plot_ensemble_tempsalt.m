@@ -88,7 +88,7 @@ for i_fjord=1:n_fjord_runs
     nexttile; hold on; box on; grid on
     text(0.98,0.98,sprintf("(%s)",letters(i_letter)),'Units','normalized','VerticalAlignment','top','HorizontalAlignment','right','FontSize',fsize)
     text(0.02,1.02,sprintf("%s) %s (%.0f km)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
-    text(0.98,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','HorizontalAlignment','right','FontSize',fsize)
+    % text(0.98,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','HorizontalAlignment','right','FontSize',fsize)
     i_letter=i_letter+1;
 
     % Observed fjord profile
