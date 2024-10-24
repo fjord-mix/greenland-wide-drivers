@@ -67,7 +67,7 @@ for i_year=n_years:-1:1
     lbl_yrs{end+1} = sprintf("%d (n=%d)",2015+i_year,n_fjords);
 end % i_year
 bubblesize([10 30])
-bubblelim([0 2.1])
+bubblelim([0 2.])
 set(gca,'fontsize',fsize)
 blgd = bubblelegend('RMSE (^oC)','Location','northeast','fontsize',fsize);
 hl = legend(hb_colors,lbl_yrs,'location','southwest','fontsize',fsize);
