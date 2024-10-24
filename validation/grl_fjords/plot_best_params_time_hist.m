@@ -35,7 +35,7 @@ for i_yr=n_years:-1:1
 
         % Filter out runs that have a high RMSE, i.e., we want to focus on the fjords we can simulate well
         rmse_tf_filtered = res_box(i_fjord).rmse_tf;
-        rmse_tf_threshold = 0.5; %prctile(rmse_tf_filtered(:,i_tgt_day),10,1);
+        rmse_tf_threshold = 10.5; %prctile(rmse_tf_filtered(:,i_tgt_day),10,1);
         rmse_tf_filtered(rmse_tf_filtered>rmse_tf_threshold) = NaN;
     
         % find run with the smallest RMSE
@@ -58,15 +58,19 @@ for i_yr=n_years:-1:1
         nexttile(i_scat,[1,2]); hold on; box on;
         for i_fjord=1:n_fjord_runs
             x_var = int32(str2double(res_box(i_fjord).id));% - 64; % converting the fjord ID ('A' to 'N') to an integer
-            size_marker = 250 - abs(best_fjord_params(i_fjord).rmse_t).*20;
+            % size_marker = 250 - abs(best_fjord_params(i_fjord).rmse_t).*20;
+            size_marker = 2-best_fjord_params(i_fjord).rmse_t;
 
-            if size_marker < 0, size_marker = 10; end
+            % if size_marker < 0, size_marker = 10; end
             if i_param==1 && i_fjord==1
-                h1 = scatter(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'filled','o','MarkerFaceAlpha',.5);
+                % h1 = scatter(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'filled','o','MarkerFaceAlpha',.5);
+                h1 = bubblechart(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
             else
-                scatter(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'filled','o','MarkerFaceAlpha',.5);
+                % scatter(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'filled','o','MarkerFaceAlpha',.5);
+                bubblechart(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
             end
         end
+        xlim([0 150])
         ylabel([param_names{i_param},' (',param_units{i_param},')'])
         ylim([0.5*min(range_params{i_param}) 1.1*max(range_params{i_param})])
     
@@ -90,13 +94,15 @@ for i_yr=n_years:-1:1
         if i_scat > 6
             xlabel('Fjord')
         end
+        bubblesize([1 15])
+        bubblelim([0 3])
         
 
         % Histogram
         nexttile(i_hist,[1,1]); hold on; box on;
         param_entry_filtered = param_entry(:,i_param);
         param_entries_all{i_param} = [param_entries_all{i_param}; param_entry_filtered];
-        histogram(param_entry_filtered,20,'Normalization','probability','FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5,'Orientation','horizontal');
+        histogram(param_entry_filtered,30,'Normalization','probability','FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5,'Orientation','horizontal');
         
         set(gca,'YTick',y_ticks)
         % set(gca,'YTickLabel',[],'XTickLabel',[])
@@ -105,7 +111,7 @@ for i_yr=n_years:-1:1
             set(gca,'YScale','log')
         end
         if i_yr==1
-            histogram(param_entries_all{i_param},20,'Normalization','probability','FaceColor',[0. 0. 0.],'FaceAlpha',0.5,'Orientation','horizontal');
+            histogram(param_entries_all{i_param},30,'Normalization','probability','FaceColor',[0. 0. 0.],'FaceAlpha',0.5,'Orientation','horizontal');
             text(0.02,1.0,['(',letters(i_letter),')'],'HorizontalAlignment','left','VerticalAlignment','top','Units','normalized','fontsize',fsize)
             i_letter=i_letter+1;
         end
@@ -120,3 +126,9 @@ end
 
 hl = legend(flip(h_yr),lbl_years,'fontsize',fsize,'Location','southeast');
 hl.NumColumns = 2;
+
+nexttile(1,[1,2]); hold on; box on;
+blgd = bubblelegend('RMSE (^oC)','Location','southwest','fontsize',fsize-4);
+blgd.Title.FontWeight='normal';
+blgd.LimitLabels = {'\leq 2','0'};
+end
