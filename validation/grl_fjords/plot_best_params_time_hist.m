@@ -35,7 +35,7 @@ for i_yr=n_years:-1:1
 
         % Filter out runs that have a high RMSE, i.e., we want to focus on the fjords we can simulate well
         rmse_tf_filtered = res_box(i_fjord).rmse_tf;
-        rmse_tf_threshold = 10.5; %prctile(rmse_tf_filtered(:,i_tgt_day),10,1);
+        rmse_tf_threshold = 10.0; %prctile(rmse_tf_filtered(:,i_tgt_day),10,1);
         rmse_tf_filtered(rmse_tf_filtered>rmse_tf_threshold) = NaN;
     
         % find run with the smallest RMSE
@@ -59,7 +59,11 @@ for i_yr=n_years:-1:1
         for i_fjord=1:n_fjord_runs
             x_var = int32(str2double(res_box(i_fjord).id));% - 64; % converting the fjord ID ('A' to 'N') to an integer
             % size_marker = 250 - abs(best_fjord_params(i_fjord).rmse_t).*20;
-            size_marker = 2-best_fjord_params(i_fjord).rmse_t;
+            if rmse_tf_threshold > 3
+                size_marker = 2-best_fjord_params(i_fjord).rmse_t;
+            else
+                size_marker = rmse_tf_threshold-best_fjord_params(i_fjord).rmse_t;
+            end
 
             % if size_marker < 0, size_marker = 10; end
             if i_param==1 && i_fjord==1
@@ -95,7 +99,7 @@ for i_yr=n_years:-1:1
             xlabel('Fjord')
         end
         bubblesize([1 15])
-        bubblelim([0 3])
+        bubblelim([0 2])
         
 
         % Histogram
