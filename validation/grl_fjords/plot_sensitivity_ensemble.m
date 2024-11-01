@@ -141,10 +141,10 @@ for i_fjord=1:size(ensemble,1)
             tfmean = mean(tf_ensemble,2,'omitnan');
             if i_bnd==1
                 % Plotting shelf forcing observation
-                plot(res_box(i_fjord).Tforc,depths,'linewidth',1.0,'color',lcolor(1,:),'linestyle','-');
+                % plot(res_box(i_fjord).Tforc,depths,'linewidth',1.0,'color',lcolor(1,:),'linestyle','-');
 
                 % Plotting fjord observation
-                plot(res_obs(i_fjord).tf,-res_obs(i_fjord).zf,'linewidth',1.0,'color',lcolor(2,:),'linestyle','-');
+                % plot(res_obs(i_fjord).tf,-res_obs(i_fjord).zf,'linewidth',1.0,'color',lcolor(2,:),'linestyle','-');
     
                 % Plotting fjord ensemble best run
                 plot(tf_best,depths,'linewidth',1.0,'color',lcolor(3,:),'linestyle','-');
