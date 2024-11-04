@@ -11,6 +11,7 @@ if size(X,2) ~=length(param_names), error('input parameter matrix must me [n_run
 n_params   = size(X,2);
 letters=lower(char(65:65+n_params*n_fjords));
 
+lcolor = lines(4);
 fsize = 14;
 fig_width = 1200;
 fig_height = 250*length(which_fjords);
@@ -78,7 +79,6 @@ end
 
 %% Preparing the figures
 handle_fjords = [];
-lcolor = lines(length(param_names));
 lbl_fjords = cell([1,length(param_names)]);
 
 
@@ -110,8 +110,8 @@ for i_fjord=1:size(ensemble,1)
 
 
     i_plt_fjord=i_plt_fjord+1;
-    i_plt = 1+(i_plt_fjord-1)*2*(n_cols*4);
-    i_plt_sub = i_plt+(n_cols*4);
+    i_plt = 1+(i_plt_fjord-1)*2*(n_cols*n_params);
+    i_plt_sub = i_plt+(n_cols*n_params);
     for i_param=1:length(param_names)
         ha_main = nexttile(i_plt,[2 n_cols]); hold on; box on
         text(0.99,1.01,['(',letters(i_panel),') ',param_names{i_param}],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',fsize)
@@ -141,13 +141,13 @@ for i_fjord=1:size(ensemble,1)
             tfmean = mean(tf_ensemble,2,'omitnan');
             if i_bnd==1
                 % Plotting shelf forcing observation
-                % plot(res_box(i_fjord).Tforc,depths,'linewidth',1.0,'color',lcolor(1,:),'linestyle','-');
+                plot(res_box(i_fjord).Tforc,depths,'linewidth',1.0,'color',lcolor(1,:),'linestyle','-');
 
                 % Plotting fjord observation
                 % plot(res_obs(i_fjord).tf,-res_obs(i_fjord).zf,'linewidth',1.0,'color',lcolor(2,:),'linestyle','-');
     
                 % Plotting fjord ensemble best run
-                plot(tf_best,depths,'linewidth',1.0,'color',lcolor(3,:),'linestyle','-');
+                % plot(tf_best,depths,'linewidth',1.0,'color',lcolor(3,:),'linestyle','-');
             end
 
             % Plot sensitivity profile
@@ -247,8 +247,8 @@ for i_fjord=1:size(ensemble,1)
         if ~plot_fjord, continue; end
     end
     i_plt_fjord=i_plt_fjord+1;
-    i_plt = 1+(i_plt_fjord-1)*2*(n_cols*4);
-    i_plt_sub = i_plt+(n_cols*4)+1;
+    i_plt = 1+(i_plt_fjord-1)*2*(n_cols*n_params);
+    i_plt_sub = i_plt+(n_cols*n_params)+1;
     for i_param=1:length(param_names)    
         ha_main = nexttile(i_plt,[2 n_cols]); hold on; box on
         text(0.98,1.01,['(',letters(i_panel),')'],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',fsize)
