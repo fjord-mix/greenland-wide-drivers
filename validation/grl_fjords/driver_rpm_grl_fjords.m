@@ -3,7 +3,7 @@ clearvars
 run setup_paths % Configuring paths 
 
 plot_ensemble = 0;
-n_runs        = 400;         % number of runs per fjord
+n_runs        = 300;         % number of runs per fjord
 dt_in_h       = 3;
 n_years       = 10;           % how many years we want to run
 tgt_days      = [n_years*365-180,n_years*365-105];  % which days of the run we want vertical profiles for
@@ -14,7 +14,7 @@ param_names = {'A0','wp','C0'};%,'K0'};
 
 range_params = {[0,3e8],...    % A0
                 [10,700],...   % wp 
-                [1e2,5e4]};%,...  % C0
+                [5e1,1e5]};%,...  % C0
                 % [1e-4,1e-3]};  % K0 
 
 rng('default') % set the seed for reproducibility
@@ -58,32 +58,32 @@ for which_year=2016:2020
 end
 
 %% Batch processing all years together
-% which_year=2020;
-% path_fout = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_',num2str(60),'layers_dt',num2str(3),'h'];
-% load(path_fout)
-% run postprocess_plot_ensembles
+if ~exist(path_fout,'var')
+    which_year=2020;
+    path_fout = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_',num2str(60),'layers_dt',num2str(3),'h'];
+end
+load(path_fout)
+run postprocess_plot_ensembles
 
-% i_yr_plt = 5;
-% %% Summary of simulated fjords & FW export (Fig. 1)
-% % hf_fig1 = plot_fw_simulated_fjords(data_path,ensemble_yr,res_box_yr);
-% % exportgraphics(hf_fig1,[figs_path,'1_fjords_fw_yrs_n',num2str(n_runs),'_norm_all.png'],'Resolution',300)
-% 
+%% Plotting figures
+i_yr_plt = 5;
+% %% Summary of simulated fjords (Fig. 1b)
 % hf_fig1 = plot_best_runs_map(data_path,ensemble_yr,res_box_yr);
 % % exportgraphics(hf_fig1,[figs_path,'sketch_processes/fjords_simulated_n',num2str(n_runs),'.png'],'BackgroundColor','none','Resolution',300)
 % 
 % %% Proof of concept that the model works (Fig. 2)
 % hf_ts = plot_ensemble_tempsalt(fjord_model_yr{i_yr_plt},ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},n_runs,tgt_days(2),2,{'0','28','89'});
-% % exportgraphics(hf_ts,[figs_path,'2_temp_salt_example_fjords',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(hf_ts,[figs_path,'2_temp_salt_example_fjords',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
 % close all
 % 
 % %% Sensitivity plots for select fjords (Fig. 3)
 % [hf_t,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'0','28','89'});
-% % exportgraphics(hf_t,[figs_path,'3_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(hf_t,[figs_path,'3_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
 % close all
 % 
 % %% Plotting best parameters (Fig. 4)
 % hf_hist = plot_best_params_time_hist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
-% % exportgraphics(hf_hist,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(hf_hist,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'.png'],'Resolution',300)
 % close all
 
 %% Supplementary/unused
@@ -105,3 +105,6 @@ end
 % [hf_dst,hf_loc] = plot_ocn_cast_pairs(folder_ctd_casts,fjord_matrix,res_box_yr);
 % exportgraphics(hf_dst,[figs_path,'supp/casts_dst_comparison/dst_OMG_fjord_shelf_casts.png'],'Resolution',300)
 % exportgraphics(hf_loc,[figs_path,'overview_fig/loc_OMG_fjord_shelf_casts.png'],'Resolution',300)
+
+% % hf_fig1 = plot_fw_simulated_fjords(data_path,ensemble_yr,res_box_yr);
+% exportgraphics(hf_fig1,[figs_path,'1_fjords_fw_yrs_n',num2str(n_runs),'_norm_all.png'],'Resolution',300)
