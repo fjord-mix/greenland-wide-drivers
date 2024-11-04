@@ -13,7 +13,7 @@ fjord_names = cell([1,length(fjord_IDs)]);
 for i=1:length(fjord_names), fjord_names{i} = fjord_IDs(i); end
 
 hf = figure('Name','Best parameters','Position',[40 40 1000 800]);
-ht = tiledlayout(n_params/2,n_params/2*3,'TileSpacing','tight','Padding','compact');
+ht = tiledlayout(ceil(n_params/2),ceil(n_params/2)*3,'TileSpacing','tight','Padding','compact');
 
 param_entries_all = cell([1,n_params]);
 h_yr = [];
@@ -95,7 +95,7 @@ for i_yr=n_years:-1:1
             i_letter=i_letter+1;
         end
         set(gca,'fontsize',fsize)
-        if i_scat > 6
+        if i_scat > 3
             xlabel('Fjord')
         end
         bubblesize([1 15])
@@ -103,10 +103,23 @@ for i_yr=n_years:-1:1
         
 
         % Histogram
-        nexttile(i_hist,[1,1]); hold on; box on;
+        % Matlab's histogram function might act funny when plotted on a log scale if we do not treat the bin edges
+        if (max(range_params{i_param}) - min(range_params{i_param}) > 1e3) || max(range_params{i_param}) - min(range_params{i_param}) < 1e-3
+            binedges = logspace(log10(y_lims(1)),log10(y_lims(end)),50);
+        else
+            binedges = linspace(y_lims(1),y_lims(end),50);
+        end
         param_entry_filtered = param_entry(:,i_param);
         param_entries_all{i_param} = [param_entries_all{i_param}; param_entry_filtered];
-        histogram(param_entry_filtered,30,'Normalization','probability','FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5,'Orientation','horizontal');
+
+        % [n, edges] = histcounts(param_entry_filtered,1e2,'Normalization','probability');
+        % edge_centre = 0.5*(edges(1:end-1)+edges(2:end));
+        % edge_centre(end) = edge_centre(end).*1.1;
+        
+        nexttile(i_hist,[1,1]); hold on; box on;
+        h = histogram(param_entry_filtered,binedges,'Normalization','probability','FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5,'Orientation','horizontal');
+        % bar(edge_centre, n, 'barwidth', 1,'FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5,'Horizontal','on');
+        % histogram(param_entry_filtered,30,'FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5,'Orientation','horizontal');
         
         set(gca,'YTick',y_ticks)
         % set(gca,'YTickLabel',[],'XTickLabel',[])
@@ -115,11 +128,16 @@ for i_yr=n_years:-1:1
             set(gca,'YScale','log')
         end
         if i_yr==1
-            histogram(param_entries_all{i_param},30,'Normalization','probability','FaceColor',[0. 0. 0.],'FaceAlpha',0.5,'Orientation','horizontal');
+            % [n, edges] = histcounts(param_entries_all{i_param},1e2,'Normalization','probability');
+            % edge_centre = 0.5*(edges(1:end-1)+edges(2:end));
+            % edge_centre(end) = edge_centre(end).*1.1;
+            histogram(param_entries_all{i_param},binedges,'Normalization','probability','FaceColor',[0. 0. 0.],'FaceAlpha',0.5,'Orientation','horizontal');
+            % bar(edge_centre, n, 'barwidth', 1,'FaceColor',[0 0 0],'FaceAlpha',0.5,'Horizontal','on');
+            % histogram(param_entries_all{i_param},30,'FaceColor',[0. 0. 0.],'FaceAlpha',0.5,'Orientation','horizontal');
             text(0.02,1.0,['(',letters(i_letter),')'],'HorizontalAlignment','left','VerticalAlignment','top','Units','normalized','fontsize',fsize)
             i_letter=i_letter+1;
         end
-        if i_scat > 6
+        if i_scat > 3
             xlabel('Probability')
         end
         set(gca,'fontsize',fsize)
