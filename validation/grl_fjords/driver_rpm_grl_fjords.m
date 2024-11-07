@@ -12,9 +12,14 @@ tgt_days      = [n_years*365-180,n_years*365-105];  % which days of the run we w
 param_units = {'m^2','m','s^{-1}'};
 param_names = {'A0','wp','C0'};
 
+sermilik_area = 1.1850e09;
+sermilik_vagl = 7.7028e11;
+sermilik_max_bergs = 3e8;
+iceberg_congestion = sermilik_max_bergs/sermilik_area;
+
 range_params = {[1,3e8],...  % A0 (starts at 1 so we can use log scale)
                 [10,700],... % wp 
-                [5e1,1e5]};  % C0
+                log10([5e1,5e4])};  % C0
 
 % create probability functions using UQLab
 rng('default') % set the seed for reproducibility
@@ -28,6 +33,7 @@ end
 input = uq_createInput(iOpts);
 
 X = uq_getSample(input,n_runs,'LHS'); % create Latin Hypercube
+X(:,3) = 10.^X(:,3); % reverting from log space to linear space
 disp('Parameter space created.')
 % plot_lhs(X,param_names,param_units); % quick check of input params distribution
 
