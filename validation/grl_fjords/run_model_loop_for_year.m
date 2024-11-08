@@ -236,6 +236,9 @@ for i_run=1:n_runs
     % Sets the model parameters according to the LHS we created
     for i_param=1:size(X,2)
         cur_fjord.p.(param_names{i_param}) = X(i_run,i_param);
+        % if strcmp(param_names{i_param},'A0') % switching from "congestion factor" to iceberg submerged area
+        %     cur_fjord.p.(param_names{i_param}) = X(i_run,i_param).*cur_fjord.p.L.*cur_fjord.p.W.*cur_fjord.p.Hgl;
+        % end
     end
     cur_fjord.a.I0 = cur_fjord.p.A0*iceberg_fun(cur_fjord.p.nu0, abs(cur_fjord.p.Hgl), -cumsum(cur_fjord.a.H0)+cur_fjord.a.H0/2);
     

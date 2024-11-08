@@ -12,9 +12,10 @@ tgt_days      = [n_years*365-180,n_years*365-105];  % which days of the run we w
 param_units = {'m^2','m','s^{-1}'};
 param_names = {'A0','wp','C0'};
 
-sermilik_area = 1.1850e09;
-sermilik_vagl = 7.7028e11;
-sermilik_max_bergs = 3e8;
+sermilik_area = 1.1850e09; % area of Sermilik fjord (W*L)
+sermilik_vagl = 7.7028e11; % volume above grounding line of Sermilik fjord (W*L*Hgl)
+sermilik_max_bergs = 3e8;  % maximum submerged iceberg area within Sermilik fjord
+
 iceberg_congestion = sermilik_max_bergs/sermilik_area;
 
 range_params = {[1,3e8],...  % A0 (starts at 1 so we can use log scale)
@@ -33,7 +34,8 @@ end
 input = uq_createInput(iOpts);
 
 X = uq_getSample(input,n_runs,'LHS'); % create Latin Hypercube
-X(:,3) = 10.^X(:,3); % reverting from log space to linear space
+X(:,3) = 10.^X(:,3); % reverting from log quantities to the ones we actually need
+
 disp('Parameter space created.')
 % plot_lhs(X,param_names,param_units); % quick check of input params distribution
 
