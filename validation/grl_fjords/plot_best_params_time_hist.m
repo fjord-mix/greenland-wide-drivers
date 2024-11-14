@@ -35,16 +35,17 @@ for i_yr=n_years:-1:1
 
         % Filter out runs that have a high RMSE, i.e., we want to focus on the fjords we can simulate well
         rmse_tf_filtered = res_box(i_fjord).rmse_tf;
-        rmse_tf_threshold = 10.0; %prctile(rmse_tf_filtered(:,i_tgt_day),10,1);
+        rmse_tf_threshold = 0.5; %prctile(rmse_tf_filtered(:,i_tgt_day),10,1);
         rmse_tf_filtered(rmse_tf_filtered>rmse_tf_threshold) = NaN;
     
         % find run with the smallest RMSE
         [best_rmse_t,inds_best_tf] = min(squeeze(rmse_tf_filtered(:,i_tgt_day)),[],'all','omitnan');
-        
-        for i_param=1:n_params
-            best_fjord_params(i_fjord).best_t.(param_names{i_param}) = ensemble(i_fjord,inds_best_tf).p.(param_names{i_param});
-            best_fjord_params(i_fjord).rmse_t = best_rmse_t;
-            param_entry(i_fjord,i_param) = best_fjord_params(i_fjord).best_t.(param_names{i_param});
+        if ~isnan(best_rmse_t) % we only compute it if that fjord has any runs below RMSE = 0.5
+            for i_param=1:n_params
+                best_fjord_params(i_fjord).best_t.(param_names{i_param}) = ensemble(i_fjord,inds_best_tf).p.(param_names{i_param});
+                best_fjord_params(i_fjord).rmse_t = best_rmse_t;
+                param_entry(i_fjord,i_param) = best_fjord_params(i_fjord).best_t.(param_names{i_param});
+            end
         end
     end
     
@@ -53,6 +54,8 @@ for i_yr=n_years:-1:1
     for i_param=1:n_params
         i_scat = i_param+(i_param-1)*2;
         i_hist = i_scat+2;
+        min_rmse = 10;
+        max_rmse = 0;
 
         % scatter
         nexttile(i_scat,[1,2]); hold on; box on;
@@ -64,14 +67,18 @@ for i_yr=n_years:-1:1
             else
                 size_marker = rmse_tf_threshold-best_fjord_params(i_fjord).rmse_t;
             end
+            if best_fjord_params(i_fjord).rmse_t > max_rmse, max_rmse = best_fjord_params(i_fjord).rmse_t; end
+            if best_fjord_params(i_fjord).rmse_t < min_rmse, min_rmse = best_fjord_params(i_fjord).rmse_t; end
 
             % if size_marker < 0, size_marker = 10; end
-            if i_param==1 && i_fjord==1
-                % h1 = scatter(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'filled','o','MarkerFaceAlpha',.5);
-                h1 = bubblechart(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
-            else
-                % scatter(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'filled','o','MarkerFaceAlpha',.5);
-                bubblechart(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
+            if ~isempty(best_fjord_params(i_fjord).best_t)
+                if i_param==1 && i_fjord==1
+                    % h1 = scatter(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'filled','o','MarkerFaceAlpha',.5);
+                    h1 = bubblechart(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
+                else
+                    % scatter(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'filled','o','MarkerFaceAlpha',.5);
+                    bubblechart(x_var,best_fjord_params(i_fjord).best_t.(param_names{i_param}),size_marker,lcolor(i_yr,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
+                end
             end
         end
         xlim([0 150])
@@ -99,7 +106,7 @@ for i_yr=n_years:-1:1
             xlabel('Fjord')
         end
         bubblesize([1 15])
-        bubblelim([0 2])
+        bubblelim([0 max_rmse])
         
 
         % Histogram
