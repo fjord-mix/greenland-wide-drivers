@@ -172,7 +172,7 @@ for i_fjord=1:height(fjord_matrix)
             % nu0 controls how much the total iceberg area extends below the surface
             % we do not vary this parameter, as previous sensitivity
             % analyses showed it to have a smaller impact than A0 or M0
-            p.nu0=25; 
+            p.nu0=25;
     
             % initial conditions
             a.H0 = ones([p.N],1).*p.H/p.N;
