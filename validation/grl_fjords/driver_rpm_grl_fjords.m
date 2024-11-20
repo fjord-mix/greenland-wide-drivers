@@ -3,7 +3,7 @@ clearvars
 run setup_paths % Configuring paths 
 
 plot_ensemble = 0;   % whether we want the ensemble to be plotted at the end of `run_model_loop_for_year`
-n_runs        = 30; % number of runs per fjord
+n_runs        = 200; % number of runs per fjord
 dt_in_h       = 1;   % model time step in hours
 n_years       = 10;  % how many years we want to run
 tgt_days      = [n_years*365-180,n_years*365-105];  % which days of the run we want vertical profiles for
@@ -31,7 +31,7 @@ sermilik_max_bergs = 3e8;  % maximum submerged iceberg area within Sermilik fjor
 % sermilik_vagl      = 7.7028e11; % volume above grounding line of Sermilik fjord (W*L*Hgl)
 % iceberg_congestion = sermilik_max_bergs/sermilik_area;
 
-range_params = {[0,1.1*sermilik_max_bergs],...  % A0 (if log scale, starts at 1)
+range_params = {[0,1.2*sermilik_max_bergs],...  % A0 (if log scale, starts at 1)
                 [10,700],... % wp 
                 log10([5e1,5e5])};  % C0
 
@@ -99,6 +99,11 @@ exportgraphics(hf_hist,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'_f
 % close all
 
 %% Supplementary/unused
+
+% hf_mis_par = plot_misfits_per_parameter(X,ensemble_yr,res_box_yr,param_names,[]);  % most generalised example, showing all runs
+% exportgraphics(hf_mis_par,[figs_path,'supp/rmse_vs_param_example_fjords_',num2str(n_runs),'_all.png'],'Resolution',300)
+% hf_mis_par = plot_misfits_per_parameter(X,ensemble_yr(end),res_box_yr(end),param_names,{'0','28','89'}); % just showing our example fjords
+% exportgraphics(hf_mis_par,[figs_path,'supp/rmse_vs_param_example_fjords_',num2str(n_runs),'.png'],'Resolution',300)
 
 % hf_lhs = plot_lhs(X,param_names,param_units);
 % exportgraphics(hf_lhs,[figs_path,'supp/lhs_design_n',num2str(n_runs),'.png'],'Resolution',300)
