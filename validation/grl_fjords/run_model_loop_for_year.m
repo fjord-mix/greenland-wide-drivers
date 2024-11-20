@@ -46,6 +46,7 @@ for i_fjord=1:height(fjord_matrix)
         p.N=60;
         p.dt=model_dt;
         p.t_save = t(1):1:t(end); % save at daily resolution
+        p.run_plume_every = 10; % run the plume model every 10 time steps (i.e., every 10*model_dt hours)
 
         % find the ocean forcing and fjord profile
         omg_data_shelf = dir([folder_ctd_casts,'/*',id_cast_shelf,'*.nc']);
@@ -258,6 +259,7 @@ for i_run=1:n_runs
             Sfinal  =NaN(size(Tfinal));
             QVsfinal=NaN(size(Tfinal));
             QVpfinal=NaN(size(Tfinal));
+            QMpfinal=NaN(size(Tfinal));
             
                          % we use a constant value for an easier comparison between different fjords. 
             Sref = 35.0; % If we were concerned about the FW quantity itself, this should be a fjord-specific value 
@@ -273,24 +275,28 @@ for i_run=1:n_runs
                 Tfinal(:,i_day)   = mean(cur_fjord.s.T(:,(tgt_day-5:tgt_day+5)),2); 
                 Sfinal(:,i_day)   = mean(cur_fjord.s.S(:,(tgt_day-5:tgt_day+5)),2);
                 QVsfinal(:,i_day) = mean(cur_fjord.s.QVs(:,(tgt_day-5:tgt_day+5)),2);
-                QVpfinal(:,i_day) = mean(cur_fjord.s.QVp(:,(tgt_day-5:tgt_day+5)),2);
+                QVpfinal(:,i_day) = mean(squeeze(cur_fjord.s.QVp(:,(tgt_day-5:tgt_day+5))),2);
+                QMpfinal(:,i_day) = mean(squeeze(cur_fjord.s.QMp(:,(tgt_day-5:tgt_day+5))),2);
                 fw_export(i_day)  = sum(QVsfinal(:,i_day).*((Sref-Sfinal(:,i_day))/Sref));
                 Qsg0              = mean(cur_fjord.s.Qsg(tgt_day-5:tgt_day+5),2);
                 [inb(i_day), ~, ~, ~]   = get_plume_properties(cur_fjord.p, cur_fjord.s.kgl, cur_fjord.s.H, Sfinal(:,i_day), Tfinal(:,i_day), Qsg0);
             end
             QVs_mean = mean(cur_fjord.s.QVs(:,(end-364:end)),2,'omitnan');
-            QVp_mean = mean(cur_fjord.s.QVp(:,(end-364:end)),2,'omitnan');
+            QVp_mean = mean(squeeze(cur_fjord.s.QVp(:,(end-364:end))),2,'omitnan');
+            QMp_mean = mean(squeeze(cur_fjord.s.QMp(:,(end-364:end))),2,'omitnan');
             S_mean   = mean(cur_fjord.s.S(:,(end-364:end)),2,'omitnan');
             T_mean   = mean(cur_fjord.s.T(:,(end-364:end)),2,'omitnan');
             fw_mean_export_profile = QVs_mean.*((Sref-S_mean)/Sref);
             fw_mean_discharge_profile = QVp_mean.*((Sref-S_mean)/Sref);
 
-            ensemble(i_fjord,i_run).s.Tfinal = Tfinal;
-            ensemble(i_fjord,i_run).s.Sfinal = Sfinal;
+            ensemble(i_fjord,i_run).s.Tfinal   = Tfinal;
+            ensemble(i_fjord,i_run).s.Sfinal   = Sfinal;
             ensemble(i_fjord,i_run).s.QVsfinal = QVsfinal;
             ensemble(i_fjord,i_run).s.QVpfinal = QVpfinal;
-            ensemble(i_fjord,i_run).s.Tmean = T_mean;
-            ensemble(i_fjord,i_run).s.Smean = S_mean;
+            ensemble(i_fjord,i_run).s.QMpfinal = QMpfinal;
+            ensemble(i_fjord,i_run).s.Tmean    = T_mean;
+            ensemble(i_fjord,i_run).s.Smean    = S_mean;
+            ensemble(i_fjord,i_run).s.QMpmean  = QMp_mean;
 
             ensemble(i_fjord,i_run).s.Tforc = mean(cur_fjord.s.Ts(:,(tgt_day-5:tgt_day+5)),2); 
             ensemble(i_fjord,i_run).s.Sforc = mean(cur_fjord.s.Ss(:,(tgt_day-5:tgt_day+5)),2); 
