@@ -89,6 +89,7 @@ for i_fjord=1:size(fjord_model,2)
     p.N=60;
     p.dt=model_dt;
     p.t_save = t(1):1:t(end); % save at daily resolution
+    p.run_plume_every = 10; % run the plume model every 10 time steps (i.e., every 10*model_dt hours)
 
     % find the ocean forcing and fjord profile
     omg_data_shelf = dir([folder_ctd_casts,'/*',id_cast_shelf,'*.nc']);
