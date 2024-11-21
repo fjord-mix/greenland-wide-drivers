@@ -3,8 +3,8 @@ clearvars
 run setup_paths % Configuring paths 
 
 plot_ensemble = 0;   % whether we want the ensemble to be plotted at the end of `run_model_loop_for_year`
-n_runs        = 200; % number of runs per fjord
-dt_in_h       = 1;   % model time step in hours
+n_runs        = 10; % number of runs per fjord
+dt_in_h       = 0.5;   % model time step in hours
 n_years       = 10;  % how many years we want to run
 tgt_days      = [n_years*365-180,n_years*365-105];  % which days of the run we want vertical profiles for
 
