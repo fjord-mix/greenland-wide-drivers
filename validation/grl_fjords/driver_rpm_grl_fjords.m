@@ -3,8 +3,9 @@ clearvars
 run setup_paths % Configuring paths 
 
 plot_ensemble = 0;   % whether we want the ensemble to be plotted at the end of `run_model_loop_for_year`
-n_runs        = 10; % number of runs per fjord
+n_runs        = 300; % number of runs per fjord
 dt_in_h       = 0.5;   % model time step in hours
+dt_plume_h    = 12;  % time step for updating the plume dynamics
 n_years       = 10;  % how many years we want to run
 tgt_days      = [n_years*365-180,n_years*365-105];  % which days of the run we want vertical profiles for
 
@@ -47,9 +48,7 @@ end
 input = uq_createInput(iOpts);
 
 X = uq_getSample(input,n_runs,'LHS'); % create Latin Hypercube
-% X(:,1) = 10.^X(:,1); % reverting from log quantities to the ones we actually need
-X(:,3) = 10.^X(:,3);
-% range_params{1} = 10.^range_params{1};
+X(:,3) = 10.^X(:,3); % reverting from log quantities to the ones we actually need
 range_params{3} = 10.^range_params{3};
 disp('Parameter space created.')
 % plot_lhs(X,param_names,param_units,1); % quick check of input params distribution
@@ -60,7 +59,7 @@ save(file_inputs,'-v7.3','X','param_names','param_units','range_params','fjord_m
 %% Run the model for every year we want
 for which_year=2016:2020
     [path_fout,tgt_days] = run_model_loop_for_year(which_year,fjords_digitised,fjords_centreline,fjord_matrix,...
-                                                   folder_ctd_casts,X,param_names,n_years,tgt_days,dt_in_h,...
+                                                   folder_ctd_casts,X,param_names,n_years,tgt_days,dt_in_h,dt_plume_h,...
                                                    plot_ensemble);
     close all
 end
@@ -72,7 +71,7 @@ if ~exist('X','var') || ~exist('param_names','var') || ~exist('range_params','va
 end
 if ~exist('path_fout','var')
     which_year=2020;
-    path_fout = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_',num2str(60),'layers_dt',num2str(3),'h'];
+    path_fout = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_dtp',num2str(12),'h_dtm',num2str(0.5),'h.mat'];
 end
 load(path_fout)
 run postprocess_plot_ensembles
