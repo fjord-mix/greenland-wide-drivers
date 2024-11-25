@@ -4,8 +4,9 @@ run setup_paths % Configuring paths
 
 which_year    = 2020;
 plot_ensemble = 0;   % whether we want the ensemble to be plotted at the end of `run_model_loop_for_year`
-n_pts        = 10; % number of runs per fjord
+n_pts         = 10;  % number of runs per fjord
 dt_in_h       = 1;   % model time step in hours
+dt_plume_h    = 12;  % time step for updating the plume dynamics
 n_years       = 10;  % how many years we want to run
 tgt_days      = [n_years*365-180,n_years*365-105];  % which days of the run we want vertical profiles for
 
@@ -42,7 +43,7 @@ sermilik_max_bergs = 3e8;  % maximum submerged iceberg area within Sermilik fjor
 % sermilik_vagl      = 7.7028e11; % volume above grounding line of Sermilik fjord (W*L*Hgl)
 % iceberg_congestion = sermilik_max_bergs/sermilik_area;
 
-range_params = {[0,1.2*sermilik_max_bergs],...  % A0 (if log scale, starts at 1)
+range_params = {[0,10*sermilik_max_bergs],...  % A0 (if log scale, starts at 1)
                 [10,700],... % wp 
                 log10([5e1,5e5])};  % C0
 
@@ -80,8 +81,8 @@ for i_fjord=1:size(fjord_model,2)
     if ~run_fjord, continue; end
 
     % process inputs
-    eval(sprintf('id_cast_shelf = num2str(fjord_matrix.shelf_%d(i_fjord));',which_year));
-    eval(sprintf('id_cast_fjord = num2str(fjord_matrix.fjord_%d(i_fjord));',which_year));
+    eval(sprintf('id_cast_shelf = num2str(fjord_matrix.shelf_%d(i_find_fjord));',which_year));
+    eval(sprintf('id_cast_fjord = num2str(fjord_matrix.fjord_%d(i_find_fjord));',which_year));
     
     % default parameters
     p=default_parameters();
@@ -89,15 +90,15 @@ for i_fjord=1:size(fjord_model,2)
     p.N=60;
     p.dt=model_dt;
     p.t_save = t(1):1:t(end); % save at daily resolution
-    p.run_plume_every = 10; % run the plume model every 10 time steps (i.e., every 10*model_dt hours)
+    p.run_plume_every = floor(24*dt_plume_h/dt_in_h); % run the plume model every dt_plume_h hours
 
     % find the ocean forcing and fjord profile
     omg_data_shelf = dir([folder_ctd_casts,'/*',id_cast_shelf,'*.nc']);
     omg_data_fjord = dir([folder_ctd_casts,'/*',id_cast_fjord,'*.nc']);
 
     % get the metadata
-    m.ID = num2str(fjord_matrix.ID(i_fjord));
-    m.name = fjord_matrix.name(i_fjord);
+    m.ID = num2str(fjord_matrix.ID(i_find_fjord));
+    m.name = fjord_matrix.name(i_find_fjord);
     m.lon=ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'lon');
     m.lat=ncread([omg_data_fjord.folder,'/',omg_data_fjord.name],'lat');
 
@@ -123,10 +124,10 @@ for i_fjord=1:size(fjord_model,2)
     end
     
     % get geometry
-    p.L = fjords_centreline([fjords_centreline.id] == fjord_matrix.ID(i_fjord)).length.*1e3;
-    p.W = fjords_digitised([fjords_digitised.id] == fjord_matrix.ID(i_fjord)).area/p.L;
-    p.Hsill = abs(fjord_matrix.sill_depth(i_fjord));
-    p.Hgl   = abs(fjord_matrix.gl_depth(i_fjord));
+    p.L = fjords_centreline([fjords_centreline.id] == fjord_matrix.ID(i_find_fjord)).length.*1e3;
+    p.W = fjords_digitised([fjords_digitised.id] == fjord_matrix.ID(i_find_fjord)).area/p.L;
+    p.Hsill = abs(fjord_matrix.sill_depth(i_find_fjord));
+    p.Hgl   = abs(fjord_matrix.gl_depth(i_find_fjord));
 
     if p.Hsill == -999 % if the fjord has no sill
         p.sill=0;        % we ignore the sill
@@ -241,12 +242,16 @@ for i_fjord=1:size(fjord_model,2)
     fjord_model(i_fjord).c.ts = Ts;
     fjord_model(i_fjord).c.ss = Ss;
     fjord_model(i_fjord).c.zs = zs;
-    fprintf('Done pre-processing fjord %d.\n',fjord_matrix.ID(i_fjord))
+    fprintf('Done pre-processing fjord %d.\n',fjord_matrix.ID(i_find_fjord))
     clear m p a f
     fprintf('Inputs processing complete.\n')
+end
 
+fjords_crashed = {};
+for i_fjord=1:size(fjord_model,2)
     i_run=0;
     % loop over desired model parameters
+    tic
     for i_A0=1:n_pts
     for i_wp=1:n_pts
     for i_C0=1:n_pts
@@ -300,7 +305,7 @@ for i_fjord=1:size(fjord_model,2)
             
             fprintf('Output interpolation complete. \n')
         catch ME
-            fprintf('fjord %s run %d failed: %s. ',cur_fjord.m.ID,i_run,ME.message)
+            fprintf('fjord %s run %d failed: %s. \n',cur_fjord.m.ID,i_run,ME.message)
             cur_fjord.m.error = ME.message;
             cur_fjord.m.stack = ME.stack;
             fjords_crashed{end+1} = cur_fjord;
@@ -309,50 +314,57 @@ for i_fjord=1:size(fjord_model,2)
     end % i_A0
     end % i_wp
     end % i_C0
+    fprintf('Done with fjord %s.',cur_fjord.m.ID,i_run)
+    toc
 end % fjords
 
 %% saving the inputs and outputs
 
-file_out = [outs_path,'rpm_GRL_misfit_fjords_',num2str(n_pts),'pts_',num2str(which_year),'_',num2str(fjord_model(1).p.N),'layers_dt',num2str(dt_in_h),'h.mat'];
+file_out = [outs_path,'rpm_GRL_misfit_fjords_',num2str(n_pts),'pts_',num2str(which_year),'_dtp',num2str(dt_plume_h),'h_dtm',num2str(dt_in_h),'h.mat'];
 save(file_out,'-v7.3','X','param_names','param_units','range_params','fjord_matrix','ensemble','fjord_model','rmse_tf');
 
 
 %% Plotting misfits
 
-hf = figure('Name','Mistfit per parameter','Position',[40 40 600 500]);
-ht = tiledlayout(3,1);
-% for i_fjord=1:1
-
+hf = figure('Name','Mistfit per parameter','Position',[40 40 900 600]);
+ht = tiledlayout(3,length(fjord_model));
+i_col=0;
+for i_fjord=1:length(fjord_model)
+    
     % Plot A0
-    nexttile(1+i_fjord-1); hold on; box on;
+    nexttile(1+i_col); hold on; box on;
     for i_wp=1:n_pts
         for i_C0=1:n_pts
-            plot(X(:,1),squeeze(rmse_tf(i_fjord,:,i_wp,i_C0)),'linestyle','-')
+            plot(X(:,1),squeeze(rmse_tf(i_fjord,:,i_wp,i_C0)),'linestyle','-','Color',[0.75 0.75 0.75])
         end
     end
+    plot(X(:,1),squeeze(mean(rmse_tf(i_fjord,:,:,:),[3,4],'omitnan')),'linestyle','-','linewidth',2,'Color',[1 0 0])
     text(0.01,1.01,sprintf("%s",fjord_model(i_fjord).m.name{1}),'horizontalAlignment','left','verticalAlignment','bottom','units','normalized','fontsize',16)
     xlabel('A0')
     set(gca,'XScale','log','fontsize',16)
     
     % Plot wp
-    nexttile(2+i_fjord-1); hold on; box on;
+    nexttile(2+i_col); hold on; box on;
     for i_A0=1:n_pts
         for i_C0=1:n_pts
-            plot(X(:,2),squeeze(rmse_tf(i_fjord,i_A0,:,i_C0)),'linestyle','-')
+            plot(X(:,2),squeeze(rmse_tf(i_fjord,i_A0,:,i_C0)),'linestyle','-','Color',[0.75 0.75 0.75])
         end
     end
+    plot(X(:,2),squeeze(mean(rmse_tf(i_fjord,:,:,:),[2,4],'omitnan')),'linestyle','-','linewidth',2,'Color',[1 0 0])
     xlabel('wp')
     set(gca,'fontsize',16)
 
     % Plot C0
-    nexttile(3+i_fjord-1); hold on; box on;
+    nexttile(3+i_col); hold on; box on;
     for i_A0=1:n_pts
         for i_wp=1:n_pts
-            plot(X(:,3),squeeze(rmse_tf(i_fjord,i_A0,i_wp,:)),'linestyle','-')
+            plot(X(:,3),squeeze(rmse_tf(i_fjord,i_A0,i_wp,:)),'linestyle','-','Color',[0.75 0.75 0.75])
         end
     end
+    plot(X(:,3),squeeze(mean(rmse_tf(i_fjord,:,:,:),[2,3],'omitnan')),'linestyle','-','linewidth',2,'Color',[1 0 0])
     xlabel('C0')
     set(gca,'XScale','log','fontsize',16)
-    
-% end
+    i_col=i_col+3;
+end
 ylabel(ht,'RMSE (^oC)','fontsize',16);
+exportgraphics(gcf,[figs_path,'supp/misfit_per_param_per_fjord.png'],'Resolution',300)
