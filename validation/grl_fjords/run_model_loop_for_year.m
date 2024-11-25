@@ -1,4 +1,4 @@
-function [file_out,tgt_days] = run_model_loop_for_year(which_year,fjords_digitised,fjords_centreline,fjord_matrix,folder_ctd_casts,X,param_names,n_years,tgt_days,dt_in_h,plot_ensemble)
+function [file_out,tgt_days] = run_model_loop_for_year(which_year,fjords_digitised,fjords_centreline,fjord_matrix,folder_ctd_casts,X,param_names,n_years,tgt_days,dt_in_h,dt_plume_h,plot_ensemble)
 
 warning('off','all')
 run setup_paths % Configuring paths
@@ -46,7 +46,7 @@ for i_fjord=1:height(fjord_matrix)
         p.N=60;
         p.dt=model_dt;
         p.t_save = t(1):1:t(end); % save at daily resolution
-        p.run_plume_every = 10; % run the plume model every 10 time steps (i.e., every 10*model_dt hours)
+        p.run_plume_every = floor(24*dt_plume_h/dt_in_h); % run the plume model every dt_plume_h hours
 
         % find the ocean forcing and fjord profile
         omg_data_shelf = dir([folder_ctd_casts,'/*',id_cast_shelf,'*.nc']);
@@ -278,8 +278,7 @@ for i_run=1:n_runs
                 QVpfinal(:,i_day) = mean(squeeze(cur_fjord.s.QVp(:,(tgt_day-5:tgt_day+5))),2);
                 QMpfinal(:,i_day) = mean(squeeze(cur_fjord.s.QMp(:,(tgt_day-5:tgt_day+5))),2);
                 fw_export(i_day)  = sum(QVsfinal(:,i_day).*((Sref-Sfinal(:,i_day))/Sref));
-                Qsg0              = mean(cur_fjord.s.Qsg(tgt_day-5:tgt_day+5),2);
-                [inb(i_day), ~, ~, ~]   = get_plume_properties(cur_fjord.p, cur_fjord.s.kgl, cur_fjord.s.H, Sfinal(:,i_day), Tfinal(:,i_day), Qsg0);
+                inb(i_day)        = int32(mean(cur_fjord.s.knb(tgt_day-5:tgt_day+5)));
             end
             QVs_mean = mean(cur_fjord.s.QVs(:,(end-364:end)),2,'omitnan');
             QVp_mean = mean(squeeze(cur_fjord.s.QVp(:,(end-364:end))),2,'omitnan');
@@ -306,12 +305,7 @@ for i_run=1:n_runs
 
             fw_export_t  = sum(cur_fjord.s.QVs.*((Sref-cur_fjord.s.S)/Sref),1,'omitnan');
             [~,i_max_export_t] = min(cur_fjord.s.QVs.*((Sref-cur_fjord.s.S)/Sref),[],1,'omitnan');
-
-            inb_t = NaN(size(cur_fjord.s.Qsg));
-            for i_s=1:length(cur_fjord.s.Qsg)
-                [inb_t(i_s), ~, ~, ~]   = get_plume_properties(cur_fjord.p, cur_fjord.s.kgl, cur_fjord.s.H, ...
-                                          cur_fjord.s.S(:,i_s), cur_fjord.s.T(:,i_s), cur_fjord.s.Qsg(i_s));
-            end
+            
             ensemble(i_fjord,i_run).s.fw_profile_export    = fw_mean_export_profile;
             ensemble(i_fjord,i_run).s.fw_profile_discharge = fw_mean_discharge_profile;
             ensemble(i_fjord,i_run).s.fw_export            = fw_export;
@@ -319,7 +313,7 @@ for i_run=1:n_runs
             ensemble(i_fjord,i_run).s.z_max_export         = cur_fjord.s.z(i_max_export);
             ensemble(i_fjord,i_run).s.z_max_export_t       = cur_fjord.s.z(i_max_export_t);
             ensemble(i_fjord,i_run).s.znb                  = cur_fjord.s.z(inb);
-            ensemble(i_fjord,i_run).s.znb_t                = cur_fjord.s.z(inb_t);
+            ensemble(i_fjord,i_run).s.znb_t                = cur_fjord.s.z(cur_fjord.s.knb);
             ensemble(i_fjord,i_run).s.Qsg                  = cur_fjord.s.Qsg;
 
             zf_obs = cur_fjord.c.zf';
@@ -352,7 +346,7 @@ fprintf('Done with fjord %d. ',i_fjord)
 toc
 fprintf('\n')
 end % for i_fjord
-file_out = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_',num2str(fjord_model(1).p.N),'layers_dt',num2str(dt_in_h),'h.mat'];
+file_out = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_dtp',num2str(dt_plume_h),'h_dtm',num2str(dt_in_h),'h.mat'];
 save(file_out,'-v7.3','ensemble','fjord_model');
 if ~isempty(fjords_crashed)
     save([file_out,'_crashed.mat'],'-v7.3','fjords_crashed');
