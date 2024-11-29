@@ -314,7 +314,7 @@ for i_fjord=1:size(fjord_model,2)
     end % i_A0
     end % i_wp
     end % i_C0
-    fprintf('Done with fjord %s.',cur_fjord.m.ID,i_run)
+    fprintf('Done with fjord %s.\n',cur_fjord.m.ID,i_run)
     toc
 end % fjords
 
