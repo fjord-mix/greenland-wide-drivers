@@ -4,7 +4,7 @@ run setup_paths % Configuring paths
 
 plot_ensemble = 0;   % whether we want the ensemble to be plotted at the end of `run_model_loop_for_year`
 n_runs        = 300; % number of runs per fjord
-dt_in_h       = 0.5;   % model time step in hours
+dt_in_h       = 1;   % model time step in hours
 dt_plume_h    = 12;  % time step for updating the plume dynamics
 n_years       = 10;  % how many years we want to run
 tgt_days      = [n_years*365-180,n_years*365-105];  % which days of the run we want vertical profiles for
@@ -32,7 +32,7 @@ sermilik_max_bergs = 3e8;  % maximum submerged iceberg area within Sermilik fjor
 % sermilik_vagl      = 7.7028e11; % volume above grounding line of Sermilik fjord (W*L*Hgl)
 % iceberg_congestion = sermilik_max_bergs/sermilik_area;
 
-range_params = {[0,1.2*sermilik_max_bergs],...  % A0 (if log scale, starts at 1)
+range_params = {[0,10*sermilik_max_bergs],...  % A0 (if log scale, starts at 1)
                 [10,700],... % wp 
                 log10([5e1,5e5])};  % C0
 
@@ -53,7 +53,7 @@ range_params{3} = 10.^range_params{3};
 disp('Parameter space created.')
 % plot_lhs(X,param_names,param_units,1); % quick check of input params distribution
 
-file_inputs = [outs_path,'inputs_GRL_fjords_n',num2str(n_runs),'_dt',num2str(dt_in_h),'h'];
+file_inputs = [outs_path,'inputs_GRL_fjords_n',num2str(n_runs),'_dt',num2str(dt_in_h),'h.mat'];
 save(file_inputs,'-v7.3','X','param_names','param_units','range_params','fjord_matrix');
 
 %% Run the model for every year we want
