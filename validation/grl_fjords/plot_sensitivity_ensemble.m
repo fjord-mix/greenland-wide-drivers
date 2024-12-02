@@ -34,12 +34,10 @@ ls_bnds = {':','-.','-'};
 n_cols = 2;
 
 % profiles: low, mid, and high
-n_std      = 1; % how many standard deviations away from the mean we want our central interval to span
 param_bnds_profile = NaN([4,n_params]);
 for i_param=1:n_params
-    std_param = std(X(:,i_param));
-    avg_param = mean(X(:,i_param));
-    param_bnds_profile(:,i_param) = [min(X(:,i_param)),avg_param-n_std.*std_param,avg_param+n_std.*std_param,max(X(:,i_param))]';
+    param_bnds_profile(:,i_param) = prctile(X(:,i_param),[0,33,66,100]);
+    % param_bnds_profile(:,i_param) = quantile(X(:,i_param),4); % no qualitative changes compared with using percentiles, but the latter makes the differences clearer
 end
 
 % scatter: 10 bins of percentiles
