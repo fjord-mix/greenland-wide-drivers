@@ -32,7 +32,7 @@ sermilik_max_bergs = 3e8;  % maximum submerged iceberg area within Sermilik fjor
 % sermilik_vagl      = 7.7028e11; % volume above grounding line of Sermilik fjord (W*L*Hgl)
 % iceberg_congestion = sermilik_max_bergs/sermilik_area;
 
-range_params = {[0,10*sermilik_max_bergs],...  % A0 (if log scale, starts at 1)
+range_params = {[0,1.5*sermilik_max_bergs],...  % A0 (if log scale, starts at 1)
                 [10,700],... % wp 
                 log10([5e1,5e5])};  % C0
 
@@ -95,7 +95,7 @@ exportgraphics(hf_t,[figs_path,'3_sensitivity_temp_',num2str(2020),'_n',num2str(
 % Plotting best parameters (Fig. 4)
 hf_hist = plot_best_params_time_hist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
 exportgraphics(hf_hist,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'_filtered.png'],'Resolution',300)
-% close all
+close all
 
 %% Supplementary/unused
 
