@@ -126,7 +126,19 @@ for i_fjord=1:size(ensemble,1)
                 if isempty(ensemble(i_fjord,i_run).s), continue; end % we skip any empty entries
                 if mask_bnds_profile(i_fjord,i_run).(param_names{i_param}) == i_bnd
                     tf_ensemble(:,i_run) = ensemble(i_fjord,i_run).s.Tfinal(:,2);
-                    znb_ensemble(i_run) = ensemble(i_fjord,i_run).s.znb(2);
+
+                    % same time as T profile
+                    % znb_ensemble(i_run) = ensemble(i_fjord,i_run).s.znb(2);
+                    
+                    % mean of 30 days around peak discharge of last year
+                    % (mean of 30 days after peak discharge of last year is not that different from using the September conditions)
+                    % [~,i_peak] = max(ensemble(i_fjord,i_run).s.Qsg(end-365:end));
+                    % znb_ensemble(i_run) = mean(ensemble(i_fjord,i_run).s.znb_t(end-365+i_peak-15:end-365+i_peak+15)); 
+
+                    % mean over melt season of the last year
+                    i_discharge = ensemble(i_fjord,i_run).s.Qsg > 0 & ensemble(i_fjord,i_run).s.t > ensemble(i_fjord,i_run).s.t(end)-365;
+                    znb_ensemble(i_run) = mean(ensemble(i_fjord,i_run).s.znb_t(i_discharge)); 
+
                 end
                 Hsill = ensemble(i_fjord,i_run).p.Hsill;
                 Hgl   = ensemble(i_fjord,i_run).p.Hgl;
