@@ -18,7 +18,7 @@ for i_yr_load=1:n_years_to_plot
     %% Loading and postprocessing
     which_year_load = 2015+i_yr_load;
     if isempty(ensemble_yr{i_yr_load})
-        file_in = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year_load),'_',num2str(fjord_model(1).p.N),'layers_dt',num2str(dt_in_h),'h'];
+        file_in = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year_load),'_dtp',num2str(dt_plume_h),'h_dtm',num2str(dt_in_h),'h.mat'];
         load(file_in);
     
         [res_obs_yr{i_yr_load},res_box_yr{i_yr_load}] = postprocess_ensemble(fjord_model,ensemble,tgt_days);
