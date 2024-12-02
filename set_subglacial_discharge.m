@@ -1,7 +1,7 @@
 % Gets the subglacial discharge for OMG-compiled data
 % to be run within `driver_grl_fjrods.m`
 
-folder_qsg = dir([data_path,'/greenland/runoff/Karlsson2023/']);
+folder_qsg = dir([data_path,'/greenland_common/runoff/Karlsson2023/']);
         
 % for each existing gateID:
 if ~isempty(fjord_matrix.qsg_id1(i_fjord))
@@ -50,29 +50,48 @@ clear qsg_gate1 qsg_gate2 qsg_gate3
 
 
 % trim by Date_YYYY-MM based on our time_start and time_end
-taxis_tsg = datetime(Qsg_time,'InputFormat','uuuu-MM') + days(14);
-which_dates = taxis_tsg > time_start & taxis_tsg < time_end;
+taxis_tsg = datetime(Qsg_time,'InputFormat','uuuu-MM') + days(15);
+which_dates = taxis_tsg >= time_start & taxis_tsg <= time_end;
 taxis_tsg = taxis_tsg(which_dates);
 Qsg_sum   = Qsg_sum(which_dates);
-seconds_in_month = eomday(taxis_tsg.Year,taxis_tsg.Month)*86400; 
-
-% TODO: adapt for haing multi-year or repeat single-year
+n_days_in_month = eomday(taxis_tsg.Year,taxis_tsg.Month);
+seconds_in_month = n_days_in_month*86400;
+taxis_tsg_daily = NaT([sum(n_days_in_month),1]);
+i_doy = 1;
+for i_month = 1:length(taxis_tsg)
+    for i_day = 1:n_days_in_month(i_month)
+        taxis_tsg_daily(i_doy) = datetime(taxis_tsg.Year(i_month),taxis_tsg.Month(i_month),i_day,0,0,0);
+        i_doy=i_doy+1;
+    end
+end
 
 % set f.Qsg and f.tsg accordingly
 if exist('n_years','var') % we treat things slightly differently in case we do a repeat of one year, or several years
-    tsg = NaT([1,length(taxis_tsg)*n_years]);
-    i_yr_beg=1;
-    i_yr_end=12;
-    for i_yr=1:n_years    
-        tsg(i_yr_beg:i_yr_end) = taxis_tsg + years(i_yr-1);
-        i_yr_beg=i_yr_end+1;
-        i_yr_end=i_yr_beg+11;
+    tsg = NaT([length(taxis_tsg_daily)*n_years,1]);
+    i_beg_yr=1;
+    i_end_yr=i_beg_yr+sum(n_days_in_month)-1;
+    for i_yr=1:n_years
+        tsg(i_beg_yr:i_end_yr) = taxis_tsg_daily + years(i_yr-1);
+        i_beg_yr=i_end_yr+1;
+        i_end_yr=i_beg_yr+sum(n_days_in_month)-1;
     end
     f.tsg = juliandate(tsg) - juliandate(tsg(1));
 else
     f.tsg = juliandate(taxis_tsg) - juliandate(taxis_tsg(1));
 end
 Qsg = Qsg_sum./seconds_in_month;
+
+% Making the monthly values at daily resolution (FjordRPM will linearly
+% interpolate if we do not do that, and we do not want linear interp)
+% tt_runoff = timetable(taxis_tsg,Qsg);
+% tt_runoff.Properties.VariableContinuity = {'step'};
+% tt_runoff_daily = retime(tt_runoff,taxis_tsg_daily);
+
+Qsg_daily = interp1(taxis_tsg,Qsg,taxis_tsg_daily,'nearest','extrap');
+% tt_runoff_daily = timetable(taxis_tsg_daily,Qsg_daily);
+
+Qsg = Qsg_daily;
+f.tsg = juliandate(tsg) - juliandate(tsg(1));
 
 % makes sure they are in the correct dimensions
 if size(Qsg,1) > size(Qsg,2)

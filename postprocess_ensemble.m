@@ -39,7 +39,8 @@ for i_fjord=1:n_fjords
 
     first_valid_run = 0;
     for i_run=1:n_runs
-        if ~isempty(ensemble(i_fjord,i_run).s) & ~isnan(ensemble(i_fjord,i_run).s.Tfinal(1))
+        if ~isempty(ensemble(i_fjord,i_run).s) & ~isnan(ensemble(i_fjord,i_run).s.Tfinal(1)) & ...
+                ~(length(ensemble(i_fjord,i_run).s.t) ~= length(ensemble(i_fjord,i_run).p.t_save))
             if first_valid_run==0,first_valid_run=i_run; end
 
             % we get a profile for each of our target days - if something
