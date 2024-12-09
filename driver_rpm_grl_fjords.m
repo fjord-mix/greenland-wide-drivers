@@ -94,7 +94,7 @@ exportgraphics(hf_t,[figs_path,'3_sensitivity_temp_',num2str(2020),'_n',num2str(
 % 
 % Plotting best parameters (Fig. 4)
 hf_hist = plot_best_params_time_hist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
-exportgraphics(hf_hist,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'_all.png'],'Resolution',300)
+exportgraphics(hf_hist,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'_filtered2.png'],'Resolution',300)
 close all
 
 %% Supplementary/unused
