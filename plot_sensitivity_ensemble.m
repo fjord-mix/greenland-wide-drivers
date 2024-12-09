@@ -137,7 +137,7 @@ for i_fjord=1:size(ensemble,1)
 
                     % mean over melt season of the last year
                     i_discharge = ensemble(i_fjord,i_run).s.Qsg > 0 & ensemble(i_fjord,i_run).s.t > ensemble(i_fjord,i_run).s.t(end)-365;
-                    znb_ensemble(i_run) = mean(ensemble(i_fjord,i_run).s.znb_t(i_discharge)); 
+                    znb_ensemble(i_run) = mean(ensemble(i_fjord,i_run).s.znb_t(i_discharge),'omitnan'); 
 
                 end
                 Hsill = ensemble(i_fjord,i_run).p.Hsill;

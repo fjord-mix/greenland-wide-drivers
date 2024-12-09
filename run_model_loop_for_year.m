@@ -278,7 +278,7 @@ for i_run=1:n_runs
                 QVpfinal(:,i_day) = mean(squeeze(cur_fjord.s.QVp(:,(tgt_day-5:tgt_day+5))),2);
                 QMpfinal(:,i_day) = mean(squeeze(cur_fjord.s.QMp(:,(tgt_day-5:tgt_day+5))),2);
                 fw_export(i_day)  = sum(QVsfinal(:,i_day).*((Sref-Sfinal(:,i_day))/Sref));
-                inb(i_day)        = int32(mean(cur_fjord.s.knb(tgt_day-5:tgt_day+5)));
+                inb(i_day)        = ceil(mean(cur_fjord.s.knb(tgt_day-5:tgt_day+5)));
             end
             QVs_mean = mean(cur_fjord.s.QVs(:,(end-364:end)),2,'omitnan');
             QVp_mean = mean(squeeze(cur_fjord.s.QVp(:,(end-364:end))),2,'omitnan');
@@ -287,6 +287,15 @@ for i_run=1:n_runs
             T_mean   = mean(cur_fjord.s.T(:,(end-364:end)),2,'omitnan');
             fw_mean_export_profile = QVs_mean.*((Sref-S_mean)/Sref);
             fw_mean_discharge_profile = QVp_mean.*((Sref-S_mean)/Sref);
+
+            % we need to ignore the cases when there is no plume (i.e., knb_t==0 and inb==0)
+            knb_t = cur_fjord.s.knb;
+            inb_mask = ones(size(inb));
+            knb_mask = ones(size(knb_t));
+            inb_mask(inb==0)   = 0;
+            knb_mask(knb_t==0) = 0;
+            inb(inb==0)        = 1; % so it doesnt crash when getting the depths
+            knb_t(knb_t==0)    = 1;
 
             ensemble(i_fjord,i_run).s.Tfinal   = Tfinal;
             ensemble(i_fjord,i_run).s.Sfinal   = Sfinal;
@@ -312,9 +321,12 @@ for i_run=1:n_runs
             ensemble(i_fjord,i_run).s.fw_export_t          = fw_export_t;
             ensemble(i_fjord,i_run).s.z_max_export         = cur_fjord.s.z(i_max_export);
             ensemble(i_fjord,i_run).s.z_max_export_t       = cur_fjord.s.z(i_max_export_t);
-            ensemble(i_fjord,i_run).s.znb                  = cur_fjord.s.z(inb);
-            ensemble(i_fjord,i_run).s.znb_t                = cur_fjord.s.z(cur_fjord.s.knb);
             ensemble(i_fjord,i_run).s.Qsg                  = cur_fjord.s.Qsg;
+
+            ensemble(i_fjord,i_run).s.znb                  = cur_fjord.s.z(inb);
+            ensemble(i_fjord,i_run).s.znb_t                = cur_fjord.s.z(knb_t);
+            ensemble(i_fjord,i_run).s.znb(inb_mask==0)        = NaN;
+            ensemble(i_fjord,i_run).s.znb_t(knb_mask==0)      = NaN;
 
             zf_obs = cur_fjord.c.zf';
             z_box = -cur_fjord.s.z;
