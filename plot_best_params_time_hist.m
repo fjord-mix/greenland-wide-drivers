@@ -35,7 +35,7 @@ for i_yr=n_years:-1:1
 
         % Filter out runs that have a high RMSE, i.e., we want to focus on the fjords we can simulate well
         rmse_tf_filtered = res_box(i_fjord).rmse_tf;
-        rmse_tf_threshold = 10.5; %prctile(rmse_tf_filtered(:,i_tgt_day),10,1);
+        rmse_tf_threshold = 0.5; %prctile(rmse_tf_filtered(:,i_tgt_day),10,1);
         rmse_tf_filtered(rmse_tf_filtered>rmse_tf_threshold) = NaN;
     
         % find run with the smallest RMSE
@@ -124,7 +124,7 @@ for i_yr=n_years:-1:1
         % edge_centre(end) = edge_centre(end).*1.1;
         
         nexttile(i_hist,[1,1]); hold on; box on;
-        h = histogram(param_entry_filtered,binedges,'Normalization','probability','FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5,'Orientation','horizontal');
+        % h = histogram(param_entry_filtered,binedges,'Normalization','probability','FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5,'Orientation','horizontal');
         % bar(edge_centre, n, 'barwidth', 1,'FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5,'Horizontal','on');
         % histogram(param_entry_filtered,30,'FaceColor',lcolor(i_yr,:),'FaceAlpha',0.5,'Orientation','horizontal');
         
@@ -159,5 +159,5 @@ hl.NumColumns = 2;
 nexttile(1,[1,2]); hold on; box on;
 blgd = bubblelegend('RMSE (^oC)','Location','southwest','fontsize',fsize-4);
 blgd.Title.FontWeight='normal';
-blgd.LimitLabels = {'\leq 2','0'};
+blgd.LimitLabels = {'\geq 2','0'};
 end
