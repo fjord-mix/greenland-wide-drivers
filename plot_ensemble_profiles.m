@@ -223,14 +223,14 @@ for i_fjord=1:n_fjord_runs
         % Observed shelf and fjord profiles
         plot(res_obs(i_fjord).ss,-res_obs(i_fjord).zs,'linewidth',2.5,'color',lcolor(1,:));
         plot(res_obs(i_fjord).sf,-res_obs(i_fjord).zf,'linewidth',2.5,'color',lcolor(2,:));
-        plot(sf_best,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(3,:),'LineStyle','--');
+        plot(sf_best,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(3,:));
         % plot(sf_best2,-res_obs(i_fjord).zf,'linewidth',1.5,'color',lcolor(3,:));
         
     
         % RPM profile(s)
         % forcing
         if isfield(res_box(i_fjord),'Sforc')
-            plot(res_box(i_fjord).Sforc,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(1,:),'LineStyle','--');
+            plot(res_box(i_fjord).Sforc,-res_box(i_fjord).zf,'linewidth',2.5,'color',lcolor(1,:));
         end
         for i_day=1:n_days
             y2 = [-res_box(i_fjord).zf; flip(-res_box(i_fjord).zf)];
