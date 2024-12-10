@@ -8,9 +8,9 @@ The model itself can be downloaded [here](https://github.com/fjord-mix/box-model
 
 - Supporting datasets published together with the manuscript
 - OMG datasets (using the PO.DAAC API)
-    - [CTD](https://podaac.jpl.nasa.gov/dataset/OMG_L2_CTD)
-    - [AXCTD](https://podaac.jpl.nasa.gov/dataset/OMG_L2_AXCTD)
-- Subglacial discharge from [Karlsson et al. (2023)](https://dataverse.geus.dk/dataset.xhtml?persistentId=doi:10.22008/FK2/BOVBVR)
+    - [CTD](https://doi.org/10.5067/OMGEV-CTDS1)
+    - [AXCTD](https://doi.org/10.5067/OMGEV-AXCT1)
+- Subglacial discharge from [Karlsson et al. (2023)](https://doi.org/10.22008/FK2/BOVBVR)
 
 ## Basic walkthrough
 Driver files for running the model ensembles:
