@@ -11,10 +11,10 @@ tgt_days      = [n_years*365-180,n_years*365-105];  % which days of the run we w
 
 %% Compiling data 
 
-file_fjords_compiled = [data_path,'/martim/fjords_digitisation/fjords_gl_sill_depths_reduced_v2.xlsx'];
-folder_ctd_casts     = [data_path,'/greenland_common/obs/OMG_all_casts'];
-file_lengths         = [data_path,'/martim/fjords_digitisation/fjords_centreline.shp'];
-file_fjords          = [data_path,'/martim/fjords_digitisation/fjords_grl.shp'];
+file_fjords_compiled = [data_path,'/fjords_digitisation/fjords_gl_sill_depths_reduced_v2.xlsx'];
+folder_ctd_casts     = [data_path,'/obs/OMG_all_casts'];
+file_lengths         = [data_path,'/fjords_digitisation/fjords_centreline.shp'];
+file_fjords          = [data_path,'/fjords_digitisation/fjords_grl.shp'];
 
 fjords_digitised  = shaperead(file_fjords);
 fjords_centreline = shaperead(file_lengths);
@@ -25,7 +25,7 @@ fjord_matrix(isnan(fjord_matrix.qsg_id1),:) = [];
 
 %% Define parameter space
 param_names = {'A0','wp','C0'};
-param_units = {'m^2','m','s^{-1}'};
+param_units = {'m^2','m','s'};
 
 sermilik_max_bergs = 3e8;  % maximum submerged iceberg area within Sermilik fjord
 % sermilik_area      = 1.1850e09; % area of Sermilik fjord (W*L)
@@ -57,7 +57,7 @@ file_inputs = [outs_path,'inputs_GRL_fjords_n',num2str(n_runs),'_dt',num2str(dt_
 save(file_inputs,'-v7.3','X','param_names','param_units','range_params','fjord_matrix');
 
 %% Run the model for every year we want
-for which_year=2016:2020
+for which_year=2020:2020
     [path_fout,tgt_days] = run_model_loop_for_year(which_year,fjords_digitised,fjords_centreline,fjord_matrix,...
                                                    folder_ctd_casts,X,param_names,n_years,tgt_days,dt_in_h,dt_plume_h,...
                                                    plot_ensemble);
@@ -71,7 +71,7 @@ if ~exist('X','var') || ~exist('param_names','var') || ~exist('range_params','va
 end
 if ~exist('path_fout','var')
     which_year=2020;
-    path_fout = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_dtp',num2str(12),'h_dtm',num2str(0.5),'h.mat'];
+    path_fout = [outs_path,'rpm_GRL_fjords_n',num2str(n_runs),'_',num2str(which_year),'_dtp',num2str(12),'h_dtm',num2str(1),'h.mat'];
 end
 load(path_fout)
 run postprocess_plot_ensembles
@@ -88,8 +88,9 @@ exportgraphics(hf_ts,[figs_path,'2_temp_salt_example_fjords',num2str(2020),'_n',
 % close all
 % 
 % Sensitivity plots for select fjords (Fig. 3)
-[hf_t,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'0','28','89'});
+[hf_t,~,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'0','28','89'},0,1);
 exportgraphics(hf_t,[figs_path,'3_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
+% exportgraphics(gcf,[figs_path,'supp/sensitivity_QVs_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
 % close all
 % 
 % Plotting best parameters (Fig. 4)

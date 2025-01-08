@@ -1,7 +1,7 @@
 % Gets the subglacial discharge for OMG-compiled data
 % to be run within `driver_grl_fjrods.m`
 
-folder_qsg = dir([data_path,'/greenland_common/runoff/Karlsson2023/']);
+folder_qsg = dir([data_path,'/runoff/Karlsson2023/']);
         
 % for each existing gateID:
 if ~isempty(fjord_matrix.qsg_id1(i_fjord))
