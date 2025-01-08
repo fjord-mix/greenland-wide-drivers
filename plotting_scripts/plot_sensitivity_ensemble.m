@@ -1,6 +1,7 @@
-function [hf_t,hf_e] = plot_sensitivity_ensemble(X,ensemble,res_box,res_obs,param_names,which_fjords,plt_fw)
+function [hf_t,hf_e,hf_s] = plot_sensitivity_ensemble(X,ensemble,res_box,res_obs,param_names,which_fjords,plt_fw,plt_sf)
 
-if nargin < 7, plt_fw = 0; hf_e=[]; end
+if nargin < 7 || plt_fw==0, plt_fw = 0; hf_e=[]; end
+if nargin < 8, plt_sf = 0; hf_s=[]; end
 
 if nargin > 4
     n_fjords = length(which_fjords);
@@ -237,7 +238,7 @@ ht_t.Padding='compact';
     % legend(ha_main,handle_fjords,param_names,'fontsize',10,'Location','southeast');
     % no_legend = 0;
 % end
-%% Plotting shelf export
+%% Plotting shelf FW export
 if plt_fw
 hf_e = figure('Name','Shelf export sensitivity','Position',[40 40 fig_width fig_height]);
 ht_e = tiledlayout(2*n_fjords,n_cols*length(param_names));
@@ -389,6 +390,159 @@ xlabel(ht_e,'Mean exported freshwater flux (m^3s^{-1})','fontsize',fsize);
 ylabel(ht_e,'Depth (m)','fontsize',fsize);
 ht_e.TileSpacing='compact';
 ht_e.Padding='compact';
+% legend(ha_main,handle_fjords,param_names,'fontsize',10,'Location','southwest');
+% no_legend = 0;
+end
+
+%% Plotting shelf fluxes
+if plt_sf
+hf_s = figure('Name','Shelf fluxes','Position',[40 40 fig_width fig_height]);
+ht_s = tiledlayout(2*n_fjords,n_cols*length(param_names));
+no_legend=1;
+i_plt_fjord=0;
+i_panel=1;
+for i_fjord=1:size(ensemble,1)
+    if nargin > 4
+        for i_tgt_fjords=1:n_fjords
+            if strcmp(which_fjords{i_tgt_fjords},res_box(i_fjord).id) == 1
+                plot_fjord=1;
+                break
+            else
+                plot_fjord=0;
+            end
+        end
+        if ~plot_fjord, continue; end
+    end
+    i_plt_fjord=i_plt_fjord+1;
+    i_plt = 1+(i_plt_fjord-1)*2*(n_cols*n_params);
+    i_plt_sub = i_plt+(n_cols*n_params)+1;
+    for i_param=1:length(param_names)    
+        ha_main = nexttile(i_plt,[2 n_cols]); hold on; box on
+        text(0.98,1.01,['(',letters(i_panel),')'],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',fsize)
+        i_panel=i_panel+1;
+        base_gl_and_sill_ef = 0;
+        for i_bnd=1:length(key_param_bnd)
+            
+            ef_ensemble = NaN([length(res_box(i_fjord).zf),size(ensemble,2)]);
+            znb_ensemble = NaN([1,size(ensemble,2)]);
+            % find profiles that fit into that interval for that cast
+            for i_run=1:size(ensemble,2)
+                if isempty(ensemble(i_fjord,i_run).s), continue; end % we skip any empty entries
+                if mask_bnds_profile(i_fjord,i_run).(param_names{i_param}) == i_bnd
+                    ef_ensemble(:,i_run) = ensemble(i_fjord,i_run).s.QVsfinal(:,2);
+                    znb_ensemble(i_run) = ensemble(i_fjord,i_run).s.znb(1);
+                end
+                Hsill = ensemble(i_fjord,i_run).p.Hsill;
+                Hgl   = ensemble(i_fjord,i_run).p.Hgl;
+                H     = ensemble(i_fjord,i_run).p.H;
+                has_sill = ensemble(i_fjord,i_run).p.sill;
+            end
+            vline(0,'linewidth',0.5,'linestyle',':','color',[0.7 0.7 0.7])
+
+            % take mean and min/max for that subset
+            depths = -res_box(i_fjord).zf;
+            efmean = -mean(ef_ensemble,2,'omitnan');
+            
+            plot(efmean,depths,'linewidth',1.5,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd});
+            if i_bnd==length(key_param_bnd)
+                hp = plot(efmean,depths,'linewidth',1.5,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd});
+            end
+
+            % add plume
+            % scatter(base_gl_and_sill_ef+1*i_bnd,mean(znb_ensemble,'omitnan'),60,[0 0 0],'x')
+            % plot([base_gl_and_sill_ef+1*i_bnd,base_gl_and_sill_ef+1*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
+            %                                     mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
+            %                                     'linewidth',1.7,'color',[0 0 0],'linestyle',ls_bnds{i_bnd})
+        end
+        
+        % add depictions of GL and sill depths
+        scatter(base_gl_and_sill_ef,-Hgl,40,'v','filled','MarkerFaceColor',[0 0 0])
+        if has_sill
+            plot([base_gl_and_sill_ef base_gl_and_sill_ef],[-H -Hsill],'-','linewidth',2,'color',[0 0 0])
+        end
+        
+        set(gca,'fontsize',fsize)
+        ylim([-H 0])
+        if no_legend==1
+            handle_fjords = [handle_fjords hp];
+            lbl_fjords{i_fjord} = param_names{i_param};%res_box(i_fjord).id;
+        end
+        if i_param==1
+            text(gca,0.02,1.075,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','fontsize',fsize)
+        end
+
+        % Adding inset scatter plot
+        ax2 = axes(ht_s);
+        ax2.Layout.Tile=i_plt_sub;
+        ax2.Layout.TileSpan=[1 n_cols-1];
+        ax2.Box = 'on';
+        hold on;
+        for i_bin=1:length(bins)-1
+            fz_ensemble = NaN([1,size(ensemble,2)]);
+            fz_full_ens = NaN(size(fz_ensemble));
+            ef_ensemble_peaks = NaN(size(ef_ensemble));
+            % find profiles that fit into that bin for that cast
+            for i_run=1:size(ensemble,2)
+                if isempty(ensemble(i_fjord,i_run).s), continue; end % we skip any empty entries
+                if mask_bnds_prctile(i_fjord,i_run).(param_names{i_param}) == i_bin
+                    % fz_ensemble(i_run) = ensemble(i_fjord,i_run).s.z_max_export;
+                    % ef_ensemble_peaks(:,i_run) = ensemble(i_fjord,i_run).s.QVsfinal(:,1).*((Sref-ensemble(i_fjord,i_run).s.Sfinal(:,1))/Sref);
+                    ef_ensemble_peaks(:,i_run) = ensemble(i_fjord,i_run).s.QVsfinal(:,2);
+                    ef_ensemble_peaks(:,i_run) = ef_ensemble_peaks(:,i_run)/trapz(ef_ensemble_peaks(:,i_run),ensemble(i_fjord,i_run).s.z); % normalising the flux magnitude
+                end
+                fz_full_ens(i_run) = ensemble(i_fjord,i_run).s.z_max_export;
+            end
+
+            % finds peaks in the FW export profile. We want those associated with export (i.e., positive & above the grounding line)
+            ef_peaks = -mean(ef_ensemble_peaks,2,'omitnan');
+            ef_peaks(depths < -Hgl) = 0;
+            ef_peaks(ef_peaks < 0) = 0;
+            
+            % [ef_peaks_rsmp,depths_rsmp] = resample(ef_peaks,-round(depths),1);
+            [val_peaks,z_peaks,w_peaks,p_peaks] = findpeaks(ef_peaks,-round(depths));%,'NPeaks',5);
+            area_peak = w_peaks.*val_peaks; % Although this is not properly the area, it worked much better than the numerical integral approach below
+
+            % functions to estimate area undr the curve of each peak
+            % sfcn = @(b,x) b(4) + b(1).*x.*(exp(b(2).*x) + exp(b(3).*x));
+            % AUC = @(b,x) - b(4).*(x(1) - x(end)) - b(1).*((exp(b(2).*x(1)).*(b(2)*x(1) - 1))./b(2).^2 - (exp(b(2).*x(end)).*(b(2)*x(end) - 1))./b(2).^2) - b(1)*((exp(b(3)*x(1)).*(b(3).*x(1) - 1))./b(3)^2 - (exp(b(3)*x(end))*(b(3)*x(end) - 1))./b(3)^2);
+            % for k = 1:numel(z_peaks)
+            %     % ixrng = -(z_peaks(k)+20:-1:z_peaks(k)-200);
+            %     ixrng = max(1,z_peaks(k)-100) : min(z_peaks(k)+100,numel(depths_rsmp));
+            %     drv = depths_rsmp(ixrng) - depths_rsmp(ixrng(1));
+            %     B(k,:) = fminsearch(@(b)norm(ef_peaks_rsmp(ixrng) - sfcn(b,drv)), [z_peaks(k)*10 -rand(1,2)*10 0.01]);
+            %     sfit{k} = [drv+depths_rsmp(ixrng(1)), sfcn(B(k,:),drv), ixrng(:)];
+            %     % area_peak(k) = AUC(B(k,:),drv);
+            %     area_peak(k,:) = trapz(drv, sfit{k}(:,2));
+            % end
+
+            % we are interested in the widest peak, i.e., the one associated with the most freshwater export
+            if isempty(val_peaks)
+                    fzplot=0;
+            else
+                fzplot = -z_peaks(area_peak == max(area_peak)); 
+            end
+
+            % fzplot = mean(fz_ensemble,[1,2],'omitnan'); % take mean for that subset
+            scatter(i_bin*10,round(fzplot,2),50,'filled','MarkerFaceColor',lcolor(4,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
+        end
+        set(gca,'YAxisLocation','left','XAxisLocation','top','fontsize',8)
+        xlabel([param_names{i_param},' percentile'],'fontsize',10)
+        % xlabel('percentile','fontsize',10)
+        ylabel('z export (m)','fontsize',10)
+        % xticks = get(gca,'XTickLabel');
+        % yticks = get(gca,'YTickLabel');
+        % set(gca,'XTickLabel',{'',xticks{2:end-1},''})
+        set(gca,'XTick',[25, 50, 75])
+        ytickangle(-45)
+        % set(gca,'YTickLabel',{'',yticks{2:end}})
+        i_plt = i_plt+n_cols;
+        i_plt_sub=i_plt_sub+n_cols;
+    end
+end
+xlabel(ht_s,'Mean fjord-shelf exchange flux (m^3s^{-1})','fontsize',fsize);
+ylabel(ht_s,'Depth (m)','fontsize',fsize);
+ht_s.TileSpacing='compact';
+ht_s.Padding='compact';
 % legend(ha_main,handle_fjords,param_names,'fontsize',10,'Location','southwest');
 % no_legend = 0;
 end
