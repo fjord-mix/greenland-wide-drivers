@@ -227,11 +227,13 @@ ensemble = struct(ensemble_fields{:});
 ensemble(dims_ensemble) = struct("p",[],"t",[],"m",[],"s",[]);
 fjords_crashed = {};
 
-run_counter=0;
+parpool(3)
+% run_counter=0;
 for i_fjord=1:length(fjord_model)
 tic
-for i_run=1:n_runs
-    run_counter = run_counter+1;
+% for i_run=1:n_runs
+parfor i_run=1:n_runs
+    % run_counter = run_counter+1;
     cur_fjord = fjord_model(i_fjord);
     
     % Sets the model parameters according to the LHS we created
@@ -347,10 +349,10 @@ for i_run=1:n_runs
             ensemble(i_fjord,i_run).s.Slower = mean(Sregular(range_lower,:),1,'omitnan'); % avg temp of the 250 - 500 m layer
             fprintf('Output interpolation complete. ')
         catch ME
-            fprintf('run %d failed: %s. ',run_counter,ME.message)
-            cur_fjord.m.error = ME.message;
-            cur_fjord.m.stack = ME.stack;
-            fjords_crashed{end+1} = cur_fjord;
+            fprintf('Fjord %d run %d failed: %s. ',i_fjord,i_run,ME.message)
+            % cur_fjord.m.error = ME.message;
+            % cur_fjord.m.stack = ME.stack;
+            % fjords_crashed{end+1} = cur_fjord;
         end
         fprintf('\n')
 end % for i_run
