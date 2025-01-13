@@ -19,7 +19,7 @@ proj      = projcrs(3413,"Authority",'EPSG');
 
 %% Getting the fjord outline
 
-path_bedmachine = [data_path,'/greenland_common/BedMachineGreenland-v5.nc']; % DOI: https://doi.org/10.5067/GMEVBWFLWA7X
+path_bedmachine = [data_path,'/BedMachineGreenland-v5.nc']; % DOI: https://doi.org/10.5067/GMEVBWFLWA7X
 x       = single(ncread(path_bedmachine,'x'));
 y       = single(ncread(path_bedmachine,'y'));
 mask    = single(ncread(path_bedmachine,'mask'));
