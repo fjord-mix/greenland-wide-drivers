@@ -227,7 +227,8 @@ ensemble = struct(ensemble_fields{:});
 ensemble(dims_ensemble) = struct("p",[],"t",[],"m",[],"s",[]);
 fjords_crashed = {};
 
-parpool(3)
+delete(gcp('nocreate')) % ensure there is no other parallel pool running
+parpool('Threads',6);%,'IdleTimeout',Inf)
 % run_counter=0;
 for i_fjord=1:length(fjord_model)
 tic
