@@ -24,7 +24,7 @@ fjord_matrix(fjord_matrix.gl_depth < 50,:) = [];
 fjord_matrix(isnan(fjord_matrix.qsg_id1),:) = [];
 
 %% Define parameter space
-param_names = {'A0','wp','C0'};
+param_names = {'A0','Wp','C0'};
 param_units = {'m^2','m','s'};
 
 sermilik_max_bergs = 3e8;  % maximum submerged iceberg area within Sermilik fjord
@@ -63,7 +63,7 @@ for which_year=2020:2020
                                                    plot_ensemble);
     close all
 end
-
+delete(gcp('nocreate')) % ensure there is no parallel pool running at the end
 %% Batch processing all years together
 if ~exist('X','var') || ~exist('param_names','var') || ~exist('range_params','var')
     file_inputs = [outs_path,'inputs_GRL_fjords_n',num2str(n_runs),'_dt',num2str(dt_in_h),'h'];
@@ -96,7 +96,7 @@ exportgraphics(hf_t,[figs_path,'3_sensitivity_temp_',num2str(2020),'_n',num2str(
 % Plotting best parameters (Fig. 4)
 hf_hist = plot_best_params_time_hist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
 exportgraphics(hf_hist,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'_filtered2.png'],'Resolution',300)
-close all
+% close all
 
 %% Supplementary/unused
 
