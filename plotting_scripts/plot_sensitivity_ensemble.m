@@ -137,6 +137,8 @@ for i_fjord=1:size(ensemble,1)
                     % znb_ensemble(i_run) = mean(ensemble(i_fjord,i_run).s.znb_t(end-365+i_peak-15:end-365+i_peak+15)); 
 
                     % mean over melt season of the last year
+                    % s.Qsg is time-dependent, yet it is not treated as so
+                    % below
                     i_discharge = ensemble(i_fjord,i_run).s.Qsg > 0 & ensemble(i_fjord,i_run).s.t > ensemble(i_fjord,i_run).s.t(end)-365;
                     znb_ensemble(i_run) = mean(ensemble(i_fjord,i_run).s.znb_t(i_discharge),'omitnan'); 
 

@@ -57,7 +57,7 @@ file_inputs = [outs_path,'inputs_GRL_fjords_n',num2str(n_runs),'_dt',num2str(dt_
 save(file_inputs,'-v7.3','X','param_names','param_units','range_params','fjord_matrix');
 
 %% Run the model for every year we want
-for which_year=2020:2020
+for which_year=2016:2020
     [path_fout,tgt_days] = run_model_loop_for_year(which_year,fjords_digitised,fjords_centreline,fjord_matrix,...
                                                    folder_ctd_casts,X,param_names,n_years,tgt_days,dt_in_h,dt_plume_h,...
                                                    plot_ensemble);
