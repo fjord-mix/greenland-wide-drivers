@@ -244,6 +244,10 @@ parfor i_run=1:n_runs
         %     cur_fjord.p.(param_names{i_param}) = X(i_run,i_param).*cur_fjord.p.L.*cur_fjord.p.W.*cur_fjord.p.Hgl;
         % end
     end
+    if isfield(cur_fjord.p,'wp') % this should not be necessary, but something went wrong and does not seem to be consistent!
+        cur_fjord.p.Wp = cur_fjord.p.wp
+        fprintf('Wrong parameter name found, setting p.Wp(%f) to be p.wp(%f)',cur_fjord.p.Wp,cur_fjord.p.wp)
+    end
     cur_fjord.a.I0 = cur_fjord.p.A0*iceberg_fun(cur_fjord.p.nu0, abs(cur_fjord.p.Hgl), -cumsum(cur_fjord.a.H0)+cur_fjord.a.H0/2);
     
     % cur_fjord.p.plot_runtime=1; % for debuggging purposes if needed
