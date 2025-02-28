@@ -137,8 +137,10 @@ for i_fjord=1:n_fjord_runs
 
     set(gca,'fontsize',fsize)
     % xlim([-2.5 9])
-    xlim([-4 7.5])
-    ylim([-fjord_model(i_fjord).p.H 0])
+    % xlim([-4 7.5])
+    % ylim([-fjord_model(i_fjord).p.H 0])
+    xlim ([-2 4])  % as per Tom's suggestion
+    ylim([-600 0]) % as per Tom's suggestion
     if i_iter==length(which_fjords)
         xlabel('Temperature (^oC)','fontsize',fsize+2);  
     end
@@ -186,7 +188,8 @@ for i_fjord=1:n_fjord_runs
 
     set(gca,'fontsize',fsize)
     xlim([30.5 35])
-    ylim([-fjord_model(i_fjord).p.H 0])
+    % ylim([-fjord_model(i_fjord).p.H 0])
+    ylim([-600 0]) % as per Tom's suggestion
 
     %% Legend
     if i_iter==1 

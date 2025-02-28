@@ -1,7 +1,14 @@
 function [hf_t,hf_e,hf_s] = plot_sensitivity_ensemble(X,ensemble,res_box,res_obs,param_names,which_fjords,plt_fw,plt_sf)
 
-if nargin < 7 || plt_fw==0, plt_fw = 0; hf_e=[]; end
-if nargin < 8, plt_sf = 0; hf_s=[]; end
+if nargin < 7 || plt_fw==0
+    plt_fw = 0; 
+end
+hf_e=[]; 
+
+if nargin < 8
+    plt_sf = 0; 
+end
+hf_s=[]; 
 
 if nargin > 4
     n_fjords = length(which_fjords);
@@ -117,7 +124,7 @@ for i_fjord=1:size(ensemble,1)
         i_panel=i_panel+1;
 
         base_gl_and_sill_t = 1;
-        base_gl_and_sill_p = -2;
+        base_gl_and_sill_p = -1.5;
 
         for i_bnd=1:length(key_param_bnd)
             tf_ensemble = NaN([length(res_box(i_fjord).zf),size(ensemble,2)]);
@@ -186,8 +193,10 @@ for i_fjord=1:size(ensemble,1)
         end
 
         set(gca,'fontsize',fsize)
-        xlim([-3 3])
-        ylim([-H 0])
+        xlim([-2 2.5])
+        % ylim([-H 0])
+        % xlim ([-2 4])  % as per Tom's suggestion
+        ylim([-700 0]) % as per Tom's suggestion
         if i_param==1
             text(0.02,1.01,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
         end
