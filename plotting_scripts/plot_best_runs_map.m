@@ -41,7 +41,8 @@ hf_map = figure('Position',[50 50, 500 700]);
 % nexttile(1,[1 1]); hold on;
 hold on
 % title('(a) Simulated fjords','fontsize',14)
-imagesc2(x,y,topo'); box on; axis xy equal %tight; 
+h = imagesc(x,y,topo'); box on; axis xy equal %tight; 
+set(h,'AlphaData', 1-isnan(topo'))
 clim([0 2.5e3])
 colormap('gray');
 
