@@ -1,4 +1,4 @@
-run load_local_paths.m % sets data_path, import_path, collation_path, model_path, and project_path
+run ../load_local_paths.m % sets data_path, import_path, collation_path, model_path, and project_path
 addpath(genpath(import_path))
 addpath(genpath(model_path))
 addpath(genpath(collation_path))
