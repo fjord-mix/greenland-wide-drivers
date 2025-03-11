@@ -252,42 +252,58 @@ for i_year=n_years:-1:1
         % interpolaring observations to box model depths
         tf_obs = interp1(res_obs(i_fjord).zf,res_obs(i_fjord).tf,res_box(i_fjord).zf,'linear');
         sf_obs = interp1(res_obs(i_fjord).zf,res_obs(i_fjord).sf,res_box(i_fjord).zf,'linear');
+        ts_obs = res_box(i_fjord).Tforc;
+        ss_obs = res_box(i_fjord).Sforc;
+
+        dt_obs = tf_obs  - ts_obs;
+        dt_rpm = tf_best - ts_obs;
+        ds_obs = sf_obs  - ss_obs;
+        ds_rpm = sf_best - ss_obs;
+        
 
         if first_time
             nexttile(3); hold on; box on; grid on
             text(0.02,0.98,sprintf("(%s)",letters(i_letter)),'Units','normalized','VerticalAlignment','top','HorizontalAlignment','left','FontSize',fsize)
             i_letter=i_letter+1;
-            xlabel('T_{obs}') ; ylabel('T_{rpm}')
+            % xlabel('T_{obs}') ; ylabel('T_{rpm}')
+            xlabel('\Delta T_{obs}') ; ylabel('\Delta T_{rpm}')
             plot([-10, 10],[-10, 10],'-r')
 
             nexttile(6); hold on; box on; grid on
             text(0.02,0.98,sprintf("(%s)",letters(i_letter)),'Units','normalized','VerticalAlignment','top','HorizontalAlignment','left','FontSize',fsize)
             i_letter=i_letter+1;
-            xlabel('S_{obs}') ; ylabel('S_{rpm}')
-            plot([10, 36],[10, 36],'-r')
+            % xlabel('S_{obs}') ; ylabel('S_{rpm}')
+            xlabel('\Delta S_{obs}') ; ylabel('\Delta S_{rpm}')
+            % plot([10, 36],[10, 36],'-r')
+            plot([-10, 36],[-10, 36],'-r')
             first_time = 0;
 
         end
 
         nexttile(3); hold on; box on; grid on
-        scatter(tf_obs,tf_best,40,-res_box(i_fjord).zf,'filled','markerfacealpha',0.5,'MarkerEdgeColor',[0 0 0],'MarkerEdgeAlpha',0.15);
+        % scatter(tf_obs,tf_best,40,-res_box(i_fjord).zf,'filled','markerfacealpha',0.5,'MarkerEdgeColor',[0 0 0],'MarkerEdgeAlpha',0.15);
+        scatter(dt_obs,dt_rpm,40,-res_box(i_fjord).zf,'filled','markerfacealpha',0.5,'MarkerEdgeColor',[0 0 0],'MarkerEdgeAlpha',0.15);
         
         nexttile(6); hold on; box on; grid on
-        scatter(sf_obs,sf_best,40,-res_box(i_fjord).zf,'filled','markerfacealpha',0.5,'MarkerEdgeColor',[0 0 0],'MarkerEdgeAlpha',0.15);
+        scatter(ds_obs,ds_rpm,40,-res_box(i_fjord).zf,'filled','markerfacealpha',0.5,'MarkerEdgeColor',[0 0 0],'MarkerEdgeAlpha',0.15);
 
-        all_r_temp{end+1} = corr(tf_obs,tf_best,'type','pearson','rows','complete');
-        all_r_salt{end+1} = corr(sf_obs,sf_best,'type','pearson','rows','complete');
+        % all_r_temp{end+1} = corr(tf_obs,tf_best,'type','pearson','rows','complete');
+        % all_r_salt{end+1} = corr(sf_obs,sf_best,'type','pearson','rows','complete');
+        all_r_temp{end+1} = corr(dt_obs,dt_rpm,'type','pearson','rows','complete');
+        all_r_salt{end+1} = corr(ds_obs,ds_rpm,'type','pearson','rows','complete');
     end % fjords
 end % years
 
 nexttile(3);
-xlim([-2, 6]); ylim([-2, 6])
+% xlim([-2, 6]); ylim([-2, 6])
+xlim([-10, 5]); ylim([-10, 5])
 hcb = colorbar;
 ylabel(hcb,'Depth (m)','FontSize',fsize)
 set(gca,'fontsize',fsize)
 
 nexttile(6);
-xlim([25, 36]); ylim([25, 36])
+% xlim([25, 36]); ylim([25, 36])
+xlim([-2, 2]); ylim([-2, 2])
 set(gca,'fontsize',fsize)
 colormap(flip(cmocean('deep')))
 
