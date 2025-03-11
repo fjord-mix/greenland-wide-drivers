@@ -54,15 +54,24 @@ for i_year=n_years:-1:1
     x_fjd=NaN([1,n_fjords]);
     y_fjd=NaN(size(x_fjd));
     rmse_fjd = NaN(size(x_fjd));
+    size_marker = NaN(size(rmse_fjd));
     for i_fjord=1:n_fjords
         for i_run=1:size(ensemble,2)
             if ~isempty(ensemble(i_fjord,i_run).s) %&& res_box(i_fjord).rmse_tf(i_run,2) < rmse_threshold
                 [x_fjd(i_fjord),y_fjd(i_fjord)] = projfwd(proj,ensemble(i_fjord,i_run).m.lat,ensemble(i_fjord,i_run).m.lon);
                 rmse_fjd(i_fjord) = min(res_box(i_fjord).rmse_tf(:,2),[],'omitnan');
+
+                size_marker(i_fjord) = 0.5-rmse_fjd(i_fjord);
+                
+                % if best_fjord_params(i_fjord).rmse_t > max_rmse, max_rmse = best_fjord_params(i_fjord).rmse_t; end
+                % if best_fjord_params(i_fjord).rmse_t < min_rmse, min_rmse = best_fjord_params(i_fjord).rmse_t; end
+
                 break
             end
         end
     end % i_fjord
+    
+
     hb = bubblechart(x_fjd,y_fjd,rmse_fjd,lcolor(i_year,:),'MarkerEdgeColor',[0 0 0],'MarkerFaceAlpha',0.5);
     hb_colors = [hb_colors hb];
     lbl_yrs{end+1} = sprintf("%d (n=%d)",2015+i_year,n_fjords);
@@ -71,6 +80,9 @@ bubblesize([10 30])
 bubblelim([0 2.])
 set(gca,'fontsize',fsize)
 blgd = bubblelegend('RMSE (^oC)','Location','northeast','fontsize',fsize);
+blgd.Title.FontWeight='normal';
+blgd.LimitLabels = {'\geq 2','0'};
+
 hl = legend(hb_colors,lbl_yrs,'location','southwest','fontsize',fsize);
 % hl.Layout.Tile = 5;
 blgd.Title.FontWeight='normal';
