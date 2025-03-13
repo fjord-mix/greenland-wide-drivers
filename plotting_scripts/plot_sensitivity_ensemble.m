@@ -39,6 +39,7 @@ fig_height = 250*length(which_fjords);
 %% Finding the low/mid/high ranges for the different parameters
 key_param_bnd = {'low ','mid ','high '};
 ls_bnds = {':','-.','-'};
+lc_bnds = {[12, 192, 120]/255., [254, 191, 36]/255. ,[251, 105, 98]/255.};
 n_cols = 2;
 
 % profiles: low, mid, and high
@@ -171,9 +172,11 @@ for i_fjord=1:size(ensemble,1)
             end
 
             % Plot sensitivity profile
-            plot(tfmean,depths,'linewidth',2.0,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd});
+            % plot(tfmean,depths,'linewidth',2.0,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd});
+            plot(tfmean,depths,'linewidth',2.0,'color',lcolor(4,:),'color',lc_bnds{i_bnd});
             if i_bnd==length(key_param_bnd)
-                hp = plot(tfmean,depths,'linewidth',2.0,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd});
+                % hp = plot(tfmean,depths,'linewidth',2.0,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd});
+                hp = plot(tfmean,depths,'linewidth',2.0,'color',lcolor(4,:),'color',lc_bnds{i_bnd});
             end
 
             % add depth-range of plume neutral buoyancy
@@ -181,15 +184,21 @@ for i_fjord=1:size(ensemble,1)
             % plot([base_gl_and_sill_t+0.1*i_bnd,base_gl_and_sill_t+0.1*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
             %                                     mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
             %                                     'linewidth',1.7,'color',lcolor(i_param,:),'linestyle',ls_bnds{i_bnd})
-            scatter(base_gl_and_sill_p+0.2*i_bnd,mean(znb_ensemble,'omitnan'),60,lcolor(4,:),'x')
+            % scatter(base_gl_and_sill_p+0.2*i_bnd,mean(znb_ensemble,'omitnan'),60,lcolor(4,:),'x')
+            % plot([base_gl_and_sill_p+0.2*i_bnd,base_gl_and_sill_p+0.2*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
+            %                                     mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
+            %                                     'linewidth',1.7,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd})
+            scatter(base_gl_and_sill_p+0.2*i_bnd,mean(znb_ensemble,'omitnan'),60,lc_bnds{i_bnd},'x')
             plot([base_gl_and_sill_p+0.2*i_bnd,base_gl_and_sill_p+0.2*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
                                                 mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
-                                                'linewidth',1.7,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd})
+                                                'linewidth',1.7,'color',lc_bnds{i_bnd})
         end
         % add depictions of GL and sill depths
-        scatter(base_gl_and_sill_t,-Hgl,40,'v','filled','MarkerFaceColor',[0 0 0])
+        % scatter(base_gl_and_sill_t,-Hgl,40,'v','filled','MarkerFaceColor',[0 0 0])
+        plot([-5 5],[-Hgl -Hgl],'linestyle','--','color',[0.3 0.3 0.3])
         if has_sill
-            plot([base_gl_and_sill_t base_gl_and_sill_t],[-H -Hsill],'-','linewidth',2,'color',[0 0 0])
+            % plot([base_gl_and_sill_t base_gl_and_sill_t],[-H -Hsill],'-','linewidth',2,'color',[0 0 0])
+            plot([-5 5],[-Hsill -Hsill],'linestyle','-','color',[0.3 0.3 0.3])
         end
 
         set(gca,'fontsize',fsize)
@@ -224,7 +233,8 @@ for i_fjord=1:size(ensemble,1)
                 tf_full_ens(:,i_run) = ensemble(i_fjord,i_run).s.Tfinal(:,2);
             end
             tfplot = mean(tf_ensemble,[1,2],'omitnan') - mean(tf_full_ens,[1,2],'omitnan');
-            scatter(i_bin*10,tfplot,50,'filled','MarkerFaceColor',lcolor(4,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
+            % scatter(i_bin*10,tfplot,50,'filled','MarkerFaceColor',lcolor(4,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
+            scatter(i_bin*10,tfplot,50,'filled','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
         end
         set(gca,'YAxisLocation','right','XAxisLocation','top','fontsize',8)
         xlabel([param_names{i_param},' percentile'],'fontsize',10)
