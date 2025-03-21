@@ -1,4 +1,4 @@
-function [hf_t,hf_e,hf_s] = plot_sensitivity_ensemble(X,ensemble,res_box,res_obs,param_names,which_fjords,plt_fw,plt_sf)
+function [hf_t,hf_e,hf_s] = plot_sensitivity_ensemble(X,ensemble,res_box,res_obs,param_names,which_fjords,plt_fw,plt_sf,ensemble_extra,res_box_extra)
 
 if nargin < 7 || plt_fw==0
     plt_fw = 0; 
@@ -9,6 +9,9 @@ if nargin < 8
     plt_sf = 0; 
 end
 hf_s=[]; 
+
+if nargin < 9,    ensemble_extra = []; end
+if nargin < 10,   res_box_extra  = []; end
 
 if nargin > 4
     n_fjords = length(which_fjords);
@@ -157,9 +160,9 @@ for i_fjord=1:size(ensemble,1)
                 has_sill = ensemble(i_fjord,i_run).p.sill;
             end
 
-
             depths = -res_box(i_fjord).zf;
             tfmean = mean(tf_ensemble,2,'omitnan');
+
             if i_bnd==1
                 % Plotting shelf forcing observation
                 plot(res_box(i_fjord).Tforc,depths,'linewidth',1.0,'color',lcolor(1,:),'linestyle','-');
@@ -169,14 +172,21 @@ for i_fjord=1:size(ensemble,1)
     
                 % Plotting fjord ensemble best run
                 % plot(tf_best,depths,'linewidth',1.0,'color',lcolor(3,:),'linestyle','-');
+
+                % Plot "no-param" run
+                if ~isempty(ensemble_extra)
+                    tf_off = ensemble_extra(i_fjord,i_param).s.Tfinal(:,2);
+                    %zf_off = ensemble_extra(i_fjord,i_param).s.z;
+                    plot(tf_off,depths,'-k','linewidth',2.0);
+                end
             end
 
             % Plot sensitivity profile
             % plot(tfmean,depths,'linewidth',2.0,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd});
-            plot(tfmean,depths,'linewidth',2.0,'color',lcolor(4,:),'color',lc_bnds{i_bnd});
+            plot(tfmean,depths,'linewidth',2.0,'color',lc_bnds{i_bnd});
             if i_bnd==length(key_param_bnd)
                 % hp = plot(tfmean,depths,'linewidth',2.0,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd});
-                hp = plot(tfmean,depths,'linewidth',2.0,'color',lcolor(4,:),'color',lc_bnds{i_bnd});
+                hp = plot(tfmean,depths,'linewidth',2.0,'color',lc_bnds{i_bnd});
             end
 
             % add depth-range of plume neutral buoyancy

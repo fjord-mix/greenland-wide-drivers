@@ -76,6 +76,21 @@ end
 load(path_fout)
 run postprocess_plot_ensembles
 
+%% Extra ensemble turning things off one at a time
+
+[file_extras,~] = run_extra_ensemble_for_year(2020,fjords_digitised,fjords_centreline,fjord_matrix,folder_ctd_casts,X,param_names,n_years,tgt_days,dt_in_h,dt_plume_h,plot_ensemble);
+
+load(file_extras);
+[res_obs_extra,res_box_extra] = postprocess_ensemble(fjord_model,ensemble_extra,tgt_days);
+
+clear_empty     = @(s) all(structfun(@isempty,s)); % tiny function to get rid of empty entries in array
+idx = arrayfun(clear_empty,res_obs_extra);
+res_obs_extra(idx)=[]; % remove the empty elements
+idx = arrayfun(clear_empty,res_box_extra);
+res_box_extra(idx)=[]; % remove the empty elements
+disp('Postprocessing extra runs done.')
+
+
 %% Plotting figures
 i_yr_plt = 5;
 % Summary of simulated fjords (Fig. 1b)
@@ -88,8 +103,9 @@ exportgraphics(hf_ts,[figs_path,'2_temp_salt_example_fjords',num2str(2020),'_n',
 % close all
 %
 % Sensitivity plots for select fjords (Fig. 3)
-[hf_t,~,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'0','28','89'},0,0);
-exportgraphics(hf_t,[figs_path,'3_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'_v3.png'],'Resolution',300)
+%[hf_t,~,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'0','28','89'},0,0);
+[hf_t,~,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'0','28','89'},0,0,ensemble_extra,res_box_extra);
+exportgraphics(hf_t,[figs_path,'3_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'_v4.png'],'Resolution',300)
 % exportgraphics(gcf,[figs_path,'supp/sensitivity_QVs_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
 % close all
 % 
