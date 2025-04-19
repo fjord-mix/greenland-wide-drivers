@@ -23,7 +23,7 @@ n_params   = size(X,2);
 letters=lower(char(65:65+n_params*n_fjords));
 
 lcolor = lines(4);
-fsize = 14;
+fsize = 18;
 fig_width = 1200;
 fig_height = 250*length(which_fjords);
 %% Applying the RMSE filter - speculative, for now trying out to see if it works
@@ -246,10 +246,10 @@ for i_fjord=1:size(ensemble,1)
             % scatter(i_bin*10,tfplot,50,'filled','MarkerFaceColor',lcolor(4,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
             scatter(i_bin*10,tfplot,50,'filled','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
         end
-        set(gca,'YAxisLocation','right','XAxisLocation','top','fontsize',8)
-        xlabel([param_names{i_param},' percentile'],'fontsize',10)
+        set(gca,'YAxisLocation','right','XAxisLocation','top','fontsize',12)
+        xlabel([param_names{i_param},' percentile'],'fontsize',12)
         % xlabel('percentile','fontsize',10)
-        ylabel('T diff. (^oC)','fontsize',10)
+        ylabel('\Delta T. (^oC)','fontsize',12)
         % xticks = get(gca,'XTickLabel');
         % yticks = get(gca,'YTickLabel');
         % set(gca,'XTickLabel',{'',xticks{2:end-1},''})

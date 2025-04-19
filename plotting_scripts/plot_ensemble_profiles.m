@@ -173,9 +173,15 @@ for i_fjord=1:n_fjord_runs
         hm = [];
     end
 
-    scatter(0,-fjord_model(i_fjord).p.Hgl,40,'v','filled','MarkerFaceColor','black')
+    % scatter(0,-fjord_model(i_fjord).p.Hgl,40,'v','filled','MarkerFaceColor','black')
+    % if fjord_model(i_fjord).p.sill
+    %     plot([0 0],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
+    % end
+    % scatter(0,-fjord_model(i_fjord).p.Hgl,60,'v','filled','MarkerFaceColor','black')
+    plot([-4 7.5],[-fjord_model(i_fjord).p.Hgl -fjord_model(i_fjord).p.Hgl],'linestyle','--','color',[0.3 0.3 0.3])
     if fjord_model(i_fjord).p.sill
-        plot([0 0],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
+        % plot([0 0],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
+        plot([-4 7.5],[-fjord_model(i_fjord).p.Hsill -fjord_model(i_fjord).p.Hsill],'linestyle','-','color',[0.3 0.3 0.3])
     end
 
     set(gca,'fontsize',fsize)
@@ -257,9 +263,14 @@ for i_fjord=1:n_fjord_runs
                 end
             end
         end
-        scatter(33,-fjord_model(i_fjord).p.Hgl,40,'v','filled','MarkerFaceColor','black')
+        % scatter(33,-fjord_model(i_fjord).p.Hgl,40,'v','filled','MarkerFaceColor','black')
+        % if fjord_model(i_fjord).p.sill
+        %     plot([33 33],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
+        % end
+        plot([30.5 35],[-fjord_model(i_fjord).p.Hgl -fjord_model(i_fjord).p.Hgl],'linestyle','--','color',[0.3 0.3 0.3])
         if fjord_model(i_fjord).p.sill
-            plot([33 33],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
+            % plot([0 0],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
+            plot([30.5 35],[-fjord_model(i_fjord).p.Hsill -fjord_model(i_fjord).p.Hsill],'linestyle','-','color',[0.3 0.3 0.3])
         end
     
         set(gca,'fontsize',fsize)

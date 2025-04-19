@@ -80,7 +80,9 @@ run postprocess_plot_ensembles
 
 [file_extras,~] = run_extra_ensemble_for_year(2020,fjords_digitised,fjords_centreline,fjord_matrix,folder_ctd_casts,X,param_names,n_years,tgt_days,dt_in_h,dt_plume_h,plot_ensemble);
 
-load(file_extras);
+if ~exist('file_extras','var')
+    load([outs_path,'rpm_GRL_fjords_extra_2020_dtp12h_dtm1h']);
+end
 [res_obs_extra,res_box_extra] = postprocess_ensemble(fjord_model,ensemble_extra,tgt_days);
 
 clear_empty     = @(s) all(structfun(@isempty,s)); % tiny function to get rid of empty entries in array
