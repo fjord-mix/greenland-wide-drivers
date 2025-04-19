@@ -2,7 +2,7 @@
 
 Repository with scripts for setting up, running, and plotting the model outputs in Mas e Braga et al. (XXXX). 
 
-The model itself can be downloaded [here](https://github.com/fjord-mix/box-model), and the release version published can be found [(not yet uploaded)](https://github.com/fjord-mix/box-model)
+FjordRPM itself can be downloaded [here](https://github.com/fjord-mix/fjordrpm), and the release version published can be found in [Zenodo](https://doi.org/10.5281/zenodo.14536606)
 
 ## Required datasets
 
@@ -11,6 +11,9 @@ The model itself can be downloaded [here](https://github.com/fjord-mix/box-model
     - [CTD](https://doi.org/10.5067/OMGEV-CTDS1)
     - [AXCTD](https://doi.org/10.5067/OMGEV-AXCT1)
 - Subglacial discharge from [Karlsson et al. (2023)](https://doi.org/10.22008/FK2/BOVBVR)
+
+## Required packages
+The Latin Hypercube Sampling was performed using the [UQLab](https://www.uqlab.com/) package, which should be installed before running the driver
 
 ## Basic walkthrough
 Driver files for running the model ensembles:
