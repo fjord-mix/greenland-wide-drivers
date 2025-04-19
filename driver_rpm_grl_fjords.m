@@ -97,23 +97,23 @@ disp('Postprocessing extra runs done.')
 i_yr_plt = 5;
 % Summary of simulated fjords (Fig. 1b)
 hf_fig1 = plot_best_runs_map(data_path,ensemble_yr,res_box_yr);
-exportgraphics(hf_fig1,[figs_path,'sketch_processes/fjords_simulated_n',num2str(n_runs),'_v2.png'],'BackgroundColor','none','Resolution',300)
+exportgraphics(hf_fig1,[figs_path,'sketch_processes/fjords_simulated_n',num2str(n_runs),'_v2.pdf'],'BackgroundColor','none','Resolution',300)
 % 
 % Proof of concept that the model works (Fig. 2)
 hf_ts = plot_ensemble_tempsalt(fjord_model_yr,ensemble_yr,res_box_yr,res_obs_yr,n_runs,tgt_days(2),2,{'0','28','89'},i_yr_plt);
-exportgraphics(hf_ts,[figs_path,'2_temp_salt_example_fjords',num2str(2020),'_n',num2str(n_runs),'_fitall_v4.png'],'Resolution',300)
+exportgraphics(hf_ts,[figs_path,'2_temp_salt_example_fjords',num2str(2020),'_n',num2str(n_runs),'_fitall_v4.pdf'],'Resolution',300)
 % close all
 %
 % Sensitivity plots for select fjords (Fig. 3)
 %[hf_t,~,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'0','28','89'},0,0);
 [hf_t,~,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'0','28','89'},0,0,ensemble_extra,res_box_extra);
-exportgraphics(hf_t,[figs_path,'3_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'_v4.png'],'Resolution',300)
+exportgraphics(hf_t,[figs_path,'3_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'_v4.pdf'],'Resolution',300)
 % exportgraphics(gcf,[figs_path,'supp/sensitivity_QVs_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
 % close all
 % 
 % Plotting best parameters (Fig. 4)
 hf_hist = plot_best_params_time_hist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
-exportgraphics(hf_hist,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'_filtered2.png'],'Resolution',300)
+exportgraphics(hf_hist,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'_filtered2.pdf'],'Resolution',300)
 % close all
 
 %% Supplementary/unused

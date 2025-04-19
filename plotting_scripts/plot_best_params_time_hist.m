@@ -94,7 +94,9 @@ for i_yr=n_years:-1:1
             end
             ylim([lower_bnd 7*max(range_params{i_param})])
         end
-        hline(range_params{i_param},'--','color',[0.75 0.75 0.75])
+        % hline(range_params{i_param},'--','color',[0.75 0.75 0.75])
+        plot([0 150],[range_params{i_param}(1),range_params{i_param}(1)],'linestyle','--','color',[0.75 0.75 0.75])
+        plot([0 150],[range_params{i_param}(2),range_params{i_param}(2)],'linestyle','--','color',[0.75 0.75 0.75])
         y_lims = get(gca,'YLim');
         y_ticks = get(gca,'YTick');
         if i_yr==1
