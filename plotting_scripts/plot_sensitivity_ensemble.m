@@ -186,7 +186,7 @@ for i_fjord=1:size(ensemble,1)
             plot(tfmean,depths,'linewidth',2.0,'color',lc_bnds{i_bnd});
             if i_bnd==length(key_param_bnd)
                 % hp = plot(tfmean,depths,'linewidth',2.0,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd});
-                hp = plot(tfmean,depths,'linewidth',2.0,'color',lc_bnds{i_bnd});
+                % hp = plot(tfmean,depths,'linewidth',2.0,'color',lc_bnds{i_bnd});
             end
 
             % add depth-range of plume neutral buoyancy
@@ -198,10 +198,12 @@ for i_fjord=1:size(ensemble,1)
             % plot([base_gl_and_sill_p+0.2*i_bnd,base_gl_and_sill_p+0.2*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
             %                                     mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
             %                                     'linewidth',1.7,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd})
+            
             scatter(base_gl_and_sill_p+0.2*i_bnd,mean(znb_ensemble,'omitnan'),60,lc_bnds{i_bnd},'x')
             plot([base_gl_and_sill_p+0.2*i_bnd,base_gl_and_sill_p+0.2*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
                                                 mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
                                                 'linewidth',1.7,'color',lc_bnds{i_bnd})
+            
         end
         % add depictions of GL and sill depths
         % scatter(base_gl_and_sill_t,-Hgl,40,'v','filled','MarkerFaceColor',[0 0 0])
@@ -220,7 +222,7 @@ for i_fjord=1:size(ensemble,1)
             text(0.02,1.01,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
         end
         if no_legend==1
-            handle_fjords = [handle_fjords hp];
+            % handle_fjords = [handle_fjords hp];
             lbl_fjords{i_fjord} = param_names{i_param};%res_box(i_fjord).id;
         end
 
@@ -255,6 +257,7 @@ for i_fjord=1:size(ensemble,1)
         % set(gca,'XTickLabel',{'',xticks{2:end-1},''})
         set(gca,'XTick',[25, 50, 75])
         ytickangle(45)
+        
         % set(gca,'YTickLabel',{'',yticks{2:end}})
         i_plt = i_plt+n_cols;
         i_plt_sub=i_plt_sub+n_cols;
