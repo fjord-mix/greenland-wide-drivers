@@ -1,4 +1,4 @@
-function [hf_t,hf_e,hf_s] = plot_sensitivity_ensemble(X,ensemble,res_box,res_obs,param_names,which_fjords,plt_fw,plt_sf,ensemble_extra,res_box_extra)
+function [hf_t,hf_e,hf_s] = plot_sensitivity_ensemble(X,ensemble,res_box,res_obs,param_names,param_units,which_fjords,plt_fw,plt_sf,ensemble_extra,res_box_extra)
 
 if nargin < 7 || plt_fw==0
     plt_fw = 0; 
@@ -123,8 +123,15 @@ for i_fjord=1:size(ensemble,1)
     i_plt = 1+(i_plt_fjord-1)*2*(n_cols*n_params);
     i_plt_sub = i_plt+(n_cols*n_params);
     for i_param=1:length(param_names)
-        ha_main = nexttile(i_plt,[2 n_cols]); hold on; box on
-        text(0.99,1.01,['(',letters(i_panel),') ',param_names{i_param}],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',fsize)
+        ha_main = nexttile(i_plt,[2 n_cols]); hold on; box on; grid on
+        % text(0.99,1.01,['(',letters(i_panel),') ',param_names{i_param}],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',fsize)
+        text(0.01,0.99,['(',letters(i_panel),') '],'HorizontalAlignment','left','VerticalAlignment','top','Units','normalized','fontsize',fsize)
+        if i_plt_fjord==1
+            title([param_names{i_param},' (',param_units{i_param},')'])
+        end
+        if i_param==1
+            text(0.02,0.01,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
+        end
         i_panel=i_panel+1;
 
         base_gl_and_sill_t = 1;
@@ -199,7 +206,7 @@ for i_fjord=1:size(ensemble,1)
             %                                     mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
             %                                     'linewidth',1.7,'color',lcolor(4,:),'linestyle',ls_bnds{i_bnd})
             
-            scatter(base_gl_and_sill_p+0.2*i_bnd,mean(znb_ensemble,'omitnan'),60,lc_bnds{i_bnd},'x')
+            scatter(base_gl_and_sill_p+0.2*i_bnd,mean(znb_ensemble,'omitnan'),100,lc_bnds{i_bnd},'o','filled')
             plot([base_gl_and_sill_p+0.2*i_bnd,base_gl_and_sill_p+0.2*i_bnd],[mean(znb_ensemble,'omitnan')-2*std(znb_ensemble,'omitnan'),...
                                                 mean(znb_ensemble,'omitnan')+2*std(znb_ensemble,'omitnan')],...
                                                 'linewidth',1.7,'color',lc_bnds{i_bnd})
@@ -218,49 +225,53 @@ for i_fjord=1:size(ensemble,1)
         % ylim([-H 0])
         % xlim ([-2 4])  % as per Tom's suggestion
         ylim([-700 0]) % as per Tom's suggestion
-        if i_param==1
-            text(0.02,1.01,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
-        end
         if no_legend==1
             % handle_fjords = [handle_fjords hp];
             lbl_fjords{i_fjord} = param_names{i_param};%res_box(i_fjord).id;
         end
 
         % Adding inset scatter plot
-        ax2 = axes(ht_t);
-        ax2.Layout.Tile=i_plt_sub;
-        ax2.Layout.TileSpan=[1 n_cols-1];
-        ax2.Box = 'on';
-        hold on;
-        % nexttile(i_plt_sub,[1 1]); box on;
-        for i_bin=1:length(bins)-1
-            tf_ensemble = NaN([length(res_box(i_fjord).zf),size(ensemble,2)]);
-            tf_full_ens = NaN(size(tf_ensemble));
-            % find profiles that fit into that bin for that cast
-            for i_run=1:size(ensemble,2)
-                if isempty(ensemble(i_fjord,i_run).s), continue; end % we skip any empty entries
-                if mask_bnds_prctile(i_fjord,i_run).(param_names{i_param}) == i_bin
-                    tf_ensemble(:,i_run) = ensemble(i_fjord,i_run).s.Tfinal(:,2);
-                end
-                tf_full_ens(:,i_run) = ensemble(i_fjord,i_run).s.Tfinal(:,2);
-            end
-            tfplot = mean(tf_ensemble,[1,2],'omitnan') - mean(tf_full_ens,[1,2],'omitnan');
-            % scatter(i_bin*10,tfplot,50,'filled','MarkerFaceColor',lcolor(4,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
-            scatter(i_bin*10,tfplot,50,'filled','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
-        end
-        set(gca,'YAxisLocation','right','XAxisLocation','top','fontsize',12)
-        xlabel([param_names{i_param},' percentile'],'fontsize',12)
-        % xlabel('percentile','fontsize',10)
-        ylabel('\Delta T. (^oC)','fontsize',12)
-        % xticks = get(gca,'XTickLabel');
-        % yticks = get(gca,'YTickLabel');
-        % set(gca,'XTickLabel',{'',xticks{2:end-1},''})
-        set(gca,'XTick',[25, 50, 75])
-        ytickangle(45)
+        % ax2 = axes(ht_t);
+        % ax2.Layout.Tile=i_plt_sub;
+        % ax2.Layout.TileSpan=[1 n_cols-1];
+        % ax2.Box = 'on';
+        % hold on;
+        % % nexttile(i_plt_sub,[1 1]); box on;
+        % for i_bin=1:length(bins)-1
+        %     tf_ensemble = NaN([length(res_box(i_fjord).zf),size(ensemble,2)]);
+        %     tf_full_ens = NaN(size(tf_ensemble));
+        %     % find profiles that fit into that bin for that cast
+        %     for i_run=1:size(ensemble,2)
+        %         if isempty(ensemble(i_fjord,i_run).s), continue; end % we skip any empty entries
+        %         if mask_bnds_prctile(i_fjord,i_run).(param_names{i_param}) == i_bin
+        %             tf_ensemble(:,i_run) = ensemble(i_fjord,i_run).s.Tfinal(:,2);
+        %         end
+        %         tf_full_ens(:,i_run) = ensemble(i_fjord,i_run).s.Tfinal(:,2);
+        %     end
+        %     tfplot = mean(tf_ensemble,[1,2],'omitnan') - mean(tf_full_ens,[1,2],'omitnan');
+        %     % scatter(i_bin*10,tfplot,50,'filled','MarkerFaceColor',lcolor(4,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
+        %     scatter(i_bin*10,tfplot,50,'filled','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
+        % end
+        % set(gca,'YAxisLocation','right','XAxisLocation','top','fontsize',12)
+        % xlabel([param_names{i_param},' percentile'],'fontsize',12)
+        % % xlabel('percentile','fontsize',10)
+        % ylabel('\Delta T. (^oC)','fontsize',12)
+        % % xticks = get(gca,'XTickLabel');
+        % % yticks = get(gca,'YTickLabel');
+        % % set(gca,'XTickLabel',{'',xticks{2:end-1},''})
+        % set(gca,'XTick',[25, 50, 75])
+        % ytickangle(45)
         
         % set(gca,'YTickLabel',{'',yticks{2:end}})
+        if i_param~=1
+            set(gca,'YTickLabel',{});
+        end
+        if i_plt_fjord < n_fjords
+            set(gca,'XTickLabel',{});
+        end
         i_plt = i_plt+n_cols;
         i_plt_sub=i_plt_sub+n_cols;
+
     end
 end
 xlabel(ht_t,'Temperature (^oC)','fontsize',fsize);

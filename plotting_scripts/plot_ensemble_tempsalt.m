@@ -136,10 +136,10 @@ for i_fjord=1:n_fjord_runs
     
     % Depiction of GL and sill
     % scatter(0,-fjord_model(i_fjord).p.Hgl,60,'v','filled','MarkerFaceColor','black')
-    plot([-5 5],[-fjord_model(i_fjord).p.Hgl -fjord_model(i_fjord).p.Hgl],'linestyle','--','color',[0.3 0.3 0.3])
+    plot([-5 5],[-fjord_model(i_fjord).p.Hgl -fjord_model(i_fjord).p.Hgl],'linestyle','--','color',[0.3 0.3 0.3],'LineWidth',1.5)
     if fjord_model(i_fjord).p.sill
         % plot([0 0],[-fjord_model(i_fjord).p.H -fjord_model(i_fjord).p.Hsill],'-k','linewidth',2)
-        plot([-5 5],[-fjord_model(i_fjord).p.Hsill -fjord_model(i_fjord).p.Hsill],'linestyle','-','color',[0.3 0.3 0.3])
+        plot([-5 5],[-fjord_model(i_fjord).p.Hsill -fjord_model(i_fjord).p.Hsill],'linestyle','-','color',[0.3 0.3 0.3],'LineWidth',1.5)
     end
 
     set(gca,'fontsize',fsize)
@@ -150,6 +150,8 @@ for i_fjord=1:n_fjord_runs
     ylim([-600 0]) % as per Tom's suggestion
     if i_iter==length(which_fjords)
         xlabel('Temperature (^oC)','fontsize',fsize+2);  
+    % else
+    %     set(gca,'XtickLabel',{})
     end
     
     %% Plotting salinity    
@@ -196,6 +198,7 @@ for i_fjord=1:n_fjord_runs
     end
 
     set(gca,'fontsize',fsize)
+    % set(gca,'YTickLabel',{})
     xlim([30.5 35])
     % ylim([-fjord_model(i_fjord).p.H 0])
     ylim([-600 0]) % as per Tom's suggestion
@@ -232,6 +235,8 @@ for i_fjord=1:n_fjord_runs
     end
     if i_iter==length(which_fjords)
         xlabel('Salinity','fontsize',fsize+2);
+    % else
+    %     set(gca,'XTickLabel',{})
     end
     i_row  = i_row+3;
 end
