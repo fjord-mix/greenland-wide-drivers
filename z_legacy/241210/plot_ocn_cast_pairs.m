@@ -27,6 +27,7 @@ for which_year=2016:2020
         if ~strcmp(id_cast_shelf,'NaN') && ~strcmp(id_cast_fjord,'NaN')
             % digitised_id = find([fjords_digitised.id] == fjord_matrix.ID(i_fjord));
             id_simulated_fjord = find(res_box_ids == fjord_matrix.ID(i_fjord));
+            if ~isempty(id_simulated_fjord)
             rmse_fjord(i_year,i_fjord) = min(res_box(id_simulated_fjord).rmse_tf(:,2));
 
             omg_data_shelf = dir([folder_ctd_casts,'/*',id_cast_shelf,'*.nc']);
@@ -48,6 +49,7 @@ for which_year=2016:2020
             else
                 scatter(fjord_matrix.ID(i_fjord),dist_between_casts,100,'o','MarkerFaceColor',mcolor(which_year-2015,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.75);
             end
+            end % isempty(id_simulated_fjord)
         end
     end
 end
