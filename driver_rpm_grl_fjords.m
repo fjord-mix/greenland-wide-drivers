@@ -78,7 +78,7 @@ run postprocess_plot_ensembles
 
 %% Extra ensemble turning things off one at a time
 
-[file_extras,~] = run_extra_ensemble_for_year(2020,fjords_digitised,fjords_centreline,fjord_matrix,folder_ctd_casts,X,param_names,n_years,tgt_days,dt_in_h,dt_plume_h,plot_ensemble);
+% [file_extras,~] = run_extra_ensemble_for_year(2020,fjords_digitised,fjords_centreline,fjord_matrix,folder_ctd_casts,X,param_names,n_years,tgt_days,dt_in_h,dt_plume_h,plot_ensemble);
 
 if ~exist('file_extras','var')
     load([outs_path,'rpm_GRL_fjords_extra_2020_dtp12h_dtm1h']);
@@ -95,9 +95,6 @@ disp('Postprocessing extra runs done.')
 
 %% Plotting figures
 i_yr_plt = 5;
-% Summary of simulated fjords (Fig. 1b)
-hf_fig1 = plot_best_runs_map(data_path,ensemble_yr,res_box_yr);
-exportgraphics(hf_fig1,[figs_path,'sketch_processes/fjords_simulated_n',num2str(n_runs),'_v2.pdf'],'BackgroundColor','none','Resolution',300)
 % 
 % Proof of concept that the model works (Fig. 2)
 hf_ts = plot_ensemble_tempsalt(fjord_model_yr,ensemble_yr,res_box_yr,res_obs_yr,n_runs,tgt_days(2),2,{'0','28','89'},i_yr_plt);
@@ -106,17 +103,25 @@ exportgraphics(hf_ts,[figs_path,'2_temp_salt_example_fjords',num2str(2020),'_n',
 %
 % Sensitivity plots for select fjords (Fig. 3)
 %[hf_t,~,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'0','28','89'},0,0);
-[hf_t,~,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'0','28','89'},0,0,ensemble_extra,res_box_extra);
+[hf_t,~,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,param_units,{'0','28','89'},0,0,ensemble_extra,res_box_extra);
 exportgraphics(hf_t,[figs_path,'3_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'_v4.pdf'],'Resolution',300)
 % exportgraphics(gcf,[figs_path,'supp/sensitivity_QVs_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
 % close all
 % 
 % Plotting best parameters (Fig. 4)
-hf_hist = plot_best_params_time_hist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
+% hf_hist = plot_best_params_time_hist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
+hf_hist = plot_best_params_hist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
 exportgraphics(hf_hist,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'_filtered2.pdf'],'Resolution',300)
 % close all
 
 %% Supplementary/unused
+
+% Summary of simulated fjords (Fig. S1b)
+% hf_grid = plot_best_runs_grid(ensemble_yr,res_box_yr);
+% exportgraphics(hf_grid,[figs_path,'supp/FigS1b_grid_fjords_simulated_n',num2str(n_runs),'_v2.png'],'BackgroundColor','none','Resolution',300)
+
+% hf_best_scatter = plot_best_params_scatter(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
+% exportgraphics(hf_best_scatter,[figs_path,'supp/FigS19_scatter_best_params',num2str(n_runs),'.png'],'Resolution',300)
 
 % hf_mis_par = plot_misfits_per_parameter(X,ensemble_yr,res_box_yr,param_names,[]);  % most generalised example, showing all runs
 % exportgraphics(hf_mis_par,[figs_path,'supp/rmse_vs_param_example_fjords_',num2str(n_runs),'_all.png'],'Resolution',300)
