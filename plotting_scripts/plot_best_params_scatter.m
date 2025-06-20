@@ -65,8 +65,8 @@ for i_yr=n_years:-1:1
             else
                 size_marker = rmse_tf_threshold-best_fjord_params(i_fjord).rmse_t;
             end
-            if best_fjord_params(i_fjord).rmse_t > max_rmse, max_rmse = best_fjord_params(i_fjord).rmse_t; end
-            if best_fjord_params(i_fjord).rmse_t < min_rmse, min_rmse = best_fjord_params(i_fjord).rmse_t; end
+            % if best_fjord_params(i_fjord).rmse_t > max_rmse, max_rmse = best_fjord_params(i_fjord).rmse_t; end
+            % if best_fjord_params(i_fjord).rmse_t < min_rmse, min_rmse = best_fjord_params(i_fjord).rmse_t; end
 
             % if size_marker < 0, size_marker = 10; end
             if ~isempty(best_fjord_params(i_fjord).best_t)
@@ -104,7 +104,7 @@ for i_yr=n_years:-1:1
         set(gca,'fontsize',fsize)
         xlabel('Fjord')
         bubblesize([1 15])
-        bubblelim([0 max_rmse])
+        bubblelim([0 0.2])
     end
     h_yr = [h_yr h1];
     lbl_years{i_yr} = num2str(2015+i_yr);
@@ -114,7 +114,7 @@ hl = legend(flip(h_yr),lbl_years,'fontsize',fsize,'Location','southeast');
 hl.NumColumns = 2;
 
 % nexttile(1,[1,2]); hold on; box on;
-blgd = bubblelegend('RMSE (^oC)','Location','southwest','fontsize',fsize-4);
+blgd = bubblelegend('RMSE (Kg m^{-3})','Location','southwest','fontsize',fsize-4);
 blgd.Title.FontWeight='normal';
-blgd.LimitLabels = {'\geq 2','0'};
+blgd.LimitLabels = {'\geq 0.2','0'};
 end

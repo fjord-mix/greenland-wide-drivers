@@ -28,8 +28,10 @@ for i_fjord=1:n_fjords
     sf_box = NaN(size(tf_box));
     tf_box_comp = NaN([length(zf_obs),n_runs,n_days]);
     sf_box_comp = NaN(size(tf_box_comp));
+    df_box_comp = NaN(size(tf_box_comp));
     rmse_tf = NaN([n_runs,n_days]);
     rmse_sf = NaN([n_runs,n_days]);
+    rmse_df = NaN([n_runs,n_days]);
     tupper_box_comp = NaN([length(fjord_model(i_fjord).p.t_save),n_runs]);
     tinter_box_comp = NaN(size(tupper_box_comp));
     tlower_box_comp = NaN(size(tupper_box_comp));
@@ -70,13 +72,23 @@ for i_fjord=1:n_fjords
                 if size(tf_obs(depths_rmse),1) ~= size(tf_box_comp(depths_rmse,i_run,i_day),1)
                     tf_obs_ref = tf_obs(depths_rmse)';
                     sf_obs_ref = sf_obs(depths_rmse)';
+                    zf_obs_ref = zf_obs(depths_rmse)';
                 else
                     tf_obs_ref = tf_obs(depths_rmse);
                     sf_obs_ref = sf_obs(depths_rmse);
+                    zf_obs_ref = zf_obs(depths_rmse);
                 end
+                
+                df_box_comp(:,i_run,i_day) = sw_dens(sf_box_comp(:,i_run,i_day),tf_box_comp(:,i_run,i_day),zf_obs);
+                df_obs_ref                 = sw_dens(sf_obs_ref,tf_obs_ref,zf_obs_ref);
 
                 rmse_tf(i_run,i_day) = rmse(tf_box_comp(depths_rmse,i_run,i_day),tf_obs_ref,'omitnan');%./mean(tf_obs(depths_rmse),'omitnan');
                 rmse_sf(i_run,i_day) = rmse(sf_box_comp(depths_rmse,i_run,i_day),sf_obs_ref,'omitnan');%./mean(sf_obs(depths_rmse),'omitnan');
+                try
+                rmse_df(i_run,i_day) = rmse(df_box_comp(depths_rmse,i_run,i_day),df_obs_ref,'omitnan');
+                catch ME
+                    disp('error')
+                end
                 % rmse_tf(i_run,i_day) = rmse(tf_box_comp(depths_rmse,i_run,i_day),tf_obs(depths_rmse),'omitnan')./std(tf_obs(depths_rmse),'omitnan');
                 % rmse_sf(i_run,i_day) = rmse(sf_box_comp(depths_rmse,i_run,i_day),sf_obs(depths_rmse),'omitnan')./std(sf_obs(depths_rmse),'omitnan');
                 % rmse_tf(i_run,i_day) = rmse(tf_box_comp(depths_rmse,i_run,i_day),tf_obs(depths_rmse),'omitnan')./(max(tf_obs(depths_rmse),[],'omitnan')-min(tf_obs(depths_rmse),[],'omitnan'));
@@ -89,10 +101,17 @@ for i_fjord=1:n_fjords
     if size(ts_obs(depths_rmse),1) ~= size(tf_obs_ref,1)
         ts_obs_ref = ts_obs(depths_rmse)';
         ss_obs_ref = ss_obs(depths_rmse)';
+        zs_obs_ref = zf_obs(depths_rmse)';
     else
         ts_obs_ref = ts_obs(depths_rmse);
         ss_obs_ref = ss_obs(depths_rmse);
+        try
+        zs_obs_ref = zf_obs(depths_rmse);
+        catch ME
+            disp('error')
+        end
     end
+    ds_obs_ref = sw_dens(ss_obs_ref,ts_obs_ref,zs_obs_ref);
 
     res_obs(i_fjord).zf = zf_obs;
     res_obs(i_fjord).tf = tf_obs;
@@ -139,9 +158,11 @@ for i_fjord=1:n_fjords
     res_box(i_fjord).ensemble_sf = sf_box;
     res_box(i_fjord).rmse_tf = rmse_tf;
     res_box(i_fjord).rmse_sf = rmse_sf;
+    res_box(i_fjord).rmse_df = rmse_df;
 
-    res_box(i_fjord).rmse_ts = rmse(ts_obs_ref,tf_obs_ref,'omitnan');%./mean(tf_obs_ref,'omitnan');
-    res_box(i_fjord).rmse_ss = rmse(ss_obs_ref,sf_obs_ref,'omitnan');%./mean(sf_obs_ref,'omitnan');
+    res_box(i_fjord).rmse_ts = rmse(ts_obs_ref,tf_obs_ref,'omitnan');
+    res_box(i_fjord).rmse_ss = rmse(ss_obs_ref,sf_obs_ref,'omitnan');
+    res_box(i_fjord).rmse_ds = rmse(ds_obs_ref,df_obs_ref,'omitnan');
 
     res_box(i_fjord).id = fjord_model(i_fjord).m.ID;
     res_box(i_fjord).name = fjord_model(i_fjord).m.name{1};

@@ -44,7 +44,7 @@ i_iter = 0;
 for i_fjord=1:n_fjord_runs
 
     % find run with the smallest RMSE
-    if isempty(res_box(i_fjord).rmse_tf)
+    if isempty(res_box(i_fjord).rmse_df)
         continue
     elseif isempty(i_tgt_day)
         rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf./mean(res_box(i_fjord).tf,'omitnan') + (1-w_rmse_t).*res_box(i_fjord).rmse_sf./mean(res_box(i_fjord).sf,'omitnan');
@@ -52,32 +52,42 @@ for i_fjord=1:n_fjord_runs
         [rmse_table(i_fjord).tf_rpm,i_min_rmse_tf] = min(res_box(i_fjord).rmse_tf,[],'all','omitnan');
         [rmse_table(i_fjord).sf_rpm,i_min_rmse_sf] = min(res_box(i_fjord).rmse_sf,[],'all','omitnan');
         [rmse_table(i_fjord).ts_rpm,i_min_rmse]    = min(rmse_both,[],'all','omitnan');
+        [rmse_table(i_fjord).df_rpm,i_min_rmse_df] = min(res_box(i_fjord).rmse_df,[],'all','omitnan');
 
         [irun_best_tf,id_best_tf] = ind2sub([n_runs,length(tgt_days)],i_min_rmse_tf);
         [irun_best_sf,id_best_sf] = ind2sub([n_runs,length(tgt_days)],i_min_rmse_sf);
         [irun_best,id_best] = ind2sub([n_runs,length(tgt_days)],i_min_rmse);
+        [irun_best_df,id_best_df] = ind2sub([n_runs,length(tgt_days)],i_min_rmse_df);
     
-        tf_best = res_box(i_fjord).ensemble_tf(:,irun_best_tf,id_best_tf);
-        sf_best = res_box(i_fjord).ensemble_sf(:,irun_best_sf,id_best_sf);
+        % tf_best = res_box(i_fjord).ensemble_tf(:,irun_best_tf,id_best_tf);
+        % sf_best = res_box(i_fjord).ensemble_sf(:,irun_best_sf,id_best_sf);
     
         tf_best2 = res_box(i_fjord).ensemble_tf(:,irun_best,id_best);
         sf_best2 = res_box(i_fjord).ensemble_sf(:,irun_best,id_best);
+
+        tf_best = res_box(i_fjord).ensemble_tf(:,irun_best_df,id_best_df);
+        sf_best = res_box(i_fjord).ensemble_sf(:,irun_best_df,id_best_df);
     
         inds_best_tf = [irun_best_tf,id_best_tf];
         inds_best_sf = [irun_best_sf,id_best_sf];
         inds_best2   = [irun_best,id_best];
+        inds_best_df = [irun_best_df,id_best_df];
     else
         rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf./mean(res_box(i_fjord).tf,1,'omitnan') + (1-w_rmse_t).*res_box(i_fjord).rmse_sf./mean(res_box(i_fjord).sf,1,'omitnan');
 
         [rmse_table(i_fjord).tf_rpm,inds_best_tf] = min(squeeze(res_box(i_fjord).rmse_tf(:,i_tgt_day)),[],'all','omitnan');
         [rmse_table(i_fjord).sf_rpm,inds_best_sf] = min(squeeze(res_box(i_fjord).rmse_sf(:,i_tgt_day)),[],'all','omitnan');
         [rmse_table(i_fjord).ts_rpm,inds_best2]   = min(squeeze(rmse_both(:,i_tgt_day)),[],'all','omitnan');
+        [rmse_table(i_fjord).df_rpm,inds_best_df] = min(squeeze(res_box(i_fjord).rmse_df(:,i_tgt_day)),[],'all','omitnan');
     
-        tf_best = res_box(i_fjord).ensemble_tf(:,inds_best_tf,i_tgt_day);
-        sf_best = res_box(i_fjord).ensemble_sf(:,inds_best_sf,i_tgt_day);
+        % tf_best = res_box(i_fjord).ensemble_tf(:,inds_best_tf,i_tgt_day);
+        % sf_best = res_box(i_fjord).ensemble_sf(:,inds_best_sf,i_tgt_day);
     
         tf_best2 = res_box(i_fjord).ensemble_tf(:,inds_best2,i_tgt_day);
         sf_best2 = res_box(i_fjord).ensemble_sf(:,inds_best2,i_tgt_day);
+
+        tf_best = res_box(i_fjord).ensemble_tf(:,inds_best_df,i_tgt_day);
+        sf_best = res_box(i_fjord).ensemble_sf(:,inds_best_df,i_tgt_day);
     end
 
     % compute RMSE for equivalent MITgcm runs
@@ -96,13 +106,15 @@ for i_fjord=1:n_fjord_runs
     % adds Shelf-fjord RMSE to the table
     rmse_table(i_fjord).rmse_ts = res_box(i_fjord).rmse_ts;
     rmse_table(i_fjord).rmse_ss = res_box(i_fjord).rmse_ss;
+    rmse_table(i_fjord).rmse_ds = res_box(i_fjord).rmse_ds;
 
     if verbose
         fprintf("Best parametres for (%s) %s: \n",res_box(i_fjord).id,res_box(i_fjord).name)
-        fprintf("Param\t Temperature\t Salinity\t Both\n")
+        fprintf("Param\t Temperature\t Salinity\t Density\t Both\n")
         for i_param=1:length(param_names)
             fprintf("%s \t %.1e\t",param_names{i_param},ensemble(i_fjord,inds_best_tf).p.(param_names{i_param}))
             fprintf("%.1e\t\t",ensemble(i_fjord,inds_best_sf).p.(param_names{i_param}))
+            fprintf("%.1e\t\t",ensemble(i_fjord,inds_best_df).p.(param_names{i_param}))
             fprintf("%.1e\n",ensemble(i_fjord,inds_best2).p.(param_names{i_param}))
         end
         % fprintf("day \t %s\t\t%s\t\t%s\n",name_days{inds_best_tf(end)},name_days{inds_best_sf(end)},name_days{inds_best2(end)})
@@ -349,10 +361,10 @@ if nargin > 14 && plt_rmse
     end
     
     for i_fjord=1:n_fjord_runs
-        scatter(i_fjord,rmse_table(i_fjord).tf_rpm,mk_sz,'o','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.75);
+        scatter(i_fjord,rmse_table(i_fjord).df_rpm,mk_sz,'o','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.75);
         % scatter(i_fjord,rmse_table(i_fjord).sf_rpm,mk_sz,'v','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.95);
         % scatter(i_fjord,rmse_table(i_fjord).ts_rpm,mk_sz,'square','MarkerFaceColor',lcolor(3,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.95);
-        scatter(i_fjord,rmse_table(i_fjord).rmse_ts,mk_sz,'o','MarkerFaceColor',lcolor(1,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.75);
+        scatter(i_fjord,rmse_table(i_fjord).rmse_ds,mk_sz,'o','MarkerFaceColor',lcolor(1,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.75);
         if ~isempty(rmse_table(i_fjord).tf_gcm) && plt_mitgcm
             scatter(i_fjord,rmse_table(i_fjord).tf_gcm,mk_sz,'o','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none');
             % scatter(i_fjord,rmse_table(i_fjord).sf_gcm,mk_sz,'v','MarkerFaceColor',[0 0 0],'MarkerEdgeColor','none');
@@ -361,7 +373,7 @@ if nargin > 14 && plt_rmse
         fjord_names{i_fjord} = res_box(i_fjord).id;
     end
     
-    ylim([0 3.5])
+    ylim([0 1.5])
     xlim([0 n_fjord_runs+1])
     % hline(0,'color',[0.5 0.5 0.5],'linestyle','--')
     set(gca,'Xtick',0:1:n_fjord_runs+1)
@@ -369,7 +381,7 @@ if nargin > 14 && plt_rmse
     xlabels(2:end-1) = fjord_names;
     xlabels{1} = ' '; xlabels{end} = ' ';
     set(gca,'XtickLabels',xlabels,'FontSize',14);
-    ylabel('RMSE rel. fjord cast (^oC)');
+    ylabel('RMSE rel. fjord cast (Kg m^{-3})');
     xlabel('Fjord')
     if plt_mitgcm
         leg_handles = [h_rpm,h_gcm,h_shf];
