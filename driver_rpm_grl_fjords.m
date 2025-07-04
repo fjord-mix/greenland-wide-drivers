@@ -26,6 +26,7 @@ fjord_matrix(isnan(fjord_matrix.qsg_id1),:) = [];
 %% Define parameter space
 param_names = {'A0','Wp','C0'};
 param_units = {'m^2','m','s'};
+param_fullnames = {'Iceberg area','Plume width','Fjord-shelf exchange'};
 
 sermilik_max_bergs = 3e8;  % maximum submerged iceberg area within Sermilik fjord
 % sermilik_area      = 1.1850e09; % area of Sermilik fjord (W*L)
@@ -54,7 +55,7 @@ disp('Parameter space created.')
 % plot_lhs(X,param_names,param_units,1); % quick check of input params distribution
 
 file_inputs = [outs_path,'inputs_GRL_fjords_n',num2str(n_runs),'_dt',num2str(dt_in_h),'h.mat'];
-save(file_inputs,'-v7.3','X','param_names','param_units','range_params','fjord_matrix');
+save(file_inputs,'-v7.3','X','param_names','param_units','param_fullnames','range_params','fjord_matrix');
 
 %% Run the model for every year we want
 for which_year=2016:2020
@@ -96,6 +97,9 @@ disp('Postprocessing extra runs done.')
 %% Plotting figures
 i_yr_plt = 5;
 % 
+hf_map = plot_map_runs(data_path,ensemble_yr,res_box_yr,{'0','28','89'},i_yr_plt);
+exportgraphics(hf_map,[figs_path,'sketch_processes/1b_map_simulated_fjords.png'],'Resolution',300)
+
 % Proof of concept that the model works (Fig. 2)
 hf_ts = plot_ensemble_tempsalt(fjord_model_yr,ensemble_yr,res_box_yr,res_obs_yr,n_runs,tgt_days(2),2,{'0','28','89'},i_yr_plt);
 exportgraphics(hf_ts,[figs_path,'2_temp_salt_example_fjords',num2str(2020),'_n',num2str(n_runs),'_fitall_v4.pdf'],'Resolution',300)
@@ -103,7 +107,7 @@ exportgraphics(hf_ts,[figs_path,'2_temp_salt_example_fjords',num2str(2020),'_n',
 %
 % Sensitivity plots for select fjords (Fig. 3)
 %[hf_t,~,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,{'0','28','89'},0,0);
-[hf_t,~,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,param_units,{'0','28','89'},0,0,ensemble_extra,res_box_extra);
+[hf_t,~,~] = plot_sensitivity_ensemble(X,ensemble_yr{i_yr_plt},res_box_yr{i_yr_plt},res_obs_yr{i_yr_plt},param_names,param_units,param_fullnames,{'0','28','89'},0,0,ensemble_extra,res_box_extra);
 exportgraphics(hf_t,[figs_path,'3_sensitivity_temp_',num2str(2020),'_n',num2str(n_runs),'_v4.pdf'],'Resolution',300)
 % exportgraphics(gcf,[figs_path,'supp/sensitivity_QVs_',num2str(2020),'_n',num2str(n_runs),'.png'],'Resolution',300)
 % close all

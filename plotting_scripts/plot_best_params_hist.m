@@ -12,7 +12,7 @@ i_letter = 1;
 fjord_names = cell([1,length(fjord_IDs)]);
 for i=1:length(fjord_names), fjord_names{i} = fjord_IDs(i); end
 
-hf = figure('Name','Best parameters','Position',[40 40 1360 300]);
+hf = figure('Name','Best parameters','Position',[40 40 1000 300]);
 ht = tiledlayout(1,n_params,'TileSpacing','tight','Padding','compact');
 
 param_entries_all = cell([1,n_params]);
@@ -34,17 +34,17 @@ for i_yr=n_years:-1:1
     for i_fjord=1:n_fjord_runs
 
         % Filter out runs that have a high RMSE(t), i.e., we want to focus on the fjords we can simulate well
-        % rmse_tf_filtered = res_box(i_fjord).rmse_tf;
-        % rmse_tf_threshold = 0.5; %prctile(rmse_tf_filtered(:,i_tgt_day),10,1);
-        % rmse_tf_filtered(rmse_tf_filtered>rmse_tf_threshold) = NaN;
-        % 
+        rmse_tf_filtered = res_box(i_fjord).rmse_tf;
+        rmse_tf_threshold = 1.25;
+        rmse_tf_filtered(rmse_tf_filtered>rmse_tf_threshold) = NaN;
 
         % % find run with the smallest RMSE(sigma)
-        rmse_df_filtered = res_box(i_fjord).rmse_df;
-        rmse_df_threshold = 0.5; %prctile(rmse_tf_filtered(:,i_tgt_day),10,1);
-        rmse_df_filtered(rmse_df_filtered>rmse_df_threshold) = NaN;
+        % rmse_df_filtered = res_box(i_fjord).rmse_df;
+        % rmse_df_threshold = 0.5; %prctile(rmse_tf_filtered(:,i_tgt_day),10,1);
+        % rmse_df_filtered(rmse_df_filtered>rmse_df_threshold) = NaN;
+
         % find run with the smallest RMSE
-        [best_rmse_t,inds_best_tf] = min(squeeze(rmse_df_filtered(:,i_tgt_day)),[],'all','omitnan');
+        [best_rmse_t,inds_best_tf] = min(squeeze(rmse_tf_filtered(:,i_tgt_day)),[],'all','omitnan');
 
         if ~isnan(best_rmse_t) % we only compute it if that fjord has any runs below RMSE = 0.5
             for i_param=1:n_params
@@ -60,7 +60,7 @@ for i_yr=n_years:-1:1
     for i_param=1:n_params
         % i_scat = i_param+(i_param-1)*2;
 
-        nexttile(i_param); hold on; box on;
+        ax1 = nexttile(i_param); hold on; box on;
 
         if (max(range_params{i_param}) - min(range_params{i_param}) > 1e3) || max(range_params{i_param}) - min(range_params{i_param}) < 1e-3
             set(gca,'XScale','log')
@@ -82,9 +82,9 @@ for i_yr=n_years:-1:1
         
         % Matlab's histogram function might act funny when plotted on a log scale if we do not treat the bin edges
         if (max(range_params{i_param}) - min(range_params{i_param}) > 1e3) || max(range_params{i_param}) - min(range_params{i_param}) < 1e-3
-            binedges = logspace(log10(x_lims(1)),log10(x_lims(end)),50);
+            binedges = logspace(log10(x_lims(1)),log10(x_lims(end)),25);
         else
-            binedges = linspace(x_lims(1),x_lims(end),50);
+            binedges = linspace(x_lims(1),x_lims(end),25);
         end
         param_entry_filtered = param_entry(:,i_param);
         param_entries_all{i_param} = [param_entries_all{i_param}; param_entry_filtered];
@@ -104,30 +104,50 @@ for i_yr=n_years:-1:1
         %     set(gca,'XScale','log')
         % end
         if i_yr==1
+            % colororder({'k','k'})
             % [n, edges] = histcounts(param_entries_all{i_param},1e2,'Normalization','probability');
             % edge_centre = 0.5*(edges(1:end-1)+edges(2:end));
             % edge_centre(end) = edge_centre(end).*1.1;
-            % histogram(param_entries_all{i_param},binedges,'Normalization','probability','FaceColor',[0. 0. 0.],'FaceAlpha',0.5,'Orientation','vertical');
-            histogram(param_entries_all{i_param},binedges,'Normalization','cumcount','FaceAlpha',0.25,'Orientation','vertical');
-            histogram(param_entries_all{i_param},binedges,'Normalization','count','FaceAlpha',0.5,'Orientation','vertical');
-            % histogram(param_entries_all{i_param},'Normalization','probability','FaceAlpha',0.5,'Orientation','vertical');
-            % histogram(param_entries_all{i_param},'Normalization','cdf','FaceAlpha',0.5,'Orientation','vertical');
-            % bar(edge_centre, n, 'barwidth', 1,'FaceColor',[0 0 0],'FaceAlpha',0.5,'Horizontal','on');
-            % histogram(param_entries_all{i_param},30,'FaceColor',[0. 0. 0.],'FaceAlpha',0.5,'Orientation','horizontal');
+
+            yyaxis(ax1,'left')
+            hhist = histogram(param_entries_all{i_param},binedges,'Normalization','cumcount','FaceAlpha',0.25,'Orientation','vertical');
+            % histogram(param_entries_all{i_param},binedges,'Normalization','cdf','FaceAlpha',0.25,'Orientation','vertical');
+            set(gca,'YColor','k');
+            if i_param == 1
+                ylabel('Cumulative','Color','k')
+                % set(gca,'YColor','k');
+            else
+                set(gca,'YTickLabel',{})
+            end
+            
+            yyaxis(ax1,'right')
+            hhist = histogram(param_entries_all{i_param},binedges,'Normalization','count','FaceAlpha',0.5,'Orientation','vertical');
+            % histogram(param_entries_all{i_param},binedges,'Normalization','probability','FaceAlpha',0.5,'Orientation','vertical');
+            set(gca,'YColor','k');
+            if i_param == n_params
+                ylabel('Count','Color','k')
+                set(gca,'YColor','k');
+            else
+                set(gca,'YTickLabel',{})
+            end
+
+            if i_param==1
+                hl = legend('Cumulative','Count','fontsize',fsize,'Location','west');
+            end
+
             text(0.02,1.0,['(',letters(i_letter),')'],'HorizontalAlignment','left','VerticalAlignment','top','Units','normalized','fontsize',fsize)
             i_letter=i_letter+1;
+            set(gca,'fontsize',fsize)
         end
-        if i_param == 1
-            ylabel('Count')
-        else
-            set(gca,'YTickLabel',{})
+        
+        if strcmp(param_names{i_param},'A0')
+            x_ticks = [1e0, 1e2, 1e4, 1e6, 1e8];
+        elseif strcmp(param_names{i_param},'C0')
+            x_ticks = [1e2, 1e3, 1e4, 1e5];
         end
-        set(gca,'fontsize',fsize)
         if (max(range_params{i_param}) - min(range_params{i_param}) > 1e3) || max(range_params{i_param}) - min(range_params{i_param}) < 1e-3
-            xt_labels = {};
-            for i=1:length(x_ticks)
-                xt_labels{end+1} = sprintf('10^{%d}', log10(x_ticks(i)));
-            end
+            xt_labels = cellstr(num2str(round(log10(x_ticks(:))), '10^%d'));
+            set(gca,'XTick',x_ticks)
             set(gca,'XTickLabel',xt_labels)
         end
         xlabel([param_names{i_param},' (',param_units{i_param},')'])
@@ -136,7 +156,6 @@ for i_yr=n_years:-1:1
     % h_yr = [h_yr h1];
     % lbl_years{i_yr} = num2str(2015+i_yr);
 end
-% hl = legend('Count','Cumulative','fontsize',fsize,'Location','southeast');
 % hl = legend(flip(h_yr),lbl_years,'fontsize',fsize,'Location','southeast');
 % hl.NumColumns = 2;
 

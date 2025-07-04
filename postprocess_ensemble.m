@@ -84,6 +84,8 @@ for i_fjord=1:n_fjords
 
                 rmse_tf(i_run,i_day) = rmse(tf_box_comp(depths_rmse,i_run,i_day),tf_obs_ref,'omitnan');%./mean(tf_obs(depths_rmse),'omitnan');
                 rmse_sf(i_run,i_day) = rmse(sf_box_comp(depths_rmse,i_run,i_day),sf_obs_ref,'omitnan');%./mean(sf_obs(depths_rmse),'omitnan');
+                % RMSE_T = sqrt((1/fjord_model(i_fjord).p.N) * sum(tf_box_comp(depths_rmse,i_run,i_day) - tf_obs_ref).^2);
+                % RMSE_S = sqrt((1/fjord_model(i_fjord).p.N) * sum(sf_box_comp(depths_rmse,i_run,i_day) - sf_obs_ref).^2);
                 try
                 rmse_df(i_run,i_day) = rmse(df_box_comp(depths_rmse,i_run,i_day),df_obs_ref,'omitnan');
                 catch ME

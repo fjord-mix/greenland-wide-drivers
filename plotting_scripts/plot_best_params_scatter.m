@@ -34,12 +34,19 @@ for i_yr=n_years:-1:1
     for i_fjord=1:n_fjord_runs
 
         % Filter out runs that have a high RMSE, i.e., we want to focus on the fjords we can simulate well
-        rmse_tf_filtered = res_box(i_fjord).rmse_tf;
-        rmse_tf_threshold = 0.5; %prctile(rmse_tf_filtered(:,i_tgt_day),10,1);
+        w_rmse_t  = 0.5;
+        z_rmse_t  = normalize(res_box(i_fjord).rmse_tf(:,i_tgt_day),"range");
+        z_rmse_s  = normalize(res_box(i_fjord).rmse_sf(:,i_tgt_day),"range");
+        rmse_both = w_rmse_t*z_rmse_t + (1-w_rmse_t)*z_rmse_s;
+        rmse_tf_filtered = rmse_both;
+
+        % rmse_tf_filtered = res_box(i_fjord).rmse_tf;
+        rmse_tf_threshold = 1.25; % 0.5
         rmse_tf_filtered(rmse_tf_filtered>rmse_tf_threshold) = NaN;
     
         % find run with the smallest RMSE
-        [best_rmse_t,inds_best_tf] = min(squeeze(rmse_tf_filtered(:,i_tgt_day)),[],'all','omitnan');
+        % [best_rmse_t,inds_best_tf] = min(squeeze(rmse_tf_filtered(:,i_tgt_day)),[],'all','omitnan');
+        [best_rmse_t,inds_best_tf] = min(squeeze(rmse_tf_filtered),[],'all','omitnan');
         if ~isnan(best_rmse_t) % we only compute it if that fjord has any runs below RMSE = 0.5
             for i_param=1:n_params
                 best_fjord_params(i_fjord).best_t.(param_names{i_param}) = ensemble(i_fjord,inds_best_tf).p.(param_names{i_param});
@@ -65,8 +72,8 @@ for i_yr=n_years:-1:1
             else
                 size_marker = rmse_tf_threshold-best_fjord_params(i_fjord).rmse_t;
             end
-            % if best_fjord_params(i_fjord).rmse_t > max_rmse, max_rmse = best_fjord_params(i_fjord).rmse_t; end
-            % if best_fjord_params(i_fjord).rmse_t < min_rmse, min_rmse = best_fjord_params(i_fjord).rmse_t; end
+            if best_fjord_params(i_fjord).rmse_t > max_rmse, max_rmse = best_fjord_params(i_fjord).rmse_t; end
+            if best_fjord_params(i_fjord).rmse_t < min_rmse, min_rmse = best_fjord_params(i_fjord).rmse_t; end
 
             % if size_marker < 0, size_marker = 10; end
             if ~isempty(best_fjord_params(i_fjord).best_t)
@@ -104,7 +111,7 @@ for i_yr=n_years:-1:1
         set(gca,'fontsize',fsize)
         xlabel('Fjord')
         bubblesize([1 15])
-        bubblelim([0 0.2])
+        bubblelim([0 0.5])
     end
     h_yr = [h_yr h1];
     lbl_years{i_yr} = num2str(2015+i_yr);
@@ -114,7 +121,7 @@ hl = legend(flip(h_yr),lbl_years,'fontsize',fsize,'Location','southeast');
 hl.NumColumns = 2;
 
 % nexttile(1,[1,2]); hold on; box on;
-blgd = bubblelegend('RMSE (Kg m^{-3})','Location','southwest','fontsize',fsize-4);
+blgd = bubblelegend('Norm. RMSE','Location','southwest','fontsize',fsize-4);
 blgd.Title.FontWeight='normal';
-blgd.LimitLabels = {'\geq 0.2','0'};
+blgd.LimitLabels = {'\geq 0.5','0'};
 end

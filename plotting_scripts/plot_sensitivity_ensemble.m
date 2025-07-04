@@ -1,4 +1,4 @@
-function [hf_t,hf_e,hf_s] = plot_sensitivity_ensemble(X,ensemble,res_box,res_obs,param_names,param_units,which_fjords,plt_fw,plt_sf,ensemble_extra,res_box_extra)
+function [hf_t,hf_e,hf_s] = plot_sensitivity_ensemble(X,ensemble,res_box,res_obs,param_names,param_units,param_fullnames,which_fjords,plt_fw,plt_sf,ensemble_extra,res_box_extra)
 
 if nargin < 7 || plt_fw==0
     plt_fw = 0; 
@@ -24,7 +24,7 @@ letters=lower(char(65:65+n_params*n_fjords));
 
 lcolor = lines(4);
 fsize = 18;
-fig_width = 1200;
+fig_width = 1000;
 fig_height = 250*length(which_fjords);
 %% Applying the RMSE filter - speculative, for now trying out to see if it works
 
@@ -127,10 +127,11 @@ for i_fjord=1:size(ensemble,1)
         % text(0.99,1.01,['(',letters(i_panel),') ',param_names{i_param}],'HorizontalAlignment','right','VerticalAlignment','bottom','Units','normalized','fontsize',fsize)
         text(0.01,0.99,['(',letters(i_panel),') '],'HorizontalAlignment','left','VerticalAlignment','top','Units','normalized','fontsize',fsize)
         if i_plt_fjord==1
-            title([param_names{i_param},' (',param_units{i_param},')'])
+            title([param_fullnames{i_param},' (',param_names{i_param},')'],fontsize=fsize-2)
         end
         if i_param==1
-            text(0.02,0.01,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
+            % text(0.02,0.01,sprintf("(%s) %s",res_box(i_fjord).id,res_box(i_fjord).name),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
+            text(0.02,0.01,sprintf("%s",res_box(i_fjord).name),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
         end
         i_panel=i_panel+1;
 

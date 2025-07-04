@@ -23,8 +23,15 @@ for i_year=n_years:-1:1
     size_marker = NaN(size(rmse_fjd));
     for i_fjord=1:n_fjords
         for i_run=1:size(ensemble,2)
-            if ~isempty(ensemble(i_fjord,i_run).s) %&& res_box(i_fjord).rmse_df(i_run,2) < rmse_threshold
-                rmse_fjd(i_fjord) = min(res_box(i_fjord).rmse_df(:,2),[],'omitnan');
+            if ~isempty(ensemble(i_fjord,i_run).s) %&& res_box(i_fjord).rmse_tf(i_run,2) < rmse_threshold
+
+                w_rmse_t  = 0.5;
+                z_rmse_t  = normalize(res_box(i_fjord).rmse_tf(:,2),"range");
+                z_rmse_s  = normalize(res_box(i_fjord).rmse_sf(:,2),"range");
+                rmse_both = w_rmse_t*z_rmse_t + (1-w_rmse_t)*z_rmse_s;
+                rmse_fjd(i_fjord) = min(rmse_both,[],'omitnan');
+
+                % rmse_fjd(i_fjord) = min(res_box(i_fjord).rmse_tf(:,2),[],'omitnan');
                 y_fjd(i_fjord) = int32(str2double(res_box(i_fjord).id));% - 64; % converting the fjord ID ('A' to 'N') to an integer
                 x_fjd(i_fjord) = 2015+i_year;
 
@@ -43,12 +50,12 @@ for i_year=n_years:-1:1
 
 end % i_year
 bubblesize([10 30])
-bubblelim([0 0.2])
+bubblelim([0 0.5])
 set(gca,'fontsize',fsize)
-% blgd = bubblelegend('RMSE (^oC)','Location','southeast','fontsize',fsize);
-blgd = bubblelegend('RMSE (Kg m^{-3})','Location','northwest','fontsize',fsize);
+blgd = bubblelegend('Norm. RMSE','Location','northwest','fontsize',fsize);
+% blgd = bubblelegend('RMSE (Kg m^{-3})','Location','northwest','fontsize',fsize);
 blgd.Title.FontWeight='normal';
-blgd.LimitLabels = {'\geq 0.2','0'};
+blgd.LimitLabels = {'\geq 0.5','0'};
 ylabel('Fjord')
 xlabel('Year')
 set(gca,'XTick',2015+[1:n_years])

@@ -34,46 +34,6 @@ for i_fjord=1:n_fjord_runs
         continue
     end
     [~,tf_best,sf_best] = get_best_profiles_rmse(res_box,i_fjord,n_runs,w_rmse_t,tgt_days,i_tgt_day);
-    
-    % if isempty(res_box(i_fjord).rmse_tf)
-    %     continue
-    % elseif isempty(i_tgt_day)
-    %     rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf./mean(res_box(i_fjord).tf,'omitnan') + (1-w_rmse_t).*res_box(i_fjord).rmse_sf./mean(res_box(i_fjord).sf,'omitnan');
-    % 
-    %     [rmse_table(i_fjord).tf_rpm,i_min_rmse_tf] = min(res_box(i_fjord).rmse_tf,[],'all','omitnan');
-    %     [rmse_table(i_fjord).sf_rpm,i_min_rmse_sf] = min(res_box(i_fjord).rmse_sf,[],'all','omitnan');
-    %     [rmse_table(i_fjord).ts_rpm,i_min_rmse]    = min(rmse_both,[],'all','omitnan');
-    % 
-    %     [irun_best_tf,id_best_tf] = ind2sub([n_runs,length(tgt_days)],i_min_rmse_tf);
-    %     [irun_best_sf,id_best_sf] = ind2sub([n_runs,length(tgt_days)],i_min_rmse_sf);
-    %     [irun_best,id_best] = ind2sub([n_runs,length(tgt_days)],i_min_rmse);
-    % 
-    %     tf_best = res_box(i_fjord).ensemble_tf(:,irun_best_tf,id_best_tf);
-    %     sf_best = res_box(i_fjord).ensemble_sf(:,irun_best_sf,id_best_sf);
-    % 
-    %     tf_best2 = res_box(i_fjord).ensemble_tf(:,irun_best,id_best);
-    %     sf_best2 = res_box(i_fjord).ensemble_sf(:,irun_best,id_best);
-    % 
-    %     inds_best_tf = [irun_best_tf,id_best_tf];
-    %     inds_best_sf = [irun_best_sf,id_best_sf];
-    %     inds_best2   = [irun_best,id_best];
-    % else
-    %     rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf./mean(res_box(i_fjord).tf,1,'omitnan') + (1-w_rmse_t).*res_box(i_fjord).rmse_sf./mean(res_box(i_fjord).sf,1,'omitnan');
-    % 
-    %     [rmse_table(i_fjord).tf_rpm,inds_best_tf] = min(squeeze(res_box(i_fjord).rmse_tf(:,i_tgt_day)),[],'all','omitnan');
-    %     [rmse_table(i_fjord).sf_rpm,inds_best_sf] = min(squeeze(res_box(i_fjord).rmse_sf(:,i_tgt_day)),[],'all','omitnan');
-    %     [rmse_table(i_fjord).ts_rpm,inds_best2]   = min(squeeze(rmse_both(:,i_tgt_day)),[],'all','omitnan');
-    % 
-    %     tf_best = res_box(i_fjord).ensemble_tf(:,inds_best_tf,i_tgt_day);
-    %     sf_best = res_box(i_fjord).ensemble_sf(:,inds_best_sf,i_tgt_day);
-    % 
-    %     tf_best2 = res_box(i_fjord).ensemble_tf(:,inds_best2,i_tgt_day);
-    %     sf_best2 = res_box(i_fjord).ensemble_sf(:,inds_best2,i_tgt_day);
-    % end
-    % 
-    % % adds Shelf-fjord RMSE to the table
-    % rmse_table(i_fjord).rmse_ts = res_box(i_fjord).rmse_ts;
-    % rmse_table(i_fjord).rmse_ss = res_box(i_fjord).rmse_ss;
 
 
     %% Plotting temperature
@@ -92,7 +52,8 @@ for i_fjord=1:n_fjord_runs
     i_iter = i_iter+1;
     nexttile(i_row); hold on; box on; grid on
     text(0.98,0.98,sprintf("(%s)",letters(i_letter)),'Units','normalized','VerticalAlignment','top','HorizontalAlignment','right','FontSize',fsize)
-    text(0.02,1.02,sprintf("%s) %s (%.0f km)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
+    % text(0.02,1.02,sprintf("%s) %s (%.0f km)",res_box(i_fjord).id,res_box(i_fjord).name, fjord_model(i_fjord).p.L/1e3),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
+    text(0.02,1.02,sprintf("%s",res_box(i_fjord).name),'units','normalized','VerticalAlignment','bottom','fontsize',fsize)
     % text(0.98,0.02,sprintf("n=%.1f %%",res_box(i_fjord).n),'Units','normalized','VerticalAlignment','bottom','HorizontalAlignment','right','FontSize',fsize)
     i_letter=i_letter+1;
 
@@ -248,6 +209,9 @@ n_years    = length(fjord_model_yr);
 first_time = 1;
 all_r_temp = {};
 all_r_salt = {};
+all_rmse_temp = {};
+all_rmse_salt = {};
+all_rmse_dens = {};
 
 for i_year=n_years:-1:1
     n_fjord_runs = length(fjord_model_yr{i_year});
@@ -256,7 +220,7 @@ for i_year=n_years:-1:1
     for i_fjord=1:n_fjord_runs
         
         % Getting the profiles for comparing
-        [~,tf_best,sf_best] = get_best_profiles_rmse(res_box,i_fjord,n_runs,w_rmse_t,tgt_days,i_tgt_day);
+        [rmse_table,tf_best,sf_best] = get_best_profiles_rmse(res_box,i_fjord,n_runs,w_rmse_t,tgt_days,i_tgt_day);
 
         % interpolaring observations to box model depths
         tf_obs = interp1(res_obs(i_fjord).zf,res_obs(i_fjord).tf,res_box(i_fjord).zf,'linear');
@@ -301,6 +265,11 @@ for i_year=n_years:-1:1
         % all_r_salt{end+1} = corr(sf_obs,sf_best,'type','pearson','rows','complete');
         all_r_temp{end+1} = corr(dt_obs,dt_rpm,'type','pearson','rows','complete');
         all_r_salt{end+1} = corr(ds_obs,ds_rpm,'type','pearson','rows','complete');
+
+        all_rmse_temp{end+1} = rmse_table.tf_rpm;
+        all_rmse_salt{end+1} = rmse_table.sf_rpm;
+        all_rmse_dens{end+1} = rmse_table.df_rpm;
+        
     end % fjords
 end % years
 
@@ -319,12 +288,15 @@ colormap(flip(cmocean('deep')))
 
 nexttile(9)
 text(0.02,0.98,sprintf("(%s)",letters(i_letter)),'Units','normalized','VerticalAlignment','top','HorizontalAlignment','left','FontSize',fsize)
-bin_edges = -0.1:0.05:1.0;
+bin_edges_df = -0.1:0.05:1.0;
+bin_edges_tf=0:0.05:1.5;
+bin_edges_sf=0:0.05:1.5;
 hold on; box on
-histogram(cell2mat(all_r_temp),bin_edges,'Normalization','count','FaceAlpha',0.5);
-histogram(cell2mat(all_r_salt),bin_edges,'Normalization','count','FaceAlpha',0.5);
-legend('Temperature','Salinity','Location','north')
-xlabel('FjordRPM_{best} fit to obs.'); ylabel('Count')
+histogram(cell2mat(all_rmse_temp),bin_edges_tf,'Normalization','count','FaceAlpha',0.5);
+histogram(cell2mat(all_rmse_salt),bin_edges_sf,'Normalization','count','FaceAlpha',0.5);
+% histogram(cell2mat(all_rmse_dens),bin_edges_df,'Normalization','count','FaceAlpha',0.5);
+legend('Temperature (^{o}C)','Salinity (g/Kg)','Location','northeast')
+xlabel('RMSE_{best} rel. to obs.'); ylabel('Count')
 set(gca,'fontsize',fsize)
 
 
