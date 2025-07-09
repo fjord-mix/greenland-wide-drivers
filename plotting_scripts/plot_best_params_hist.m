@@ -34,9 +34,15 @@ for i_yr=n_years:-1:1
     for i_fjord=1:n_fjord_runs
 
         % Filter out runs that have a high RMSE(t), i.e., we want to focus on the fjords we can simulate well
-        rmse_tf_filtered = res_box(i_fjord).rmse_tf;
-        rmse_tf_threshold = 1.25;
-        rmse_tf_filtered(rmse_tf_filtered>rmse_tf_threshold) = NaN;
+        % rmse_tf_filtered = res_box(i_fjord).rmse_tf;
+        z_rmse_t  = normalize(res_box(i_fjord).rmse_tf(:,2),"range");
+        z_rmse_s  = normalize(res_box(i_fjord).rmse_sf(:,2),"range");
+        rmse_both = (z_rmse_t + z_rmse_s)/2;
+        rmse_ts_filtered = rmse_both;
+
+        rmse_ts_threshold = 0.1;
+        rmse_ts_filtered(rmse_ts_filtered>rmse_ts_threshold) = NaN;
+        [best_rmse_t,inds_best_tf] = min(squeeze(rmse_ts_filtered),[],'all','omitnan');
 
         % % find run with the smallest RMSE(sigma)
         % rmse_df_filtered = res_box(i_fjord).rmse_df;
@@ -44,7 +50,9 @@ for i_yr=n_years:-1:1
         % rmse_df_filtered(rmse_df_filtered>rmse_df_threshold) = NaN;
 
         % find run with the smallest RMSE
-        [best_rmse_t,inds_best_tf] = min(squeeze(rmse_tf_filtered(:,i_tgt_day)),[],'all','omitnan');
+        % rmse_tf_threshold = 0.5;
+        % rmse_tf_filtered(rmse_ts_filtered>rmse_tf_threshold) = NaN;
+        % [best_rmse_t,inds_best_tf] = min(squeeze(rmse_tf_filtered(:,i_tgt_day)),[],'all','omitnan');
 
         if ~isnan(best_rmse_t) % we only compute it if that fjord has any runs below RMSE = 0.5
             for i_param=1:n_params

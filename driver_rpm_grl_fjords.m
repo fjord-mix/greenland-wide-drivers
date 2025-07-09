@@ -102,7 +102,7 @@ exportgraphics(hf_map,[figs_path,'sketch_processes/1b_map_simulated_fjords.png']
 
 % Proof of concept that the model works (Fig. 2)
 hf_ts = plot_ensemble_tempsalt(fjord_model_yr,ensemble_yr,res_box_yr,res_obs_yr,n_runs,tgt_days(2),2,{'0','28','89'},i_yr_plt);
-exportgraphics(hf_ts,[figs_path,'2_temp_salt_example_fjords',num2str(2020),'_n',num2str(n_runs),'_fitall_v4.pdf'],'Resolution',300)
+exportgraphics(hf_ts,[figs_path,'2_temp_salt_example_fjords',num2str(2020),'_n',num2str(n_runs),'_fitall_v4_filtered.pdf'],'Resolution',300)
 % close all
 %
 % Sensitivity plots for select fjords (Fig. 3)
@@ -121,8 +121,8 @@ exportgraphics(hf_hist,[figs_path,'4_best_params_GRL_hist_n',num2str(n_runs),'_f
 %% Supplementary/unused
 
 % Summary of simulated fjords (Fig. S1b)
-% hf_grid = plot_best_runs_grid(ensemble_yr,res_box_yr);
-% exportgraphics(hf_grid,[figs_path,'supp/FigS1b_grid_fjords_simulated_n',num2str(n_runs),'_v2.png'],'BackgroundColor','none','Resolution',300)
+% hf_grid = plot_best_runs_grid(ensemble_yr,res_box_yr,fjord_matrix);
+% exportgraphics(hf_grid,[figs_path,'supp/FigS19_grid_rmse_fjords_simulated_n',num2str(n_runs),'_v2.png'],'BackgroundColor','none','Resolution',300)
 
 % hf_best_scatter = plot_best_params_scatter(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,2);
 % exportgraphics(hf_best_scatter,[figs_path,'supp/FigS19_scatter_best_params',num2str(n_runs),'.png'],'Resolution',300)
