@@ -223,10 +223,10 @@ for i_year=n_years:-1:1
         [rmse_table,tf_best,sf_best] = get_best_profiles_rmse(res_box,i_fjord,n_runs,w_rmse_t,tgt_days,i_tgt_day);
 
         % removing fjords that the model cannot fit from the analysis
-        rmse_ts_threshold = 0.1;
-        if rmse_table.ts_rpm > rmse_ts_threshold 
-            continue
-        end
+        % rmse_ts_threshold = 0.1;
+        % if rmse_table.ts_rpm > rmse_ts_threshold 
+        %     continue
+        % end
 
         % interpolaring observations to box model depths
         tf_obs = interp1(res_obs(i_fjord).zf,res_obs(i_fjord).tf,res_box(i_fjord).zf,'linear');

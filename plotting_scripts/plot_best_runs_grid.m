@@ -1,4 +1,4 @@
-function hf_grid = plot_best_runs_grid(ensemble_yr,res_box_yr,fjord_matrix)
+function hf_grid = plot_best_runs_grid(ensemble_yr,res_box_yr,res_obs_yr,fjord_matrix)
 
 fsize=18;
 % rmse_threshold = 0.5;
@@ -19,6 +19,38 @@ N = 256;
 nb = size(basect,1);
 CT1 = interp1(1:nb,basect,linspace(1,nb,N)); % interpolate to get a specified-length version
 
+%% find the max/min T and S of the entire ensemble so we can normalise the data
+max_t = 0;
+min_t = 99;
+max_s = 0;
+min_s = 99;
+for i_year=n_years:-1:1
+    res_obs  = res_obs_yr{i_year};
+    ensemble = ensemble_yr{i_year};
+    for i_fjord=1:size(ensemble,1)
+        for i_run=1:size(ensemble,2)
+            % if max(res_box(i_fjord).rmse_tf(:,2),[],'omitnan') > max_rmse_t
+            %     max_rmse_t = max(res_box(i_fjord).rmse_tf(:,2),[],'omitnan');
+            % end
+            % if max(res_box(i_fjord).rmse_sf(:,2),[],'omitnan') > max_rmse_s
+            %     max_rmse_s = max(res_box(i_fjord).rmse_sf(:,2),[],'omitnan');
+            % end
+            if max(res_obs(i_fjord).tf,[],'omitnan') > max_t
+                max_t = max(res_obs(i_fjord).tf,[],'omitnan');
+            end
+            if min(res_obs(i_fjord).tf,[],'omitnan') < min_t
+                min_t = min(res_obs(i_fjord).tf,[],'omitnan');
+            end
+            if max(res_obs(i_fjord).sf,[],'omitnan') > max_s
+                max_s = max(res_obs(i_fjord).sf,[],'omitnan');
+            end
+            if min(res_obs(i_fjord).sf,[],'omitnan') < min_s
+                min_s = min(res_obs(i_fjord).sf,[],'omitnan');
+            end
+        end
+    end
+end
+
 % y_grid =1;
 %% Summary figure
 % hf_grid = figure('Position',[50 50, 500 700]); 
@@ -37,9 +69,11 @@ for i_year=n_years:-1:1
             if ~isempty(ensemble(i_fjord,i_run).s) %&& res_box(i_fjord).rmse_tf(i_run,2) < rmse_threshold
 
                 w_rmse_t  = 0.5;
-                z_rmse_t  = normalize(res_box(i_fjord).rmse_tf(:,2),"range");
-                z_rmse_s  = normalize(res_box(i_fjord).rmse_sf(:,2),"range");
-                rmse_both = (z_rmse_t + z_rmse_s)/2;
+                % z_rmse_t  = normalize(res_box(i_fjord).rmse_tf(:,2),"zscore");
+                % z_rmse_s  = normalize(res_box(i_fjord).rmse_sf(:,2),"zscore");
+                z_rmse_t  = res_box(i_fjord).rmse_tf(:,2)./(max_t-min_t);
+                z_rmse_s  = res_box(i_fjord).rmse_sf(:,2)./(max_s-min_s);
+                rmse_both = w_rmse_t * z_rmse_t + (1-w_rmse_t) * z_rmse_s;
                 rmse_fjd(i_fjord) = min(rmse_both,[],'omitnan');
 
                 % Creating a proper grid with T and S RMSEs
@@ -158,7 +192,7 @@ nexttile(3)
 hold on;
 h = imagesc(x_plot_axis,rmse_y,grid_rmse_2_filt');
 set(h,'AlphaData', 1-isnan(grid_rmse_2_filt'))
-clim([0 0.12])
+% clim([0 0.12])
 xlim([x_plot_axis(1)-0.5 x_plot_axis(end)+0.5]); ylim([1 n_years+1])
 box on;
 set(gca,'XTick',1:length(fjord_lbl),'XtickLabel',rmse_x);

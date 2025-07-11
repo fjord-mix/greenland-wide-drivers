@@ -40,6 +40,12 @@ if plt_series
     ht_series = tiledlayout("flow");
 end
 
+%% max/min T and S of the entire ensemble so we can normalise the data
+max_t = 9.27;
+min_t = -1.61;
+max_s = 34.99;
+min_s = 2.48;
+
 i_iter = 0;
 for i_fjord=1:n_fjord_runs
 
@@ -48,8 +54,10 @@ for i_fjord=1:n_fjord_runs
         continue
     elseif isempty(i_tgt_day)
         % rmse_both = w_rmse_t.*res_box(i_fjord).rmse_tf./mean(res_box(i_fjord).tf,'omitnan') + (1-w_rmse_t).*res_box(i_fjord).rmse_sf./mean(res_box(i_fjord).sf,'omitnan');
-        z_rmse_t  = normalize(res_box(i_fjord).rmse_tf(:,2),"range");
-        z_rmse_s  = normalize(res_box(i_fjord).rmse_sf(:,2),"range");
+        % z_rmse_t  = normalize(res_box(i_fjord).rmse_tf(:,2),"range");
+        % z_rmse_s  = normalize(res_box(i_fjord).rmse_sf(:,2),"range");
+        z_rmse_t  = res_box(i_fjord).rmse_tf(:,2)./(max_t-min_t);
+        z_rmse_s  = res_box(i_fjord).rmse_sf(:,2)./(max_s-min_s);
         rmse_both = w_rmse_t*z_rmse_t + (1-w_rmse_t)*z_rmse_s;
 
         [rmse_table(i_fjord).tf_rpm,i_min_rmse_tf] = min(res_box(i_fjord).rmse_tf,[],'all','omitnan');
@@ -62,11 +70,11 @@ for i_fjord=1:n_fjord_runs
         [irun_best,id_best] = ind2sub([n_runs,length(tgt_days)],i_min_rmse);
         [irun_best_df,id_best_df] = ind2sub([n_runs,length(tgt_days)],i_min_rmse_df);
 
-        tf_best = res_box(i_fjord).ensemble_tf(:,irun_best_tf,id_best_tf);
-        sf_best = res_box(i_fjord).ensemble_sf(:,irun_best_tf,id_best_tf);
+        % tf_best = res_box(i_fjord).ensemble_tf(:,irun_best_tf,id_best_tf);
+        % sf_best = res_box(i_fjord).ensemble_sf(:,irun_best_tf,id_best_tf);
 
-        % tf_best = res_box(i_fjord).ensemble_tf(:,irun_best,id_best);
-        % sf_best = res_box(i_fjord).ensemble_sf(:,irun_best,id_best);
+        tf_best = res_box(i_fjord).ensemble_tf(:,irun_best,id_best);
+        sf_best = res_box(i_fjord).ensemble_sf(:,irun_best,id_best);
         
         % tf_best = res_box(i_fjord).ensemble_tf(:,irun_best_df,id_best_df);
         % sf_best = res_box(i_fjord).ensemble_sf(:,irun_best_df,id_best_df);
@@ -86,11 +94,11 @@ for i_fjord=1:n_fjord_runs
         [rmse_table(i_fjord).ts_rpm,inds_best]   = min(squeeze(rmse_both),[],'all','omitnan');
         [rmse_table(i_fjord).df_rpm,inds_best_df] = min(squeeze(res_box(i_fjord).rmse_df(:,i_tgt_day)),[],'all','omitnan');
 
-        tf_best = res_box(i_fjord).ensemble_tf(:,inds_best_tf,i_tgt_day);
-        sf_best = res_box(i_fjord).ensemble_sf(:,inds_best_tf,i_tgt_day);
+        % tf_best = res_box(i_fjord).ensemble_tf(:,inds_best_tf,i_tgt_day);
+        % sf_best = res_box(i_fjord).ensemble_sf(:,inds_best_tf,i_tgt_day);
 
-        % tf_best = res_box(i_fjord).ensemble_tf(:,inds_best,i_tgt_day);
-        % sf_best = res_box(i_fjord).ensemble_sf(:,inds_best,i_tgt_day);
+        tf_best = res_box(i_fjord).ensemble_tf(:,inds_best,i_tgt_day);
+        sf_best = res_box(i_fjord).ensemble_sf(:,inds_best,i_tgt_day);
         
         % tf_best = res_box(i_fjord).ensemble_tf(:,inds_best_df,i_tgt_day);
         % sf_best = res_box(i_fjord).ensemble_sf(:,inds_best_df,i_tgt_day);
@@ -338,19 +346,20 @@ xlabel(ht_temp,'Temperature (^oC)','fontsize',fsize+2);
 ylabel(ht_temp,'Depth (m)','fontsize',fsize+2);
 
 %% RMSE table
-fprintf('\n')
-fprintf("RMSE table\n")
-fprintf('Fjord | RPM_t  | RPM_s  | RPM_ts | GCM_t  | GCM_s  | GCM_ts |\n')
-fprintf('-------------------------------------------------------------------\n')
-for i_fjord=1:n_fjord_runs
-    fprintf("%s     | %.4f | %.4f | %.4f ",res_box(i_fjord).id,rmse_table(i_fjord).tf_rpm,rmse_table(i_fjord).sf_rpm,rmse_table(i_fjord).ts_rpm)
-    % if ~isempty(rmse_table(i_fjord).tf_gcm)
-    %     fprintf('| %.4f | %.4f | %.4f ',rmse_table(i_fjord).tf_gcm,rmse_table(i_fjord).sf_gcm,rmse_table(i_fjord).ts_gcm)
-    % end
-    fprintf('|\n')
+if verbose
+    fprintf('\n')
+    fprintf("RMSE table\n")
+    fprintf('Fjord | RPM_t  | RPM_s  | RPM_ts | GCM_t  | GCM_s  | GCM_ts |\n')
+    fprintf('-------------------------------------------------------------------\n')
+    for i_fjord=1:n_fjord_runs
+        fprintf("%s     | %.4f | %.4f | %.4f ",res_box(i_fjord).id,rmse_table(i_fjord).tf_rpm,rmse_table(i_fjord).sf_rpm,rmse_table(i_fjord).ts_rpm)
+        % if ~isempty(rmse_table(i_fjord).tf_gcm)
+        %     fprintf('| %.4f | %.4f | %.4f ',rmse_table(i_fjord).tf_gcm,rmse_table(i_fjord).sf_gcm,rmse_table(i_fjord).ts_gcm)
+        % end
+        fprintf('|\n')
+    end
+    fprintf('-------------------------------------------------------------------\n')
 end
-fprintf('-------------------------------------------------------------------\n')
-
 %% RMSE scatter plot
 
 if nargin > 14 && plt_rmse

@@ -34,10 +34,10 @@ for i_yr_load=1:n_years_to_plot
     %% Plotting and saving the main figures
 
     % Profiles and series for all fjords
-    % [hf_profiles,hfs_profiles,hf_series,hf_rmse] = plot_ensemble_profiles(fjord_model_yr{i_yr_load},ensemble_yr{i_yr_load},res_box_yr{i_yr_load},res_obs_yr{i_yr_load},n_runs,param_names,tgt_days(2),[],2,[],1,1,0,[],1);
-    % exportgraphics(hf_profiles,[figs_path,'supp/profiles_temp_salt/profiles_GRL_temp_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
-    % exportgraphics(hfs_profiles,[figs_path,'supp/profiles_temp_salt/profiles_GRL_salt_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
-    % % exportgraphics(hf_series,[figs_path,'supp/series/series_GRL_temp_',num2str(which_year_load),'_n',num2str(n_runs),'_ign20.png'],'Resolution',300)
+    [hf_profiles,hfs_profiles,hf_series,hf_rmse] = plot_ensemble_profiles(fjord_model_yr{i_yr_load},ensemble_yr{i_yr_load},res_box_yr{i_yr_load},res_obs_yr{i_yr_load},n_runs,param_names,tgt_days(2),[],2,[],1,1,0,[],1);
+    exportgraphics(hf_profiles,[figs_path,'supp/profiles_temp_salt/profiles_GRL_temp_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
+    exportgraphics(hfs_profiles,[figs_path,'supp/profiles_temp_salt/profiles_GRL_salt_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
+    % exportgraphics(hf_series,[figs_path,'supp/series/series_GRL_temp_',num2str(which_year_load),'_n',num2str(n_runs),'_ign20.png'],'Resolution',300)
     % exportgraphics(hf_rmse,[figs_path,'supp/rmse/rmse_temp_rpm_shelf_GRL_',num2str(which_year_load),'_n',num2str(n_runs),'.png'],'Resolution',300)
     close all
 

@@ -1,4 +1,4 @@
-function hf = plot_best_params_hist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,param_names,param_units,range_params,i_tgt_day)
+function hf = plot_best_params_hist(fjord_IDs,fjord_model_yr,ensemble_yr,res_box_yr,res_obs_yr,param_names,param_units,range_params,i_tgt_day)
 
 if nargin < 7, i_tgt_day=1; end
 fsize    = 16;
@@ -19,6 +19,40 @@ param_entries_all = cell([1,n_params]);
 h_yr = [];
 lbl_years = cell([n_years,1]);
 % for i_yr=1:n_years
+
+%% find the max/min T, S of the entire ensemble so we can normalise the data
+max_t = 0;
+min_t = 99;
+max_s = 0;
+min_s = 99;
+for i_year=n_years:-1:1
+    ensemble = ensemble_yr{i_year};
+    res_obs  = res_obs_yr{i_year};
+    for i_fjord=1:size(ensemble,1)
+        for i_run=1:size(ensemble,2)
+            % if max(res_box(i_fjord).rmse_tf(:,2),[],'omitnan') > max_rmse_t
+            %     max_rmse_t = max(res_box(i_fjord).rmse_tf(:,2),[],'omitnan');
+            % end
+            % if max(res_box(i_fjord).rmse_sf(:,2),[],'omitnan') > max_rmse_s
+            %     max_rmse_s = max(res_box(i_fjord).rmse_sf(:,2),[],'omitnan');
+            % end
+            if max(res_obs(i_fjord).tf,[],'omitnan') > max_t
+                max_t = max(res_obs(i_fjord).tf,[],'omitnan');
+            end
+            if min(res_obs(i_fjord).tf,[],'omitnan') < min_t
+                min_t = min(res_obs(i_fjord).tf,[],'omitnan');
+            end
+            if max(res_obs(i_fjord).sf,[],'omitnan') > max_s
+                max_s = max(res_obs(i_fjord).sf,[],'omitnan');
+            end
+            if min(res_obs(i_fjord).sf,[],'omitnan') < min_s
+                min_s = min(res_obs(i_fjord).sf,[],'omitnan');
+            end
+        end
+    end
+end
+
+%% Run loop
 for i_yr=n_years:-1:1
     fjord_model = fjord_model_yr{i_yr};
     ensemble    = ensemble_yr{i_yr};
@@ -35,12 +69,15 @@ for i_yr=n_years:-1:1
 
         % Filter out runs that have a high RMSE(t), i.e., we want to focus on the fjords we can simulate well
         % rmse_tf_filtered = res_box(i_fjord).rmse_tf;
-        z_rmse_t  = normalize(res_box(i_fjord).rmse_tf(:,2),"range");
-        z_rmse_s  = normalize(res_box(i_fjord).rmse_sf(:,2),"range");
-        rmse_both = (z_rmse_t + z_rmse_s)/2;
+        w_rmse_t  = 0.5;
+        % z_rmse_t  = normalize(res_box(i_fjord).rmse_tf(:,2),"zscore");
+        % z_rmse_s  = normalize(res_box(i_fjord).rmse_sf(:,2),"zscore");
+        z_rmse_t  = res_box(i_fjord).rmse_tf(:,2)./(max_t-min_t);
+        z_rmse_s  = res_box(i_fjord).rmse_sf(:,2)./(max_s-min_s);
+        rmse_both = w_rmse_t * z_rmse_t + (1-w_rmse_t) * z_rmse_s;
         rmse_ts_filtered = rmse_both;
 
-        rmse_ts_threshold = 0.1;
+        rmse_ts_threshold = 1.0; % 1.0 won't filter anything
         rmse_ts_filtered(rmse_ts_filtered>rmse_ts_threshold) = NaN;
         [best_rmse_t,inds_best_tf] = min(squeeze(rmse_ts_filtered),[],'all','omitnan');
 

@@ -7,9 +7,18 @@ if nargin < 5
     i_tgt_day=1;
 end
 
+% max/min T and S of the entire ensemble so we can normalise the data
+max_t = 9.27;
+min_t = -1.61;
+max_s = 34.99;
+min_s = 2.48;
+
 if nargin > 5
-    z_rmse_t  = normalize(res_box(i_fjord).rmse_tf(:,2),"range");
-    z_rmse_s  = normalize(res_box(i_fjord).rmse_sf(:,2),"range");
+    % z_rmse_t  = normalize(res_box(i_fjord).rmse_tf(:,2),"range");
+    % z_rmse_s  = normalize(res_box(i_fjord).rmse_sf(:,2),"range");
+    % rmse_both = w_rmse_t*z_rmse_t + (1-w_rmse_t)*z_rmse_s;
+    z_rmse_t  = res_box(i_fjord).rmse_tf(:,2)./(max_t-min_t);
+    z_rmse_s  = res_box(i_fjord).rmse_sf(:,2)./(max_s-min_s);
     rmse_both = w_rmse_t*z_rmse_t + (1-w_rmse_t)*z_rmse_s;
 
     [rmse_table.tf_rpm,i_min_rmse_tf] = min(res_box(i_fjord).rmse_tf,[],'all','omitnan');
