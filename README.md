@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/648269217.svg)](https://doi.org/10.5281/zenodo.15880809)
+
 # model-runs
 
 Repository with scripts for setting up, running, and plotting the model outputs in Mas e Braga et al. (XXXX). 
